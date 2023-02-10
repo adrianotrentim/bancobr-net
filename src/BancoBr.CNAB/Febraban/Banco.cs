@@ -5,10 +5,13 @@ namespace BancoBr.CNAB.Febraban
 {
     public class Banco : IBanco
     {
-        public Banco()
+        protected Banco(int codigo, string nome)
         {
+            Codigo = codigo;
+            Nome = nome;
+
             HeaderArquivo = new HeaderArquivo();
-            HeaderArquivo.CodigoBanco = Codigo;
+            HeaderArquivo.CodigoBanco = codigo;
 
             HeaderLote = new List<HeaderLote>();
         }

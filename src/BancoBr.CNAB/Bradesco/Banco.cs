@@ -6,9 +6,8 @@ namespace BancoBr.CNAB.Bradesco
     public class Banco : Febraban.Banco
     {
         public Banco()
+            : base(237, "Banco Bradesco SA")
         {
-            Codigo = 237;
-            Nome = "Banco Bradesco SA";
         }
 
         public override string ToString()
