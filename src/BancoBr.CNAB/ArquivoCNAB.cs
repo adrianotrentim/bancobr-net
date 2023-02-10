@@ -12,10 +12,10 @@ namespace BancoBr.CNAB
             switch (banco)
             {
                 case Bancos.BradescoSA:
-                    Banco = Activator.CreateInstance<Bradesco.Banco>();
+                    Banco = new Bradesco.Banco();
                     break;
                 case Bancos.Santander:
-                    Banco = Activator.CreateInstance<Santander.Banco>();
+                    Banco = new Santander.Banco();
                     break;
                 default:
                     throw new Exception("Banco não implementado!");
