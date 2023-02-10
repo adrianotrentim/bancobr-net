@@ -1,23 +1,17 @@
 ﻿using System.Collections.Generic;
-using BancoBr.Common.Interfaces;
 
 namespace BancoBr.CNAB.Febraban
 {
-    public class Banco : IBanco
+    public class Banco : Common.Instances.Banco
     {
         protected Banco(int codigo, string nome)
+            : base(codigo, nome)
         {
-            Codigo = codigo;
-            Nome = nome;
-
             HeaderArquivo = new HeaderArquivo();
             HeaderArquivo.CodigoBanco = codigo;
 
             HeaderLote = new List<HeaderLote>();
         }
-
-        public int Codigo { get; set; }
-        public string Nome { get; set; }
 
         public HeaderArquivo HeaderArquivo { get; set; }
         public List<HeaderLote> HeaderLote { get; set; }

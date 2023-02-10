@@ -9,10 +9,5 @@ namespace BancoBr.CNAB.Bradesco
             : base(237, "Banco Bradesco SA")
         {
         }
-
-        public override string ToString()
-        {
-            return $"[({Codigo}) {Nome}";
-        }
     }
 }
