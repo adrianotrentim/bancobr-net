@@ -22,7 +22,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\BancoBr.CNAB\BancoBr.CNAB.csproj" />
+    <ProjectReference Include="..\..\src\BancoBr.API\BancoBr.API.csproj" />
+    <ProjectReference Include="..\..\src\BancoBr.CNAB\BancoBr.CNAB.csproj" />
     <ProjectReference Include="..\..\src\BancoBr.Common\BancoBr.Common.csproj" />
   </ItemGroup>
 
