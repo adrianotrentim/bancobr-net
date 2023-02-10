@@ -1,4 +1,7 @@
-﻿using Xunit;
+﻿using BancoBr.CNAB;
+using BancoBr.Common.Enums;
+using BancoBr.Common.Instances;
+using Xunit;
 
 namespace BancoBr.Tests
 {
@@ -7,17 +10,31 @@ namespace BancoBr.Tests
         [Fact]
         public void CriaBancoBradesco()
         {
-            var bank = new CNAB.Bradesco.Banco();
+            var cnab = new ArquivoCNAB(Bancos.BradescoSA);
 
-            Assert.Equal(237, bank.Codigo);
+            Assert.Equal(237, cnab.Banco.Codigo);
+
+            var lote = cnab.NovoLotePagamento();
+            
+            var titulo1 = new Titulo();
+            lote.AddPagamento(titulo1);
+
+            var titulo2 = new Titulo();
+            lote.AddPagamento(titulo2);
+
+            Assert.Equal(237, lote.Registros.FirstOrDefault().Banco.Codigo);
+
+            Assert.Equal(1, cnab.Trailer.QuantidadeLotes);
+            Assert.Equal(4, lote.Trailer.QuantidadeRegistros);
+            Assert.Equal(6, cnab.Trailer.QuantidadeRegistros);
         }
 
         [Fact]
         public void CriaBancoSantander()
         {
-            var bank = new CNAB.Bradesco.Banco();
+            var cnab = new ArquivoCNAB(Bancos.Santander);
 
-            Assert.Equal(33, bank.Codigo);
+            Assert.Equal(33, cnab.Banco.Codigo);
         }
     }
 }

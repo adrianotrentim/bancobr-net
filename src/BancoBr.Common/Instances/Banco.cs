@@ -1,11 +1,11 @@
-﻿using BancoBr.Common.Interfaces;
-using System.Collections.Generic;
+﻿using BancoBr.Common.Enums;
+using BancoBr.Common.Interfaces;
 
 namespace BancoBr.Common.Instances
 {
     public class Banco : IBanco
     {
-        protected Banco(int codigo, string nome)
+        public Banco(int codigo, string nome)
         {
             Codigo = codigo;
             Nome = nome;
