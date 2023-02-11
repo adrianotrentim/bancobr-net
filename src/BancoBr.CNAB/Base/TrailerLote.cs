@@ -18,10 +18,10 @@ namespace BancoBr.CNAB.Base
             _registros = registros;
         }
 
-        [CNAB(4, 9)]
+        [CampoCNAB(4, 9)]
         public int CNAB1 { get; set; }
 
-        [CNAB(5, 6)]
+        [CampoCNAB(5, 6)]
         public int QuantidadeRegistros => _registros.Count + 2; //2 = Header de Lote + Trailer de Lote
     }
 }

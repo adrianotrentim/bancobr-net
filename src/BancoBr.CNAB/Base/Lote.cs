@@ -16,9 +16,9 @@ namespace BancoBr.CNAB.Base
 
         #region ::. Bloco de Pagamentos .::
 
-        public void AddPagamento(Titulo titulo)
+        public void NovoPagamento(Titulo titulo)
         {
-            Registros.AddRange(((Banco)Header.Banco).GetPagamento(titulo));
+            Registros.AddRange(((Banco)Header.Banco).NovoPagamento(titulo));
         }
 
         #endregion

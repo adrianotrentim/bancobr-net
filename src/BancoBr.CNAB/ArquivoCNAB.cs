@@ -34,7 +34,7 @@ namespace BancoBr.CNAB
 
         public Lote NovoLotePagamento()
         {
-            var lote = Banco.GetLotePagamento();
+            var lote = Banco.NovoLotePagamento();
             Lotes.Add(lote);
 
             return lote;

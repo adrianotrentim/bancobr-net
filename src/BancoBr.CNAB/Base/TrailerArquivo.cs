@@ -17,19 +17,19 @@ namespace BancoBr.CNAB.Base
             _lotes = lotes;
         }
 
-        [CNAB(4, 9)]
+        [CampoCNAB(4, 9)]
         public int CNAB1 { get; set; }
 
-        [CNAB(5, 6)]
+        [CampoCNAB(5, 6)]
         public int QuantidadeLotes => _lotes.Count;
 
-        [CNAB(6, 6)]
+        [CampoCNAB(6, 6)]
         public int QuantidadeRegistros => _lotes.Sum(l => l.Trailer.QuantidadeRegistros) + 2; //2 = Header de Arquivo + Trailer de Arquivo
 
-        [CNAB(7, 6)]
+        [CampoCNAB(7, 6)]
         public int QuantidadeContasConciliacao => 0;
 
-        [CNAB(8, 205)]
+        [CampoCNAB(8, 205)]
         public int CNAB2 { get; set; }
     }
 }

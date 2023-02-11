@@ -1,4 +1,6 @@
-﻿namespace BancoBr.Common.Enums
+﻿using System.ComponentModel;
+
+namespace BancoBr.Common.Enums
 {
     public enum TipoArquivoEnum
     {

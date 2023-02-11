@@ -17,10 +17,10 @@ namespace BancoBr.Tests
             var lote = cnab.NovoLotePagamento();
             
             var titulo1 = new Titulo();
-            lote.AddPagamento(titulo1);
+            lote.NovoPagamento(titulo1);
 
             var titulo2 = new Titulo();
-            lote.AddPagamento(titulo2);
+            lote.NovoPagamento(titulo2);
 
             Assert.Equal(237, lote.Registros.FirstOrDefault().Banco.Codigo);
 

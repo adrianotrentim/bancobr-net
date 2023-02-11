@@ -6,7 +6,7 @@ using BancoBr.Common.Interfaces;
 
 namespace BancoBr.CNAB.Bradesco
 {
-    public class Banco : Base.Banco
+    public sealed class Banco : Base.Banco
     {
         public Banco()
             : base(237, "Banco Bradesco SA")
@@ -15,17 +15,17 @@ namespace BancoBr.CNAB.Bradesco
 
         #region ::. Bloco de Pagamentos .::
 
-        ////SOMENTE EXEMPLO - Se o lote de pagamento for diferente do febraban , retorna a instancia do lote próprio do bradesco
-        //protected internal override Lote GetLotePagamento()
-        //{
-        //    var lote = new Lote();
-        //    lote.Header = new Bradesco.Pagamento.HeaderLote(this);
+        //SOMENTE EXEMPLO - Se o lote de pagamento for diferente do febraban , retorna a instancia do lote próprio do bradesco
+        protected internal override Lote NovoLotePagamento()
+        {
+            var lote = new Lote();
+            //lote.Header = new Bradesco.Pagamento.HeaderLote(this);
 
-        //    return lote;
-        //}
+            return lote;
+        }
 
         ////SOMENTE EXEMPLO - Se o pagamento for diferente do febraban , retorna a instancia do pagamento próprio do bradesco
-        //protected internal override List<Registro> GetPagamento(Titulo titulo)
+        //protected override List<Registro> GetPagamento(Titulo titulo)
         //{
         //    var registros = new List<Registro>();
         //    var segmentoA = new Bradesco.Pagamento.SegmentoA(this);

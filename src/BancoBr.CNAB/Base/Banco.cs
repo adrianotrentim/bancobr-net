@@ -1,29 +1,30 @@
 ﻿using System.Collections.Generic;
+using BancoBr.CNAB.Febraban.PagamentoTitulo;
 using BancoBr.Common.Instances;
 
 namespace BancoBr.CNAB.Base
 {
-    public class Banco : Common.Instances.Banco
+    public abstract class Banco : Common.Instances.Banco
     {
-        public Banco(int codigo, string nome) 
+        protected Banco(int codigo, string nome) 
             : base(codigo, nome)
         {
         }
 
         #region ::. Bloco de Pagamentos .::
 
-        protected internal virtual Lote GetLotePagamento()
+        protected internal virtual Lote NovoLotePagamento()
         {
             var lote = new Lote();
-            lote.Header = new Febraban.Pagamento.HeaderLote(this);
+            lote.Header = new Febraban.PagamentoTitulo.HeaderLote(this);
 
             return lote;
         }
 
-        protected internal virtual List<Registro> GetPagamento(Titulo titulo)
+        protected internal virtual List<Registro> NovoPagamento(Titulo titulo)
         {
             var registros = new List<Registro>();
-            var segmentoA = new Febraban.Pagamento.SegmentoA(this);
+            var segmentoA = new SegmentoJ(this);
             //Preenche o segmentoA
             //segmentoA.CampoQualquer = titulo.CampoQualquer
 

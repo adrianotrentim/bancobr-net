@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using BancoBr.CNAB.Base;
+﻿using BancoBr.CNAB.Base;
 using BancoBr.Common.Attributes;
-using BancoBr.Common.Interfaces.CNAB;
 
-namespace BancoBr.CNAB.Febraban.Pagamento
+namespace BancoBr.CNAB.Febraban.PagamentoTitulo
 {
     public class SegmentoA : Registro
     {
@@ -16,10 +12,10 @@ namespace BancoBr.CNAB.Febraban.Pagamento
             CodigoSegmento = "A";
         }
 
-        [CNAB(3, 5)]
+        [CampoCNAB(3, 5)]
         public int NumeroRegistro { get; set; }
 
-        [CNAB(4, 1)]
+        [CampoCNAB(4, 1)]
         public string CodigoSegmento { get; }
 
     }

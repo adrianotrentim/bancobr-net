@@ -3,9 +3,9 @@ using BancoBr.Common.Interfaces;
 
 namespace BancoBr.Common.Instances
 {
-    public class Banco : IBanco
+    public abstract class Banco : IBanco
     {
-        public Banco(int codigo, string nome)
+        protected Banco(int codigo, string nome)
         {
             Codigo = codigo;
             Nome = nome;

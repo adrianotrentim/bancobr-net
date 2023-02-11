@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using BancoBr.CNAB.Base;
 
-namespace BancoBr.CNAB.Febraban.Pagamento
+namespace BancoBr.CNAB.Febraban.PagamentoTitulo
 {
     public class TrailerLote : Base.TrailerLote
     {
