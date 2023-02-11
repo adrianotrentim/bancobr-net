@@ -3,9 +3,9 @@ using BancoBr.Common.Attributes;
 
 namespace BancoBr.CNAB.Febraban.PagamentoTitulo
 {
-    public class SegmentoA : Registro
+    public class SegmentoJ : Registro
     {
-        public SegmentoA(Common.Instances.Banco banco) 
+        public SegmentoJ(Common.Instances.Banco banco) 
             : base(banco)
         {
             TipoRegistro = 3;

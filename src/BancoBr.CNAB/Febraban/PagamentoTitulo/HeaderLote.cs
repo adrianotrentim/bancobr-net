@@ -69,13 +69,10 @@ namespace BancoBr.CNAB.Febraban.PagamentoTitulo
         [CampoCNAB(25, 2)]
         public string UFEmpresa { get; set; }
 
-        [CampoCNAB(26, 2)]
-        public TipoFormaPagamentoEnum TipoPagamento { get; set; }
-
-        [CampoCNAB(27, 6)]
+        [CampoCNAB(26, 8)]
         public string CNAB2 { get; set; }
 
-        [CampoCNAB(28, 10)]
+        [CampoCNAB(27, 10)]
         public string Ocorrencias { get; set; }
     }
 }
