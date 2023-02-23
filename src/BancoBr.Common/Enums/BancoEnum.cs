@@ -4,9 +4,10 @@ using System.Text;
 
 namespace BancoBr.Common.Enums
 {
-    public enum Bancos
+    public enum BancoEnum
     {
         BradescoSA = 237,
+        Itau = 341,
         Santander = 33
     }
 }

@@ -1,19 +1,20 @@
-﻿using BancoBr.Common.Attributes;
+﻿using BancoBr.CNAB.Base;
+using BancoBr.Common.Attributes;
 using BancoBr.Common.Enums;
 
-namespace BancoBr.CNAB.Febraban.PagamentoTitulo
+namespace BancoBr.CNAB.Febraban.Pagamento
 {
-    public class HeaderLote : Base.HeaderLote
+    public class HeaderLote : HeaderLoteBase
     {
         public HeaderLote(Common.Instances.Banco banco) 
             : base(banco)
         {
-            VersaoLote = 40;
+            VersaoLote = 46;
             Operacao = "C";
         }
 
         [CampoCNAB(6, 2)]
-        public int FormaLancamento { get; set; }
+        public FormaLancamentoEnum FormaLancamento { get; set; }
 
         [CampoCNAB(7, 3)]
         public int VersaoLote { get; set; }
@@ -22,10 +23,10 @@ namespace BancoBr.CNAB.Febraban.PagamentoTitulo
         public string CNAB1 { get; set; }
 
         [CampoCNAB(9, 1)]
-        public TipoInscricaoEmpresaEnum TipoInscricaoEmpresa { get; set; }
+        public TipoInscricaoCPFCNPJEnum TipoInscricaoEmpresa { get; set; }
 
         [CampoCNAB(10, 14)]
-        public int InscricaoEmpresa { get; set; }
+        public string InscricaoEmpresa { get; set; }
 
         [CampoCNAB(11, 20)]
         public string Convenio { get; set; }
@@ -69,10 +70,13 @@ namespace BancoBr.CNAB.Febraban.PagamentoTitulo
         [CampoCNAB(25, 2)]
         public string UFEmpresa { get; set; }
 
-        [CampoCNAB(26, 8)]
+        [CampoCNAB(26, 2)]
+        public TipoFormaPagamentoEnum IndicativoFormaPagamento { get; set; }
+        
+        [CampoCNAB(27, 6)]
         public string CNAB2 { get; set; }
 
-        [CampoCNAB(27, 10)]
+        [CampoCNAB(28, 10)]
         public string Ocorrencias { get; set; }
     }
 }

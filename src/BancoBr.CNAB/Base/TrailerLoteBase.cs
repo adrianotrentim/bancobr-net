@@ -5,11 +5,11 @@ using BancoBr.Common.Attributes;
 
 namespace BancoBr.CNAB.Base
 {
-    public class TrailerLote : Registro
+    public class TrailerLoteBase : RegistroBase
     {
-        private readonly List<Registro> _registros;
+        private readonly List<RegistroBase> _registros;
 
-        public TrailerLote(Lote lote, List<Registro> registros)
+        public TrailerLoteBase(Lote lote, List<RegistroBase> registros)
             : base(lote.Header.Banco)
         {
             LoteServico = lote.Header.LoteServico;

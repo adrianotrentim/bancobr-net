@@ -1,41 +1,33 @@
-﻿using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using BancoBr.CNAB.Base;
-using BancoBr.Common.Instances;
-using BancoBr.Common.Interfaces;
+﻿using BancoBr.CNAB.Base;
+using BancoBr.CNAB.Bradesco.Pagamento;
 
 namespace BancoBr.CNAB.Bradesco
 {
     public sealed class Banco : Base.Banco
     {
         public Banco()
-            : base(237, "Banco Bradesco SA")
+            : base(237, "Banco Bradesco SA", 80)
         {
         }
 
         #region ::. Bloco de Pagamentos .::
 
-        //SOMENTE EXEMPLO - Se o lote de pagamento for diferente do febraban , retorna a instancia do lote próprio do bradesco
-        protected internal override Lote NovoLotePagamento()
+        protected internal override HeaderLoteBase NovoHeaderLote()
         {
-            var lote = new Lote();
-            //lote.Header = new Bradesco.Pagamento.HeaderLote(this);
-
-            return lote;
+            return new HeaderLote(this);
         }
 
-        ////SOMENTE EXEMPLO - Se o pagamento for diferente do febraban , retorna a instancia do pagamento próprio do bradesco
-        //protected override List<Registro> GetPagamento(Titulo titulo)
-        //{
-        //    var registros = new List<Registro>();
-        //    var segmentoA = new Bradesco.Pagamento.SegmentoA(this);
+        protected internal override RegistroDetalheBase NovoSegmentoB()
+        {
+            return new SegmentoB(this);
+        }
 
-        //    //Adiciona outros registros
+        protected internal override RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Common.Instances.Pagamento pagamento)
+        {
+            var segmentoB = (SegmentoB)segmento;
 
-        //    registros.Add(segmentoA);
-
-        //    return registros;
-        //}
+            return segmentoB;
+        }
 
         #endregion
 

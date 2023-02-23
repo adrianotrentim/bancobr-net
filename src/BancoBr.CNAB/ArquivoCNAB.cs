@@ -2,39 +2,44 @@
 using System.Collections.Generic;
 using BancoBr.CNAB.Base;
 using BancoBr.Common.Enums;
+using BancoBr.Common.Instances;
+using Banco = BancoBr.CNAB.Base.Banco;
 
 namespace BancoBr.CNAB
 {
     public class ArquivoCNAB
     {
-        public ArquivoCNAB(Bancos banco)
+        public ArquivoCNAB(BancoEnum banco, Pessoa empresaCedente, int numeroRemessa)
         {
             switch (banco)
             {
-                case Bancos.BradescoSA:
+                case BancoEnum.BradescoSA:
                     Banco = new Bradesco.Banco();
                     break;
-                case Bancos.Santander:
-                    Banco = new Santander.Banco();
+                case BancoEnum.Itau:
+                    Banco = new Itau.Banco();
                     break;
                 default:
                     throw new Exception("Banco não implementado!");
             }
 
-            Header = new HeaderArquivo(Banco);
+            EmpresaCedente = empresaCedente;
+            Header = new HeaderArquivo(Banco, empresaCedente, numeroRemessa);
+
             Lotes = new List<Lote>();
         }
 
         public Banco Banco { get; }
+        public Pessoa EmpresaCedente { get; }
         public HeaderArquivo Header { get; set; }
         public List<Lote> Lotes { get; set; }
         public TrailerArquivo Trailer => new TrailerArquivo(this, Lotes);
 
         #region ::. Blocos de Pagamento .::
 
-        public Lote NovoLotePagamento()
+        public Lote NovoLotePagamento(int tipoServico, TipoFormaPagamentoEnum tipoFormaPagamento, FormaLancamentoEnum formaLancamento)
         {
-            var lote = Banco.NovoLotePagamento();
+            var lote = Banco.NovoLotePagamento(EmpresaCedente, tipoServico, formaLancamento, tipoFormaPagamento);
             Lotes.Add(lote);
 
             return lote;

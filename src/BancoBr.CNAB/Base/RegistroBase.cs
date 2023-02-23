@@ -1,17 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Text;
-using BancoBr.Common.Attributes;
+﻿using BancoBr.Common.Attributes;
 using BancoBr.Common.Interfaces.CNAB;
 
 namespace BancoBr.CNAB.Base
 {
-    public abstract class Registro : IRegistro
+    public abstract class RegistroBase : IRegistro
     {
         public Common.Instances.Banco Banco { get; }
 
-        protected Registro(Common.Instances.Banco banco)
+        protected RegistroBase(Common.Instances.Banco banco)
         {
             Banco = banco;
         }

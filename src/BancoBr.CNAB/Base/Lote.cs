@@ -5,20 +5,24 @@ namespace BancoBr.CNAB.Base
 {
     public class Lote
     {
+        private int _numeroRegistro = 0;
+
         public Lote()
         {
-            Registros = new List<Registro>();
+            Registros = new List<RegistroBase>();
         }
 
-        public HeaderLote Header { get; set; }
-        public List<Registro> Registros { get; set; }
-        public TrailerLote Trailer => new TrailerLote(this, Registros);
+        public HeaderLoteBase Header { get; set; }
+        public List<RegistroBase> Registros { get; set; }
+        public TrailerLoteBase Trailer => new TrailerLoteBase(this, Registros);
 
         #region ::. Bloco de Pagamentos .::
 
-        public void NovoPagamento(Titulo titulo)
+        public void NovoPagamento(Pagamento titulo)
         {
-            Registros.AddRange(((Banco)Header.Banco).NovoPagamento(titulo));
+            _numeroRegistro++;
+
+            Registros.AddRange(((Banco)Header.Banco).NovoPagamento(titulo, _numeroRegistro));
         }
 
         #endregion

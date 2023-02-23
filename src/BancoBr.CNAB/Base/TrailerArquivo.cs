@@ -4,7 +4,7 @@ using BancoBr.Common.Attributes;
 
 namespace BancoBr.CNAB.Base
 {
-    public class TrailerArquivo : Registro
+    public class TrailerArquivo : RegistroBase
     {
         private readonly List<Lote> _lotes;
 

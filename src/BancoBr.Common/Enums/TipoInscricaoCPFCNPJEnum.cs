@@ -4,7 +4,7 @@ using System.Text;
 
 namespace BancoBr.Common.Enums
 {
-    public enum TipoInscricaoEmpresaEnum
+    public enum TipoInscricaoCPFCNPJEnum
     {
         Isento = 0,
         CPF = 1,

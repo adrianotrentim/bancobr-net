@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace BancoBr.CNAB.Base
 {
-    public class HeaderLote : Registro
+    public class HeaderLoteBase : RegistroBase
     {
-        protected HeaderLote(Common.Instances.Banco banco)
+        protected HeaderLoteBase(Common.Instances.Banco banco)
             : base(banco)
         {
             TipoRegistro = 1;
@@ -17,6 +17,6 @@ namespace BancoBr.CNAB.Base
         [CampoCNAB(4, 2)]
         public int Servico { get; set; }
 
-        public List<Registro> Registros { get; set; }
+        public List<RegistroBase> Registros { get; set; }
     }
 }

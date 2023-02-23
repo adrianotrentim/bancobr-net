@@ -1,27 +1,48 @@
 ﻿using System;
 using BancoBr.Common.Attributes;
+using BancoBr.Common.Core;
 using BancoBr.Common.Enums;
+using BancoBr.Common.Instances;
 
 namespace BancoBr.CNAB.Base
 {
-    public class HeaderArquivo : Registro
+    public class HeaderArquivo : RegistroBase
     {
-        public HeaderArquivo(Common.Instances.Banco banco)
+        public HeaderArquivo(Common.Instances.Banco banco, Pessoa empresaCedente, int numeroRemessa)
             : base(banco)
         {
             LoteServico = 0;
             TipoRegistro = 0;
             VersaoArquivo = 103;
+            NumeroSequencialArquivo = numeroRemessa;
+            DataGeracao = DateTime.Now;
+            HoraGeracao = DateTime.Now;
+            CodigoRemessaRetorno = TipoArquivoEnum.Remessa;
+            VersaoArquivo = banco.VersaoArquivo;
+
+            if (empresaCedente != null)
+            {
+                TipoInscricaoCpfcnpj = empresaCedente.TipoPessoa;
+                InscricaoEmpresa = empresaCedente.CPF_CNPJ.JustNumbers();
+                Convenio = empresaCedente.Convenio;
+                NumeroAgencia = empresaCedente.NumeroAgencia;
+                DVAgencia = empresaCedente.DVAgencia;
+                NumeroConta = empresaCedente.NumeroConta;
+                DVConta = empresaCedente.DVConta.Substring(0, 1);
+
+                if (empresaCedente.DVConta.Length >= 2)
+                    DVAgenciaConta = empresaCedente.DVConta.Substring(1, 1);
+            }
         }
 
         [CampoCNAB(4, 9)]
         public string CNAB1 { get; set; }
 
         [CampoCNAB(5, 1)]
-        public TipoInscricaoEmpresaEnum TipoInscricaoEmpresa { get; set; }
+        public TipoInscricaoCPFCNPJEnum TipoInscricaoCpfcnpj { get; set; }
 
         [CampoCNAB(6, 14)]
-        public int InscricaoEmpresa { get; set; }
+        public string InscricaoEmpresa { get; set; }
 
         [CampoCNAB(7, 20)]
         public string Convenio { get; set; }
