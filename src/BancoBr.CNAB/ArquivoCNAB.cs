@@ -9,6 +9,8 @@ namespace BancoBr.CNAB
 {
     public class ArquivoCNAB
     {
+        private int _numeroLote = 1;
+
         public ArquivoCNAB(BancoEnum banco, Pessoa empresaCedente, int numeroRemessa)
         {
             switch (banco)
@@ -37,10 +39,15 @@ namespace BancoBr.CNAB
 
         #region ::. Blocos de Pagamento .::
 
-        public Lote NovoLotePagamento(int tipoServico, TipoFormaPagamentoEnum tipoFormaPagamento, FormaLancamentoEnum formaLancamento)
+        public Lote NovoLotePagamento(TipoServicoEnum tipoServico, TipoLancamentoEnum tipoLancamento, FormaPagamentoEnum formaPagamento)
         {
-            var lote = Banco.NovoLotePagamento(EmpresaCedente, tipoServico, formaLancamento, tipoFormaPagamento);
+            var lote = Banco.NovoLotePagamento(EmpresaCedente, tipoServico, formaPagamento, tipoLancamento);
+
+            lote.Header.LoteServico = _numeroLote;
+
             Lotes.Add(lote);
+
+            _numeroLote = Lotes.Count + 1;
 
             return lote;
         }

@@ -24,7 +24,7 @@ namespace BancoBr.CNAB.Febraban.Pagamento
         public int CamaraCentralizadora { get; set; }
 
         [CampoCNAB(9, 3)]
-        public BancoEnum BancoFavorecido { get; set; }
+        public int BancoFavorecido { get; set; }
 
         [CampoCNAB(10, 5)]
         public int AgenciaFavorecido { get; set; }
@@ -59,30 +59,39 @@ namespace BancoBr.CNAB.Febraban.Pagamento
         [CampoCNAB(20, 15)]
         public decimal ValorPagamento { get; set; }
 
+        /// <summary>
+        /// Somente no arquivo de Retorno
+        /// </summary>
         [CampoCNAB(21, 20)]
         public string NumeroDocumentoBanco { get; set; }
 
+        /// <summary>
+        /// Somente no arquivo de Retorno
+        /// </summary>
         [CampoCNAB(22, 8)]
         public DateTime DataRealPagamento { get; set; }
 
+        /// <summary>
+        /// Somente no arquivo de Retorno
+        /// </summary>
         [CampoCNAB(23, 15)]
         public decimal ValorRealPagamento { get; set; }
 
         [CampoCNAB(24, 40)]
         public string Informacao2 { get; set; }
 
+        /// <summary>
+        /// Verificar Nota P005 - CNAB240 FEBRABAN
+        /// </summary>
         [CampoCNAB(25, 2)]
         public string CodigoFinalidadeDOC{ get; set; }
 
         /// <summary>
-        /// Verificar Nota P005 - CNAB240 FEBRABAN
+        /// Verificar Nota P011 - CNAB240 FEBRABAN
         /// </summary>
         [CampoCNAB(26, 5)]
         public string CodigoFinalidadeTED { get; set; }
 
-        /// <summary>
-        /// Verificar Nota P011 - CNAB240 FEBRABAN
-        /// </summary>
         [CampoCNAB(27, 2)]
         public string CodigoFinalidadeComplementar { get; set; }
 
@@ -90,7 +99,7 @@ namespace BancoBr.CNAB.Febraban.Pagamento
         public string CNAB1 { get; set; }
 
         [CampoCNAB(29, 1)]
-        public int AvisoFavorecido { get; set; }
+        public AvisoFavorecidoEnum AvisoFavorecido { get; set; }
 
         [CampoCNAB(30, 10)]
         public string Ocorrencias { get; set; }

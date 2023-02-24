@@ -1,4 +1,5 @@
 ﻿using BancoBr.CNAB;
+using BancoBr.CNAB.Core;
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
 using Xunit;
@@ -17,7 +18,7 @@ namespace BancoBr.Tests
         public void CriaBancoBradesco()
         {
             var numeroArquivo = 1;
-            var tipoServico = 30;
+            var tipoServico = TipoServicoEnum.PagamentoSalarios;
 
             var empresa = new Pessoa
             {
@@ -33,7 +34,7 @@ namespace BancoBr.Tests
                 UF = "SP",
                 Convenio = "",
                 NumeroAgencia = 825,
-                DVAgencia = 0,
+                DVAgencia = "0",
                 NumeroConta = 12345,
                 DVConta = "6"
             };
@@ -42,7 +43,7 @@ namespace BancoBr.Tests
 
             Assert.Equal(237, cnab.Banco.Codigo);
 
-            var lote = cnab.NovoLotePagamento(tipoServico, TipoFormaPagamentoEnum.DebitoContaCorrente, FormaLancamentoEnum.CreditoConta);
+            var lote = cnab.NovoLotePagamento(tipoServico, TipoLancamentoEnum.DebitoContaCorrente, FormaPagamentoEnum.CreditoConta);
 
             var pagamento1 = new Pagamento
             {
@@ -60,13 +61,14 @@ namespace BancoBr.Tests
                     UF = "SP",
                     Banco = 341,
                     NumeroAgencia = 528,
-                    DVAgencia = 0,
+                    DVAgencia = "0",
                     NumeroConta = 54321,
                     DVConta = "8"
                 },
                 TipoMovimento = TipoMovimentoEnum.Inclusao, //Valor Padrão, pode ser ignorado a setagem desta propriedade
+                CodigoInstrucao = CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado, //Valor Padrão, pode ser ignorado a setagem desta propriedade
                 FinalidadeLancamento = "01", //Verificar nota P005 e P011 do CNAB240 FEBRABAN
-                NumeroDocumento = 5637,
+                NumeroDocumento = "5637",
                 DataPagamento = DateTime.Parse("2023-02-28"),
                 Moeda = "BRL", //Valor Padrão, pode ser ignorado a setagem desta propriedade
                 ValorPagamento = (decimal)2500.65
@@ -90,21 +92,26 @@ namespace BancoBr.Tests
                     UF = "SP",
                     Convenio = "",
                     NumeroAgencia = 135,
-                    DVAgencia = 0,
+                    DVAgencia = "0",
                     NumeroConta = 98765,
                     DVConta = "7"
                 },
-                NumeroDocumento = 6598,
+                NumeroDocumento = "6598",
                 DataPagamento = DateTime.Parse("2023-02-28"),
                 ValorPagamento = (decimal)1830.34
             };
             lote.NovoPagamento(pagamento2);
 
-            Assert.Equal(237, lote.Registros.FirstOrDefault().Banco.Codigo);
-
             Assert.Equal(1, cnab.Trailer.QuantidadeLotes);
-            Assert.Equal(8, lote.Trailer.QuantidadeRegistros);
-            Assert.Equal(10, cnab.Trailer.QuantidadeRegistros);
+            Assert.Equal(4, lote.Trailer.QuantidadeRegistros);
+            Assert.Equal(6, cnab.Trailer.QuantidadeRegistros);
+
+            var stringArquivo = cnab.Exportar();
+
+            //File.WriteAllText("c:\\cnabteste.txt", stringArquivo);
+
+            foreach(var linha in stringArquivo.Split("\r\n"))
+                Assert.Equal(240, linha.Length);
         }
     }
 }

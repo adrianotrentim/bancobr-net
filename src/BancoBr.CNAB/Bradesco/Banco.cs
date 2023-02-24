@@ -17,20 +17,21 @@ namespace BancoBr.CNAB.Bradesco
             return new HeaderLote(this);
         }
 
-        protected internal override RegistroDetalheBase NovoSegmentoB()
+        protected internal override RegistroDetalheBase NovoSegmentoA()
         {
-            return new SegmentoB(this);
+            return new SegmentoA(this);
         }
-
+        
         protected internal override RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Common.Instances.Pagamento pagamento)
         {
-            var segmentoB = (SegmentoB)segmento;
+            return null;
+        }
 
-            return segmentoB;
+        protected internal override RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Common.Instances.Pagamento pagamento)
+        {
+            return null;
         }
 
         #endregion
-
-
     }
 }

@@ -18,7 +18,7 @@ namespace BancoBr.Common.Instances
         public int Banco { get; set; }
         public string Convenio { get; set; }
         public int NumeroAgencia { get; set; }
-        public int DVAgencia { get; set; }
+        public string DVAgencia { get; set; }
         public int NumeroConta { get; set; }
         public string DVConta { get; set; }
     }

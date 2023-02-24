@@ -1,6 +1,6 @@
 ﻿namespace BancoBr.Common.Enums
 {
-    public enum FormaLancamentoEnum
+    public enum FormaPagamentoEnum
     {
         CreditoConta = 1,
         ChequePagamento = 2,

@@ -14,7 +14,7 @@ namespace BancoBr.CNAB.Febraban.Pagamento
         }
 
         [CampoCNAB(6, 2)]
-        public FormaLancamentoEnum FormaLancamento { get; set; }
+        public FormaPagamentoEnum FormaPagamento { get; set; }
 
         [CampoCNAB(7, 3)]
         public int VersaoLote { get; set; }
@@ -26,7 +26,7 @@ namespace BancoBr.CNAB.Febraban.Pagamento
         public TipoInscricaoCPFCNPJEnum TipoInscricaoEmpresa { get; set; }
 
         [CampoCNAB(10, 14)]
-        public string InscricaoEmpresa { get; set; }
+        public long InscricaoEmpresa { get; set; }
 
         [CampoCNAB(11, 20)]
         public string Convenio { get; set; }
@@ -35,7 +35,7 @@ namespace BancoBr.CNAB.Febraban.Pagamento
         public int NumeroAgencia { get; set; }
 
         [CampoCNAB(13, 1)]
-        public int DVAgencia { get; set; }
+        public string DVAgencia { get; set; }
 
         [CampoCNAB(14, 12)]
         public int NumeroConta { get; set; }
@@ -71,8 +71,8 @@ namespace BancoBr.CNAB.Febraban.Pagamento
         public string UFEmpresa { get; set; }
 
         [CampoCNAB(26, 2)]
-        public TipoFormaPagamentoEnum IndicativoFormaPagamento { get; set; }
-        
+        public TipoLancamentoEnum TipoLancamento { get; set; }
+
         [CampoCNAB(27, 6)]
         public string CNAB2 { get; set; }
 

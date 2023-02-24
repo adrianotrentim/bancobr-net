@@ -7,7 +7,6 @@ namespace BancoBr.Common.Enums
     public enum BancoEnum
     {
         BradescoSA = 237,
-        Itau = 341,
-        Santander = 33
+        Itau = 341
     }
 }

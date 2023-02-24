@@ -15,7 +15,7 @@ namespace BancoBr.CNAB.Bradesco.Pagamento
         #region ::. Propriedades Desativadas .::
 
         [CampoCNAB(true)]
-        private new TipoFormaPagamentoEnum IndicativoFormaPagamento { get; set; }
+        private new TipoLancamentoEnum TipoLancamento { get; set; }
 
         #endregion
 

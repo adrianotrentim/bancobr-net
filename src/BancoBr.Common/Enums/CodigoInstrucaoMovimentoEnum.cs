@@ -15,4 +15,9 @@
         AlegacaoPagador = 40,
         ExclusaoRegistroDetalheIncluidoAnteriormente = 99
     }
+
+    public enum AvisoFavorecidoEnum
+    {
+        NaoEmiteAviso = 0
+    }
 }

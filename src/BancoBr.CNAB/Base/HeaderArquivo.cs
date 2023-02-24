@@ -23,7 +23,7 @@ namespace BancoBr.CNAB.Base
             if (empresaCedente != null)
             {
                 TipoInscricaoCpfcnpj = empresaCedente.TipoPessoa;
-                InscricaoEmpresa = empresaCedente.CPF_CNPJ.JustNumbers();
+                InscricaoEmpresa = long.Parse(empresaCedente.CPF_CNPJ.JustNumbers());
                 Convenio = empresaCedente.Convenio;
                 NumeroAgencia = empresaCedente.NumeroAgencia;
                 DVAgencia = empresaCedente.DVAgencia;
@@ -42,7 +42,7 @@ namespace BancoBr.CNAB.Base
         public TipoInscricaoCPFCNPJEnum TipoInscricaoCpfcnpj { get; set; }
 
         [CampoCNAB(6, 14)]
-        public string InscricaoEmpresa { get; set; }
+        public long InscricaoEmpresa { get; set; }
 
         [CampoCNAB(7, 20)]
         public string Convenio { get; set; }
@@ -51,7 +51,7 @@ namespace BancoBr.CNAB.Base
         public int NumeroAgencia { get; set; }
 
         [CampoCNAB(9, 1)]
-        public int DVAgencia { get; set; }
+        public string DVAgencia { get; set; }
 
         [CampoCNAB(10, 12)]
         public int NumeroConta { get; set; }
@@ -74,10 +74,10 @@ namespace BancoBr.CNAB.Base
         [CampoCNAB(16, 1)]
         public TipoArquivoEnum CodigoRemessaRetorno { get; set; }
 
-        [CampoCNAB(17, 8)]
+        [CampoCNAB(17, 8, "ddMMyyyy")]
         public DateTime DataGeracao { get; set; }
 
-        [CampoCNAB(18, 6)]
+        [CampoCNAB(18, 6, "HHmmss")]
         public DateTime HoraGeracao { get; set; }
 
         [CampoCNAB(19, 6)]

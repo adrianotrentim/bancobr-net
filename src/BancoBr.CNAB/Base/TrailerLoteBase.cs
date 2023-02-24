@@ -7,21 +7,23 @@ namespace BancoBr.CNAB.Base
 {
     public class TrailerLoteBase : RegistroBase
     {
-        private readonly List<RegistroBase> _registros;
+        public Lote Lote { get; }
 
-        public TrailerLoteBase(Lote lote, List<RegistroBase> registros)
+        public TrailerLoteBase(Lote lote)
             : base(lote.Header.Banco)
         {
-            LoteServico = lote.Header.LoteServico;
             TipoRegistro = 5;
 
-            _registros = registros;
+            Lote = lote;
         }
+
+        [CampoCNAB(2, 4)] 
+        public new int LoteServico => Lote.Header.LoteServico;
 
         [CampoCNAB(4, 9)]
         public int CNAB1 { get; set; }
 
         [CampoCNAB(5, 6)]
-        public int QuantidadeRegistros => _registros.Count + 2; //2 = Header de Lote + Trailer de Lote
+        public int QuantidadeRegistros => Lote.Registros.Count + 2; //2 = Header de Lote + Trailer de Lote
     }
 }

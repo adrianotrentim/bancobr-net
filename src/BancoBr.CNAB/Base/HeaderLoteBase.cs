@@ -1,5 +1,6 @@
 ﻿using BancoBr.Common.Attributes;
 using System.Collections.Generic;
+using BancoBr.Common.Enums;
 
 namespace BancoBr.CNAB.Base
 {
@@ -11,11 +12,11 @@ namespace BancoBr.CNAB.Base
             TipoRegistro = 1;
         }
 
-        [CampoCNAB(3, 1)]
+        [CampoCNAB(4, 1)]
         public string Operacao { get; set; }
 
-        [CampoCNAB(4, 2)]
-        public int Servico { get; set; }
+        [CampoCNAB(5, 2)]
+        public TipoServicoEnum Servico { get; set; }
 
         public List<RegistroBase> Registros { get; set; }
     }
