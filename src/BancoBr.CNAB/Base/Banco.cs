@@ -26,43 +26,7 @@ namespace BancoBr.CNAB.Base
 
         #region ::. Bloco de Pagamentos .::
 
-        public Lote NovoLotePagamento(Pessoa empresaCedente, TipoServicoEnum tipoServico, FormaPagamentoEnum formaPagamento, TipoLancamentoEnum tipoLancamento)
-        {
-            _empresaCedente = empresaCedente;
-            _tipoServico = tipoServico;
-            _formaPagamento = formaPagamento;
-            _tipoLancamento = tipoLancamento;
-
-            if (formaPagamento == FormaPagamentoEnum.CartaoSalario && tipoServico != TipoServicoEnum.PagamentoSalarios)
-                throw new InvalidOperationException("A forma de pagamento Cartão Salário (4), só é permitida para o Tipo de Serviço Pagamento de Salários (30)");
-
-            var lote = new Lote
-            {
-                Header = PreencheHeaderLoteBase()
-            };
-
-            lote.Trailer = PreencheTrailerLoteBase(lote);
-
-            return lote;
-        }
-
-        public List<RegistroDetalheBase> NovoPagamento(Pagamento titulo, int numeroLote, int numeroRegistro)
-        {
-            var registros = new List<RegistroDetalheBase>();
-
-            var segmentoA = PreencheSegmentoABase(titulo, numeroLote);
-            var segmentoB = PreencheSegmentoBBase(titulo, numeroLote);
-            var segmentoC = PreencheSegmentoCBase(titulo, numeroLote);
-
-            segmentoA.NumeroRegistro = numeroRegistro;
-
-            registros.Add(segmentoA);
-            
-            if (segmentoB != null) registros.Add(segmentoB);
-            if (segmentoC != null) registros.Add(segmentoC);
-
-            return registros;
-        }
+        #region ::. Métodos Privados .::
 
         private HeaderLoteBase PreencheHeaderLoteBase()
         {
@@ -171,7 +135,7 @@ namespace BancoBr.CNAB.Base
         private RegistroDetalheBase PreencheSegmentoBBase(Pagamento pagamento, int numeroLote)
         {
             var segmento = (SegmentoB)NovoSegmentoB();
-            
+
             segmento.LoteServico = numeroLote;
 
             return PreencheSegmentoB(segmento, pagamento);
@@ -185,6 +149,52 @@ namespace BancoBr.CNAB.Base
 
             return PreencheSegmentoC(segmento, pagamento);
         }
+
+        #endregion
+
+        #region ::. Métodos Públicos .::
+
+        public Lote NovoLotePagamento(Pessoa empresaCedente, TipoServicoEnum tipoServico, FormaPagamentoEnum formaPagamento, TipoLancamentoEnum tipoLancamento)
+        {
+            _empresaCedente = empresaCedente;
+            _tipoServico = tipoServico;
+            _formaPagamento = formaPagamento;
+            _tipoLancamento = tipoLancamento;
+
+            if (formaPagamento == FormaPagamentoEnum.CartaoSalario && tipoServico != TipoServicoEnum.PagamentoSalarios)
+                throw new InvalidOperationException("A forma de pagamento Cartão Salário (4), só é permitida para o Tipo de Serviço Pagamento de Salários (30)");
+
+            var lote = new Lote
+            {
+                Header = PreencheHeaderLoteBase()
+            };
+
+            lote.Trailer = PreencheTrailerLoteBase(lote);
+
+            return lote;
+        }
+
+        public List<RegistroDetalheBase> NovoPagamento(Pagamento titulo, int numeroLote, int numeroRegistro)
+        {
+            var registros = new List<RegistroDetalheBase>();
+
+            var segmentoA = PreencheSegmentoABase(titulo, numeroLote);
+            var segmentoB = PreencheSegmentoBBase(titulo, numeroLote);
+            var segmentoC = PreencheSegmentoCBase(titulo, numeroLote);
+
+            segmentoA.NumeroRegistro = numeroRegistro;
+
+            registros.Add(segmentoA);
+            
+            if (segmentoB != null) registros.Add(segmentoB);
+            if (segmentoC != null) registros.Add(segmentoC);
+
+            return registros;
+        }
+
+        #endregion
+
+        #region ::. Métodos Herdáveis .::
 
         protected internal virtual HeaderLoteBase NovoHeaderLote()
         {
@@ -235,6 +245,8 @@ namespace BancoBr.CNAB.Base
         {
             return segmento;
         }
+
+        #endregion
 
         #endregion
     }
