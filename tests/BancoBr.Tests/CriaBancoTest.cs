@@ -15,7 +15,7 @@ namespace BancoBr.Tests
         /// <summary>
         /// Para novos testes, apenas adicionar as linhas de cada banco no retorno da própriedade
         /// </summary>
-        public static IEnumerable<object[]> CNAB240_Pagamento
+        public static IEnumerable<object[]> CNAB240
         {
             get
             {
@@ -54,8 +54,8 @@ namespace BancoBr.Tests
         ///
         /// No caso de CEP, é um inteiro. A biblioteca cuidará para adicionar zeros a esquerda se necessário
         /// </summary>
-        [Theory, MemberData("CNAB240_Pagamento")]
-        public static void RotinaTesteGeral(ArquivoCNAB cnab)
+        [Theory, MemberData("CNAB240")]
+        public static void TestePagamento(ArquivoCNAB cnab)
         {
             var tipoServico = TipoServicoEnum.PagamentoSalarios;
             var lote = cnab.NovoLotePagamento(tipoServico, TipoLancamentoEnum.DebitoContaCorrente, FormaPagamentoEnum.CreditoConta);
