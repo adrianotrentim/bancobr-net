@@ -27,28 +27,28 @@ namespace BancoBr.CNAB.Bradesco.Pagamento
 
         #endregion
 
-        [CampoCNAB(17, 8)]
+        [CampoCNAB(128, 8)]
         public DateTime Vencimento { get; set; }
 
-        [CampoCNAB(18, 15)]
+        [CampoCNAB(136, 15)]
         public decimal ValorDocumento { get; set; }
 
-        [CampoCNAB(19, 15)]
+        [CampoCNAB(151, 15)]
         public decimal Abatimento { get; set; }
 
-        [CampoCNAB(20, 15)]
+        [CampoCNAB(166, 15)]
         public decimal Desconto { get; set; }
 
-        [CampoCNAB(21, 15)]
+        [CampoCNAB(181, 15)]
         public decimal Mora { get; set; }
 
-        [CampoCNAB(22, 15)]
+        [CampoCNAB(196, 15)]
         public decimal Multa { get; set; }
 
-        [CampoCNAB(23, 15)]
+        [CampoCNAB(211, 15)]
         public string DocumentoFavorecido { get; set; }
 
-        [CampoCNAB(24, 15)]
+        [CampoCNAB(226, 15)]
         public string CNAB2 { get; set; }
     }
 }

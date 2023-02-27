@@ -17,7 +17,7 @@ namespace BancoBr.CNAB.Base
             NumeroSequencialArquivo = numeroRemessa;
             DataGeracao = DateTime.Now;
             HoraGeracao = DateTime.Now;
-            CodigoRemessaRetorno = TipoArquivoEnum.Remessa;
+            TipoRemessaRetorno = TipoArquivoEnum.Remessa;
             VersaoArquivo = banco.VersaoArquivo;
 
             if (empresaCedente != null)
@@ -26,6 +26,7 @@ namespace BancoBr.CNAB.Base
                 InscricaoEmpresa = long.Parse(empresaCedente.CPF_CNPJ.JustNumbers());
                 Convenio = empresaCedente.Convenio;
                 NumeroAgencia = empresaCedente.NumeroAgencia;
+                NomeEmpresa = empresaCedente.Nome;
                 DVAgencia = empresaCedente.DVAgencia;
                 NumeroConta = empresaCedente.NumeroConta;
                 DVConta = empresaCedente.DVConta.Substring(0, 1);
@@ -35,67 +36,67 @@ namespace BancoBr.CNAB.Base
             }
         }
 
-        [CampoCNAB(4, 9)]
+        [CampoCNAB(9, 9)]
         public string CNAB1 { get; set; }
 
-        [CampoCNAB(5, 1)]
+        [CampoCNAB(18, 1)]
         public TipoInscricaoCPFCNPJEnum TipoInscricaoCpfcnpj { get; set; }
 
-        [CampoCNAB(6, 14)]
+        [CampoCNAB(19, 14)]
         public long InscricaoEmpresa { get; set; }
 
-        [CampoCNAB(7, 20)]
+        [CampoCNAB(33, 20)]
         public string Convenio { get; set; }
 
-        [CampoCNAB(8, 5)]
+        [CampoCNAB(53, 5)]
         public int NumeroAgencia { get; set; }
 
-        [CampoCNAB(9, 1)]
+        [CampoCNAB(58, 1)]
         public string DVAgencia { get; set; }
 
-        [CampoCNAB(10, 12)]
+        [CampoCNAB(59, 12)]
         public int NumeroConta { get; set; }
 
-        [CampoCNAB(11, 1)]
+        [CampoCNAB(71, 1)]
         public string DVConta { get; set; }
 
-        [CampoCNAB(12, 1)]
+        [CampoCNAB(72, 1)]
         public string DVAgenciaConta { get; set; }
 
-        [CampoCNAB(13, 30)]
+        [CampoCNAB(73, 30)]
         public string NomeEmpresa { get; set; }
 
-        [CampoCNAB(14, 30)]
+        [CampoCNAB(103, 30)]
         public string NomeBanco { get; set; }
 
-        [CampoCNAB(15, 10)]
+        [CampoCNAB(133, 10)]
         public string CNAB2 { get; set; }
 
-        [CampoCNAB(16, 1)]
-        public TipoArquivoEnum CodigoRemessaRetorno { get; set; }
+        [CampoCNAB(143, 1)]
+        public TipoArquivoEnum TipoRemessaRetorno { get; set; }
 
-        [CampoCNAB(17, 8, "ddMMyyyy")]
+        [CampoCNAB(144, 8, "ddMMyyyy")]
         public DateTime DataGeracao { get; set; }
 
-        [CampoCNAB(18, 6, "HHmmss")]
+        [CampoCNAB(152, 6, "HHmmss")]
         public DateTime HoraGeracao { get; set; }
 
-        [CampoCNAB(19, 6)]
+        [CampoCNAB(158, 6)]
         public int NumeroSequencialArquivo { get; set; }
 
-        [CampoCNAB(20, 3)]
+        [CampoCNAB(164, 3)]
         public int VersaoArquivo { get; set; }
 
-        [CampoCNAB(21, 5)]
+        [CampoCNAB(167, 5)]
         public int DensidadeArquivo { get; set; }
 
-        [CampoCNAB(22, 20)]
+        [CampoCNAB(172, 20)]
         public string ReservadorBanco { get; set; }
 
-        [CampoCNAB(23, 20)]
+        [CampoCNAB(192, 20)]
         public string ReservadorEmpresa { get; set; }
 
-        [CampoCNAB(24, 29)]
+        [CampoCNAB(212, 29)]
         public string CNAB3 { get; set; }
     }
 }

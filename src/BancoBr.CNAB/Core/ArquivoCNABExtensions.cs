@@ -1,15 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using BancoBr.CNAB.Base;
 using BancoBr.Common.Attributes;
 using BancoBr.Common.Core;
+using BancoBr.Common.Interfaces.CNAB;
 
 namespace BancoBr.CNAB.Core
 {
     public static class ArquivoCNABExtensions
     {
+        #region ::. Métodos de Exportação .::
+
         public static string Exportar(this ArquivoCNAB cnab)
         {
             var arquivo = new StringBuilder();
@@ -72,5 +76,127 @@ namespace BancoBr.CNAB.Core
 
             return ret.ToString();
         }
+
+        #endregion
+
+        #region ::. Métodos de Importação .::
+
+        public static void Importar(this ArquivoCNAB cnab, IEnumerable<string> linhas)
+        {
+            Lote lote = null;
+
+            foreach (var linha in linhas)
+            {
+                var tipoRegistro = linha.Substring(7, 1);
+                RegistroBase instanciaRegistro = null;
+
+                if (tipoRegistro == "0") //Header de Arquivo
+                {
+                    instanciaRegistro = cnab.Header;
+                }
+                else if (tipoRegistro == "1") //Header de Lote
+                {
+                    lote = new Lote
+                    {
+                        Header = cnab.Banco.NovoHeaderLote()
+                    };
+
+                    cnab.Lotes.Add(lote);
+
+                    instanciaRegistro = lote.Header;
+                }
+                else if (tipoRegistro == "2") //Registros Iniciais de Lote
+                {
+
+                }
+                else if (tipoRegistro == "3") //Registros Detalhe
+                {
+                    var bancoType = cnab.Banco.GetType();
+                    var tipoSegmento = linha.Substring(13, 1);
+
+                    var registro = (RegistroDetalheBase)bancoType.InvokeMember("NovoSegmento" + tipoSegmento, BindingFlags.InvokeMethod, null, cnab.Banco, null);
+                    lote.Registros.Add(registro);
+
+                    instanciaRegistro = registro;
+                }
+                else if (tipoRegistro == "4") //Registros Finais de Lote
+                {
+
+                }
+                else if (tipoRegistro == "5") //Trailer de Lote
+                {
+                    lote.Trailer = cnab.Banco.NovoTrailerLote(lote);
+                    instanciaRegistro = lote.Trailer;
+                }
+                else if (tipoRegistro == "9") //Trailer de Arquivo
+                {
+                    continue; //É automático
+                }
+
+                var listaCampos = instanciaRegistro
+                    .GetType()
+                    .GetProperties()
+                    .Where(p => p.GetCustomAttributes(typeof(CampoCNABAttribute), true).Any())
+                    .Where(p => !((CampoCNABAttribute)p.GetCustomAttributes(typeof(CampoCNABAttribute), true)[0]).Desabilitado)
+                    .OrderBy(p => ((CampoCNABAttribute)p.GetCustomAttributes(typeof(CampoCNABAttribute), true)[0]).Posicao)
+                    .ToList();
+
+                foreach (var campo in listaCampos)
+                {
+                    var campoCNAB = ((CampoCNABAttribute)campo.GetCustomAttributes(typeof(CampoCNABAttribute), true)[0]);
+
+                    if (!campo.CanWrite || !campo.GetSetMethod(/*nonPublic*/ true).IsPublic)
+                        continue;
+
+                    object valueObject = null;
+
+                    if (campo.PropertyType == typeof(string))
+                        valueObject = linha.Substring(campoCNAB.Posicao-1, campoCNAB.Tamanho);
+                    else if (campo.PropertyType.IsEnum)
+                        valueObject = Enum.ToObject(campo.PropertyType, Convert.ToInt32(linha.Substring(campoCNAB.Posicao - 1, campoCNAB.Tamanho)));
+                    else if (campo.PropertyType == typeof(int) || campo.PropertyType == typeof(int?) || campo.PropertyType == typeof(long) || campo.PropertyType == typeof(long?))
+                        valueObject = Convert.ChangeType(linha.Substring(campoCNAB.Posicao - 1, campoCNAB.Tamanho), campo.PropertyType);
+                    else if (campo.PropertyType == typeof(decimal) || campo.PropertyType == typeof(decimal?))
+                        valueObject = (decimal)Convert.ChangeType(linha.Substring(campoCNAB.Posicao - 1, campoCNAB.Tamanho), campo.PropertyType) / 100;
+                    else if (campo.PropertyType == typeof(DateTime) || campo.PropertyType == typeof(DateTime?))
+                    {
+                        if (string.IsNullOrEmpty(campoCNAB.Formatacao) || campoCNAB.Formatacao == "ddMMyyyy")
+                        {
+                            var value = linha.Substring(campoCNAB.Posicao - 1, campoCNAB.Tamanho);
+
+                            if (value == "00000000" || value == "        ")
+                            {
+                                valueObject = (DateTime?)null;
+                            }
+                            else
+                            {
+                                value = value.Substring(0, 2) + "/" + value.Substring(2, 2) + "/" + value.Substring(4, 4);
+
+                                valueObject = DateTime.Parse(value);
+                            }
+                        } 
+                        else if (campoCNAB.Formatacao == "HHmmss")
+                        {
+                            var value = linha.Substring(campoCNAB.Posicao - 1, campoCNAB.Tamanho);
+
+                            if (value == "000000" || value == "      ")
+                            {
+                                valueObject = (DateTime?)null;
+                            }
+                            else
+                            {
+                                value = value.Substring(0, 2) + ":" + value.Substring(2, 2) + ":" + value.Substring(4, 2);
+
+                                valueObject = DateTime.Parse(value);
+                            }
+                        }
+                    }
+
+                    campo.SetValue(instanciaRegistro, valueObject);
+                }
+            }
+        }
+
+        #endregion
     }
 }

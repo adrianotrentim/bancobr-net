@@ -10,15 +10,16 @@ namespace BancoBr.CNAB.Base
         protected RegistroBase(Common.Instances.Banco banco)
         {
             Banco = banco;
+            CodigoBanco = Banco.Codigo;
         }
 
         [CampoCNAB(1, 3)]
-        public int CodigoBanco => Banco.Codigo;
+        public int CodigoBanco { get; set; }
 
-        [CampoCNAB(2, 4)]
+        [CampoCNAB(4, 4)]
         public int LoteServico { get; set; }
 
-        [CampoCNAB(3, 1)]
+        [CampoCNAB(8, 1)]
         public int TipoRegistro { get; set; }
     }
 }

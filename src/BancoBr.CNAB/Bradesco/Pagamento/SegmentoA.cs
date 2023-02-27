@@ -18,7 +18,7 @@ namespace BancoBr.CNAB.Bradesco.Pagamento
 
         #endregion
 
-        [CampoCNAB(28, 5)]
+        [CampoCNAB(225, 5)]
         public new string CNAB1 { get; set; }
     }
 }

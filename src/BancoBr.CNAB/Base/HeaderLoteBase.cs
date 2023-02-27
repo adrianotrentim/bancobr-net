@@ -12,12 +12,10 @@ namespace BancoBr.CNAB.Base
             TipoRegistro = 1;
         }
 
-        [CampoCNAB(4, 1)]
+        [CampoCNAB(9, 1)]
         public string Operacao { get; set; }
 
-        [CampoCNAB(5, 2)]
+        [CampoCNAB(10, 2)]
         public TipoServicoEnum Servico { get; set; }
-
-        public List<RegistroBase> Registros { get; set; }
     }
 }

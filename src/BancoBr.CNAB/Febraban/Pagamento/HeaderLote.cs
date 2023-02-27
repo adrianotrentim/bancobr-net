@@ -13,70 +13,70 @@ namespace BancoBr.CNAB.Febraban.Pagamento
             Operacao = "C";
         }
 
-        [CampoCNAB(6, 2)]
+        [CampoCNAB(12, 2)]
         public FormaPagamentoEnum FormaPagamento { get; set; }
 
-        [CampoCNAB(7, 3)]
+        [CampoCNAB(14, 3)]
         public int VersaoLote { get; set; }
 
-        [CampoCNAB(8, 1)]
+        [CampoCNAB(17, 1)]
         public string CNAB1 { get; set; }
 
-        [CampoCNAB(9, 1)]
+        [CampoCNAB(18, 1)]
         public TipoInscricaoCPFCNPJEnum TipoInscricaoEmpresa { get; set; }
 
-        [CampoCNAB(10, 14)]
+        [CampoCNAB(19, 14)]
         public long InscricaoEmpresa { get; set; }
 
-        [CampoCNAB(11, 20)]
+        [CampoCNAB(33, 20)]
         public string Convenio { get; set; }
 
-        [CampoCNAB(12, 5)]
+        [CampoCNAB(53, 5)]
         public int NumeroAgencia { get; set; }
 
-        [CampoCNAB(13, 1)]
+        [CampoCNAB(58, 1)]
         public string DVAgencia { get; set; }
 
-        [CampoCNAB(14, 12)]
+        [CampoCNAB(59, 12)]
         public int NumeroConta { get; set; }
 
-        [CampoCNAB(15, 1)]
+        [CampoCNAB(71, 1)]
         public string DVConta { get; set; }
 
-        [CampoCNAB(16, 1)]
+        [CampoCNAB(72, 1)]
         public string DVAgenciaConta { get; set; }
 
-        [CampoCNAB(17, 30)]
+        [CampoCNAB(73, 30)]
         public string NomeEmpresa { get; set; }
 
-        [CampoCNAB(18, 40)]
+        [CampoCNAB(103, 40)]
         public string Informacao1 { get; set; }
 
-        [CampoCNAB(19, 30)]
+        [CampoCNAB(143, 30)]
         public string EnderecoEmpresa { get; set; }
 
-        [CampoCNAB(20, 5)]
+        [CampoCNAB(173, 5)]
         public string NumeroEnderecoEmpresa { get; set; }
 
-        [CampoCNAB(21, 15)]
+        [CampoCNAB(178, 15)]
         public string ComplementoEnderecoEmpresa { get; set; }
 
-        [CampoCNAB(22, 20)]
+        [CampoCNAB(193, 20)]
         public string CidadeEmpresa { get; set; }
 
-        [CampoCNAB(23, 8)]
+        [CampoCNAB(213, 8)]
         public int CEPEmpresa { get; set; }
 
-        [CampoCNAB(25, 2)]
+        [CampoCNAB(221, 2)]
         public string UFEmpresa { get; set; }
 
-        [CampoCNAB(26, 2)]
+        [CampoCNAB(223, 2)]
         public TipoLancamentoEnum TipoLancamento { get; set; }
 
-        [CampoCNAB(27, 6)]
+        [CampoCNAB(225, 6)]
         public string CNAB2 { get; set; }
 
-        [CampoCNAB(28, 10)]
+        [CampoCNAB(231, 10)]
         public string Ocorrencias { get; set; }
     }
 }

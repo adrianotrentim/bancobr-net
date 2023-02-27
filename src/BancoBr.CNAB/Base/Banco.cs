@@ -196,52 +196,52 @@ namespace BancoBr.CNAB.Base
 
         #region ::. Métodos Herdáveis .::
 
-        protected internal virtual HeaderLoteBase NovoHeaderLote()
+        public virtual HeaderLoteBase NovoHeaderLote()
         {
             return new HeaderLote(this);
         }
         
-        protected internal virtual TrailerLoteBase NovoTrailerLote(Lote lote)
+        public virtual TrailerLoteBase NovoTrailerLote(Lote lote)
         {
             return new TrailerLote(lote);
         }
 
-        protected internal virtual RegistroDetalheBase NovoSegmentoA()
+        public virtual RegistroDetalheBase NovoSegmentoA()
         {
             return new SegmentoA(this);
         }
 
-        protected internal virtual RegistroDetalheBase NovoSegmentoB()
+        public virtual RegistroDetalheBase NovoSegmentoB()
         {
             return new SegmentoB(this);
         }
 
-        protected internal virtual RegistroDetalheBase NovoSegmentoC()
+        public virtual RegistroDetalheBase NovoSegmentoC()
         {
             return new SegmentoC(this);
         }
 
-        protected internal virtual HeaderLoteBase PreencheHeaderLote(HeaderLoteBase headerLote)
+        public virtual HeaderLoteBase PreencheHeaderLote(HeaderLoteBase headerLote)
         {
             return headerLote;
         }
 
-        protected internal virtual TrailerLoteBase PreencheTrailerLote(TrailerLoteBase trailerLote)
+        public virtual TrailerLoteBase PreencheTrailerLote(TrailerLoteBase trailerLote)
         {
             return trailerLote;
         }
 
-        protected internal virtual RegistroDetalheBase PreencheSegmentoA(RegistroDetalheBase segmento, Pagamento pagamento)
+        public virtual RegistroDetalheBase PreencheSegmentoA(RegistroDetalheBase segmento, Pagamento pagamento)
         {
             return segmento;
         }
 
-        protected internal virtual RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Pagamento pagamento)
+        public virtual RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Pagamento pagamento)
         {
             return segmento;
         }
 
-        protected internal virtual RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Pagamento pagamento)
+        public virtual RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Pagamento pagamento)
         {
             return segmento;
         }

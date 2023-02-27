@@ -17,13 +17,13 @@ namespace BancoBr.CNAB.Base
             Lote = lote;
         }
 
-        [CampoCNAB(2, 4)] 
+        [CampoCNAB(4, 4)] 
         public new int LoteServico => Lote.Header.LoteServico;
 
-        [CampoCNAB(4, 9)]
-        public int CNAB1 { get; set; }
+        [CampoCNAB(9, 9)]
+        public string CNAB1 { get; set; }
 
-        [CampoCNAB(5, 6)]
+        [CampoCNAB(18, 6)]
         public int QuantidadeRegistros => Lote.Registros.Count + 2; //2 = Header de Lote + Trailer de Lote
     }
 }

@@ -12,46 +12,46 @@ namespace BancoBr.CNAB.Febraban.Pagamento
             CodigoSegmento = "C";
         }
 
-        [CampoCNAB(6, 3)]
+        [CampoCNAB(15, 3)]
         public string CNAB1 { get; set; }
 
-        [CampoCNAB(7, 15)]
+        [CampoCNAB(18, 15)]
         public decimal ValorIR { get; set; }
 
-        [CampoCNAB(8, 15)]
+        [CampoCNAB(33, 15)]
         public decimal ValorISS { get; set; }
 
-        [CampoCNAB(9, 15)]
+        [CampoCNAB(48, 15)]
         public decimal ValorIOF { get; set; }
 
-        [CampoCNAB(10, 15)]
+        [CampoCNAB(63, 15)]
         public decimal ValorOutrasDeducoes { get; set; }
 
-        [CampoCNAB(11, 15)]
+        [CampoCNAB(78, 15)]
         public decimal ValorOutrosAcrescimos { get; set; }
 
-        [CampoCNAB(12, 5)]
+        [CampoCNAB(93, 5)]
         public int AgenciaSubistituta { get; set; }
 
-        [CampoCNAB(13, 1)]
+        [CampoCNAB(98, 1)]
         public string DVAgenciaSubistituta { get; set; }
 
-        [CampoCNAB(14, 12)]
+        [CampoCNAB(99, 12)]
         public int ContaSubistituta { get; set; }
 
-        [CampoCNAB(15, 1)]
+        [CampoCNAB(111, 1)]
         public string DVContaSubistituta { get; set; }
 
-        [CampoCNAB(16, 1)]
+        [CampoCNAB(112, 1)]
         public string DVAgenciaContaSubistituta { get; set; }
 
-        [CampoCNAB(17, 15)]
+        [CampoCNAB(113, 15)]
         public decimal ValorINSS { get; set; }
 
-        [CampoCNAB(18, 20)]
+        [CampoCNAB(128, 20)]
         public int ContaPagamentoCreditada { get; set; }
 
-        [CampoCNAB(19, 93)]
+        [CampoCNAB(148, 93)]
         public string CNAB2 { get; set; }
     }
 }

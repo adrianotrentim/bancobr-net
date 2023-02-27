@@ -14,43 +14,43 @@ namespace BancoBr.CNAB.Febraban.Pagamento
             CodigoSegmento = "B";
         }
 
-        [CampoCNAB(6, 3)]
+        [CampoCNAB(15, 3)]
         public string CNAB1 { get; set; }
 
-        [CampoCNAB(7, 1)]
+        [CampoCNAB(18, 1)]
         public TipoInscricaoCPFCNPJEnum TipoInscricaoFavorecido { get; set; }
 
-        [CampoCNAB(8, 14)]
+        [CampoCNAB(19, 14)]
         public long InscricaoFavorecido { get; set; }
 
-        [CampoCNAB(9, 30)]
+        [CampoCNAB(33, 30)]
         public string EnderecoFavorecido { get; set; }
 
-        [CampoCNAB(10, 5)]
+        [CampoCNAB(63, 5)]
         public string NumeroEnderecoFavorecido { get; set; }
 
-        [CampoCNAB(11, 15)]
+        [CampoCNAB(68, 15)]
         public string ComplementoEnderecoFavorecido { get; set; }
 
-        [CampoCNAB(12, 15)]
+        [CampoCNAB(83, 15)]
         public string BairroFavorecido { get; set; }
 
-        [CampoCNAB(13, 20)]
+        [CampoCNAB(98, 20)]
         public string CidadeFavorecido { get; set; }
 
-        [CampoCNAB(14, 8)]
+        [CampoCNAB(118, 8)]
         public int CEPFavorecido { get; set; }
 
-        [CampoCNAB(16, 2)]
+        [CampoCNAB(126, 2)]
         public string UFFavorecido { get; set; }
 
-        [CampoCNAB(17, 99)]
+        [CampoCNAB(128, 99)]
         public string Informacao12 { get; set; }
 
-        [CampoCNAB(18, 6)]
+        [CampoCNAB(211, 6)]
         public int CodigoUGCentralizadora { get; set; }
 
-        [CampoCNAB(19, 8)]
+        [CampoCNAB(226, 8)]
         public int IdentificacaoBancoSPB { get; set; }
     }
 }

@@ -1,48 +1,63 @@
 ﻿using BancoBr.CNAB;
+using BancoBr.CNAB.Base;
 using BancoBr.CNAB.Core;
+using BancoBr.CNAB.Febraban.Pagamento;
+using BancoBr.Common.Core;
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
 using Xunit;
+using Xunit.Extensions;
 
 namespace BancoBr.Tests
 {
     public class CriaBancoTest
     {
         /// <summary>
+        /// Para novos testes, apenas adicionar as linhas de cada banco no retorno da própriedade
+        /// </summary>
+        public static IEnumerable<object[]> CNAB240_Pagamento
+        {
+            get
+            {
+                var numeroArquivo = 1;
+
+                var empresa = new Pessoa
+                {
+                    TipoPessoa = TipoInscricaoCPFCNPJEnum.CNPJ,
+                    CPF_CNPJ = "12.345.678/0001-00",
+                    Nome = "Empresa BancoBR.Net",
+                    Endereco = "Rua Teste BancoBR.Net",
+                    NumeroEndereco = "567",
+                    ComplementoEndereco = "Compl. End.",
+                    Bairro = "Centro",
+                    CEP = 12345678,
+                    Cidade = "Ribeirão Preto",
+                    UF = "SP",
+                    Convenio = "",
+                    NumeroAgencia = 825,
+                    DVAgencia = "0",
+                    NumeroConta = 12345,
+                    DVConta = "6"
+                };
+
+                return new[]
+                {
+                    new object[] { new ArquivoCNAB(BancoEnum.BradescoSA, empresa, numeroArquivo) },
+                    //new object[] { new ArquivoCNAB(BancoEnum.Itau, empresa, numeroArquivo) },
+                };
+            }
+        }
+
+        /// <summary>
         /// Todas as informações podem ser adicionadas com formatações e acentos, pois a biblioteca cuidará de retira-los
         /// Todas as informações podem ser adicionadas em minúsculo, pois a biblioteca formatará em maiúsculo
         ///
         /// No caso de CEP, é um inteiro. A biblioteca cuidará para adicionar zeros a esquerda se necessário
         /// </summary>
-        [Fact]
-        public void CriaBancoBradesco()
+        [Theory, MemberData("CNAB240_Pagamento")]
+        public static void RotinaTesteGeral(ArquivoCNAB cnab)
         {
-            var numeroArquivo = 1;
             var tipoServico = TipoServicoEnum.PagamentoSalarios;
-
-            var empresa = new Pessoa
-            {
-                TipoPessoa = TipoInscricaoCPFCNPJEnum.CNPJ,
-                CPF_CNPJ = "12.345.678/0001-00",
-                Nome = "Empresa BancoBR.Net",
-                Endereco = "Rua Teste BancoBR.Net",
-                NumeroEndereco = "567",
-                ComplementoEndereco = "Compl. End.",
-                Bairro = "Centro",
-                CEP = 12345678,
-                Cidade = "Ribeirão Preto",
-                UF = "SP",
-                Convenio = "",
-                NumeroAgencia = 825,
-                DVAgencia = "0",
-                NumeroConta = 12345,
-                DVConta = "6"
-            };
-
-            var cnab = new ArquivoCNAB(BancoEnum.BradescoSA, empresa, numeroArquivo);
-
-            Assert.Equal(237, cnab.Banco.Codigo);
-
             var lote = cnab.NovoLotePagamento(tipoServico, TipoLancamentoEnum.DebitoContaCorrente, FormaPagamentoEnum.CreditoConta);
 
             var pagamento1 = new Pagamento
@@ -108,10 +123,38 @@ namespace BancoBr.Tests
 
             var stringArquivo = cnab.Exportar();
 
-            //File.WriteAllText("c:\\cnabteste.txt", stringArquivo);
+            #region ::. Testes Básicos .::
 
-            foreach(var linha in stringArquivo.Split("\r\n"))
+            //Todas as linhas devem conter exatamente 240 caracteres
+            foreach (var linha in stringArquivo.Split("\r\n"))
                 Assert.Equal(240, linha.Length);
+
+            #endregion
+
+            #region ::. Exportando e Importando o Arquivo
+
+            var fileName = Path.GetTempFileName();
+            File.WriteAllText(fileName, stringArquivo);
+
+            var linhas = File.ReadLines(fileName);
+
+            var cnabLeitura = new ArquivoCNAB((BancoEnum)cnab.Banco.Codigo, cnab.EmpresaCedente, 0);
+            cnabLeitura.Importar(linhas);
+
+            Assert.Equal(cnab.Header.NumeroConta, cnabLeitura.Header.NumeroConta);
+            Assert.Equal(cnab.Header.NomeEmpresa.RemoveAccents().ToUpper().Trim(), cnabLeitura.Header.NomeEmpresa.Trim());
+
+            Assert.Equal(((HeaderLote)cnab.Lotes[0].Header).NumeroConta, ((HeaderLote)cnabLeitura.Lotes[0].Header).NumeroConta);
+            Assert.Equal(((HeaderLote)cnab.Lotes[0].Header).NomeEmpresa.RemoveAccents().ToUpper(), ((HeaderLote)cnabLeitura.Lotes[0].Header).NomeEmpresa.Trim());
+
+            Assert.Equal(((SegmentoA)cnab.Lotes[0].Registros[0]).ContaFavorecido, ((SegmentoA)cnabLeitura.Lotes[0].Registros[0]).ContaFavorecido);
+            Assert.Equal(((SegmentoA)cnab.Lotes[0].Registros[0]).NomeFavorecido.RemoveAccents().ToUpper(), ((SegmentoA)cnabLeitura.Lotes[0].Registros[0]).NomeFavorecido.Trim());
+            Assert.Equal(((SegmentoA)cnab.Lotes[0].Registros[0]).ValorPagamento, ((SegmentoA)cnabLeitura.Lotes[0].Registros[0]).ValorPagamento);
+
+            Assert.Equal(((TrailerLote)cnab.Lotes[0].Trailer).QuantidadeRegistros, ((TrailerLote)cnabLeitura.Lotes[0].Trailer).QuantidadeRegistros);
+            Assert.Equal(cnab.Trailer.QuantidadeRegistros, cnabLeitura.Trailer.QuantidadeRegistros);
+
+            #endregion
         }
     }
 }

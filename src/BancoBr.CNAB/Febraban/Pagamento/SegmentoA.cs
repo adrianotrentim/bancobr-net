@@ -14,94 +14,94 @@ namespace BancoBr.CNAB.Febraban.Pagamento
             CodigoSegmento = "A";
         }
 
-        [CampoCNAB(6, 1)]
+        [CampoCNAB(15, 1)]
         public TipoMovimentoEnum TipoMovimento { get; set; }
 
-        [CampoCNAB(7, 2)]
+        [CampoCNAB(16, 2)]
         public CodigoInstrucaoMovimentoEnum CodigoInstrucaoMovimento { get; set; }
 
-        [CampoCNAB(8, 3)]
+        [CampoCNAB(18, 3)]
         public int CamaraCentralizadora { get; set; }
 
-        [CampoCNAB(9, 3)]
+        [CampoCNAB(21, 3)]
         public int BancoFavorecido { get; set; }
 
-        [CampoCNAB(10, 5)]
+        [CampoCNAB(24, 5)]
         public int AgenciaFavorecido { get; set; }
 
-        [CampoCNAB(11, 1)]
+        [CampoCNAB(29, 1)]
         public string DVAgenciaFavorecido { get; set; }
 
-        [CampoCNAB(12, 12)]
+        [CampoCNAB(30, 12)]
         public int ContaFavorecido { get; set; }
 
-        [CampoCNAB(13, 1)]
+        [CampoCNAB(42, 1)]
         public string DVContaFavorecido { get; set; }
 
-        [CampoCNAB(14, 1)]
+        [CampoCNAB(43, 1)]
         public string DVAgenciaContaFavorecido { get; set; }
 
-        [CampoCNAB(15, 30)]
+        [CampoCNAB(44, 30)]
         public string NomeFavorecido { get; set; }
 
-        [CampoCNAB(16, 20)]
+        [CampoCNAB(74, 20)]
         public string NumeroDocumentoEmpresa { get; set; }
 
-        [CampoCNAB(17, 8)]
+        [CampoCNAB(94, 8)]
         public DateTime DataPagamento { get; set; }
 
-        [CampoCNAB(18, 3)]
+        [CampoCNAB(102, 3)]
         public string TipoMoeda { get; set; }
         
-        [CampoCNAB(19, 15)]
+        [CampoCNAB(105, 15)]
         public decimal QuantidadeMoeda { get; set; }
 
-        [CampoCNAB(20, 15)]
+        [CampoCNAB(120, 15)]
         public decimal ValorPagamento { get; set; }
 
         /// <summary>
         /// Somente no arquivo de Retorno
         /// </summary>
-        [CampoCNAB(21, 20)]
+        [CampoCNAB(135, 20)]
         public string NumeroDocumentoBanco { get; set; }
 
         /// <summary>
         /// Somente no arquivo de Retorno
         /// </summary>
-        [CampoCNAB(22, 8)]
+        [CampoCNAB(155, 8)]
         public DateTime DataRealPagamento { get; set; }
 
         /// <summary>
         /// Somente no arquivo de Retorno
         /// </summary>
-        [CampoCNAB(23, 15)]
+        [CampoCNAB(163, 15)]
         public decimal ValorRealPagamento { get; set; }
 
-        [CampoCNAB(24, 40)]
+        [CampoCNAB(178, 40)]
         public string Informacao2 { get; set; }
 
         /// <summary>
         /// Verificar Nota P005 - CNAB240 FEBRABAN
         /// </summary>
-        [CampoCNAB(25, 2)]
+        [CampoCNAB(218, 2)]
         public string CodigoFinalidadeDOC{ get; set; }
 
         /// <summary>
         /// Verificar Nota P011 - CNAB240 FEBRABAN
         /// </summary>
-        [CampoCNAB(26, 5)]
+        [CampoCNAB(220, 5)]
         public string CodigoFinalidadeTED { get; set; }
 
-        [CampoCNAB(27, 2)]
+        [CampoCNAB(225, 2)]
         public string CodigoFinalidadeComplementar { get; set; }
 
-        [CampoCNAB(28, 3)]
+        [CampoCNAB(227, 3)]
         public string CNAB1 { get; set; }
 
-        [CampoCNAB(29, 1)]
+        [CampoCNAB(230, 1)]
         public AvisoFavorecidoEnum AvisoFavorecido { get; set; }
 
-        [CampoCNAB(30, 10)]
+        [CampoCNAB(231, 10)]
         public string Ocorrencias { get; set; }
     }
 }

@@ -10,10 +10,10 @@ namespace BancoBr.CNAB.Base
             TipoRegistro = 3;
         }
 
-        [CampoCNAB(4, 5)]
+        [CampoCNAB(9, 5)]
         public int NumeroRegistro { get; set; }
 
-        [CampoCNAB(5, 1)]
+        [CampoCNAB(14, 1)]
         public string CodigoSegmento { get; set; }
     }
 }
