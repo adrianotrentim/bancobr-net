@@ -26,16 +26,16 @@ namespace BancoBr.CNAB
             }
 
             EmpresaCedente = empresaCedente;
-            Header = new HeaderArquivo(Banco, empresaCedente, numeroRemessa);
+            Header = Banco.NovoHeaderArquivo(empresaCedente, numeroRemessa);
 
             Lotes = new List<Lote>();
         }
 
         public Banco Banco { get; }
         public Pessoa EmpresaCedente { get; }
-        public HeaderArquivo Header { get; set; }
+        public RegistroBase Header { get; set; }
         public List<Lote> Lotes { get; set; }
-        public TrailerArquivo Trailer => new TrailerArquivo(this, Lotes);
+        public RegistroBase Trailer => Banco.NovoTrailerArquivo(this, Lotes);
 
         #region ::. Blocos de Pagamento .::
 

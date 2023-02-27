@@ -5,12 +5,6 @@ namespace BancoBr.Common.Instances
 {
     public abstract class Banco : IBanco
     {
-        protected Banco(int codigo, string nome)
-        {
-            Codigo = codigo;
-            Nome = nome;
-        }
-
         protected Banco(int codigo, string nome, int versaoArquivo)
         {
             Codigo = codigo;

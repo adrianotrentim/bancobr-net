@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using BancoBr.CNAB.Febraban;
 using BancoBr.CNAB.Febraban.Pagamento;
 using BancoBr.Common.Core;
 using BancoBr.Common.Enums;
@@ -14,15 +15,13 @@ namespace BancoBr.CNAB.Base
         private FormaPagamentoEnum _formaPagamento;
         private TipoLancamentoEnum _tipoLancamento;
 
-        protected Banco(int codigo, string nome)
-            : base(codigo, nome)
-        {
-        }
-
         protected Banco(int codigo, string nome, int versaoArquivo)
             : base(codigo, nome, versaoArquivo)
         {
         }
+
+        public virtual RegistroBase NovoHeaderArquivo(Pessoa empresaCedente, int numeroRemessa) => new HeaderArquivo(this, empresaCedente, numeroRemessa);
+        public virtual RegistroBase NovoTrailerArquivo(ArquivoCNAB arquivoCnab, List<Lote> lotes) => new TrailerArquivo(arquivoCnab, lotes);
 
         #region ::. Bloco de Pagamentos .::
 
@@ -208,12 +207,12 @@ namespace BancoBr.CNAB.Base
         #region ::. Métodos Herdáveis .::
 
         public virtual HeaderLoteBase NovoHeaderLote() => new HeaderLote(this);
-        public virtual TrailerLoteBase NovoTrailerLote(Lote lote) => new TrailerLote(lote);
         public virtual RegistroDetalheBase NovoSegmentoA() => new SegmentoA(this);
         public virtual RegistroDetalheBase NovoSegmentoB() => new SegmentoB(this);
         public virtual RegistroDetalheBase NovoSegmentoC() => new SegmentoC(this);
         public virtual RegistroDetalheBase NovoSegmentoJ() => new SegmentoJ(this);
-        
+        public virtual TrailerLoteBase NovoTrailerLote(Lote lote) => new TrailerLote(lote);
+
         public virtual HeaderLoteBase PreencheHeaderLote(HeaderLoteBase headerLote) => headerLote;
         public virtual TrailerLoteBase PreencheTrailerLote(TrailerLoteBase trailerLote) => trailerLote;
         public virtual RegistroDetalheBase PreencheSegmentoA(RegistroDetalheBase segmento, Pagamento pagamento) => segmento;

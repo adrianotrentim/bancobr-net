@@ -1,10 +1,11 @@
 ﻿using System;
+using BancoBr.CNAB.Base;
 using BancoBr.Common.Attributes;
 using BancoBr.Common.Core;
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
 
-namespace BancoBr.CNAB.Base
+namespace BancoBr.CNAB.Febraban
 {
     public class HeaderArquivo : RegistroBase
     {
@@ -13,7 +14,6 @@ namespace BancoBr.CNAB.Base
         {
             LoteServico = 0;
             TipoRegistro = 0;
-            VersaoArquivo = 103;
             NumeroSequencialArquivo = numeroRemessa;
             DataGeracao = DateTime.Now;
             HoraGeracao = DateTime.Now;
@@ -91,10 +91,10 @@ namespace BancoBr.CNAB.Base
         public int DensidadeArquivo { get; set; }
 
         [CampoCNAB(172, 20)]
-        public string ReservadorBanco { get; set; }
+        public string ReservadoBanco { get; set; }
 
         [CampoCNAB(192, 20)]
-        public string ReservadorEmpresa { get; set; }
+        public string ReservadoEmpresa { get; set; }
 
         [CampoCNAB(212, 29)]
         public string CNAB3 { get; set; }

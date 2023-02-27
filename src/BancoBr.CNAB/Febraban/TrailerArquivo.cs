@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using BancoBr.CNAB.Base;
 using BancoBr.Common.Attributes;
 
-namespace BancoBr.CNAB.Base
+namespace BancoBr.CNAB.Febraban
 {
     public class TrailerArquivo : RegistroBase
     {

@@ -1,12 +1,11 @@
 ﻿using BancoBr.CNAB;
-using BancoBr.CNAB.Base;
 using BancoBr.CNAB.Core;
+using BancoBr.CNAB.Febraban;
 using BancoBr.CNAB.Febraban.Pagamento;
 using BancoBr.Common.Core;
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
 using Xunit;
-using Xunit.Extensions;
 
 namespace BancoBr.Tests
 {
@@ -43,7 +42,7 @@ namespace BancoBr.Tests
                 return new[]
                 {
                     new object[] { new ArquivoCNAB(BancoEnum.BradescoSA, empresa, numeroArquivo) },
-                    //new object[] { new ArquivoCNAB(BancoEnum.Itau, empresa, numeroArquivo) },
+                    new object[] { new ArquivoCNAB(BancoEnum.Itau, empresa, numeroArquivo) }
                 };
             }
         }
@@ -117,9 +116,9 @@ namespace BancoBr.Tests
             };
             lote.NovoPagamento(pagamento2);
 
-            Assert.Equal(1, cnab.Trailer.QuantidadeLotes);
+            Assert.Equal(1, ((TrailerArquivo)cnab.Trailer).QuantidadeLotes);
             Assert.Equal(4, lote.Trailer.QuantidadeRegistros);
-            Assert.Equal(6, cnab.Trailer.QuantidadeRegistros);
+            Assert.Equal(6, ((TrailerArquivo)cnab.Trailer).QuantidadeRegistros);
 
             var stringArquivo = cnab.Exportar();
 
@@ -141,8 +140,8 @@ namespace BancoBr.Tests
             var cnabLeitura = new ArquivoCNAB((BancoEnum)cnab.Banco.Codigo, cnab.EmpresaCedente, 0);
             cnabLeitura.Importar(linhas);
 
-            Assert.Equal(cnab.Header.NumeroConta, cnabLeitura.Header.NumeroConta);
-            Assert.Equal(cnab.Header.NomeEmpresa.RemoveAccents().ToUpper().Trim(), cnabLeitura.Header.NomeEmpresa.Trim());
+            Assert.Equal(((HeaderArquivo)cnab.Header).NumeroConta, ((HeaderArquivo)cnabLeitura.Header).NumeroConta);
+            Assert.Equal(((HeaderArquivo)cnab.Header).NomeEmpresa.RemoveAccents().ToUpper().Trim(), ((HeaderArquivo)cnabLeitura.Header).NomeEmpresa.Trim());
 
             Assert.Equal(((HeaderLote)cnab.Lotes[0].Header).NumeroConta, ((HeaderLote)cnabLeitura.Lotes[0].Header).NumeroConta);
             Assert.Equal(((HeaderLote)cnab.Lotes[0].Header).NomeEmpresa.RemoveAccents().ToUpper(), ((HeaderLote)cnabLeitura.Lotes[0].Header).NomeEmpresa.Trim());
@@ -152,7 +151,7 @@ namespace BancoBr.Tests
             Assert.Equal(((SegmentoA)cnab.Lotes[0].Registros[0]).ValorPagamento, ((SegmentoA)cnabLeitura.Lotes[0].Registros[0]).ValorPagamento);
 
             Assert.Equal(((TrailerLote)cnab.Lotes[0].Trailer).QuantidadeRegistros, ((TrailerLote)cnabLeitura.Lotes[0].Trailer).QuantidadeRegistros);
-            Assert.Equal(cnab.Trailer.QuantidadeRegistros, cnabLeitura.Trailer.QuantidadeRegistros);
+            Assert.Equal(((TrailerArquivo)cnab.Trailer).QuantidadeRegistros, ((TrailerArquivo)cnabLeitura.Trailer).QuantidadeRegistros);
 
             #endregion
         }
