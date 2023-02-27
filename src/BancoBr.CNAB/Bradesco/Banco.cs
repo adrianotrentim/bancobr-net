@@ -17,6 +17,7 @@ namespace BancoBr.CNAB.Bradesco
 
         public override RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Common.Instances.Pagamento pagamento) => null;
         public override RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Common.Instances.Pagamento pagamento) => null;
+        public override RegistroDetalheBase PreencheSegmentoJ(RegistroDetalheBase segmento, Common.Instances.Pagamento pagamento) => null;
 
         #endregion
     }
