@@ -14,6 +14,7 @@ namespace BancoBr.CNAB.Bradesco
 
         public override HeaderLoteBase NovoHeaderLote() => new HeaderLote(this);
         public override RegistroDetalheBase NovoSegmentoA() => new SegmentoA(this);
+        public override RegistroDetalheBase NovoSegmentoB() => new SegmentoB(this);
 
         public override RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Common.Instances.Pagamento pagamento) => null;
         public override RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Common.Instances.Pagamento pagamento) => null;
