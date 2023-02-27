@@ -12,25 +12,11 @@ namespace BancoBr.CNAB.Bradesco
 
         #region ::. Bloco de Pagamentos .::
 
-        public override HeaderLoteBase NovoHeaderLote()
-        {
-            return new HeaderLote(this);
-        }
+        public override HeaderLoteBase NovoHeaderLote() => new HeaderLote(this);
+        public override RegistroDetalheBase NovoSegmentoA() => new SegmentoA(this);
 
-        public override RegistroDetalheBase NovoSegmentoA()
-        {
-            return new SegmentoA(this);
-        }
-        
-        public override RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Common.Instances.Pagamento pagamento)
-        {
-            return null;
-        }
-
-        public override RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Common.Instances.Pagamento pagamento)
-        {
-            return null;
-        }
+        public override RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Common.Instances.Pagamento pagamento) => null;
+        public override RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Common.Instances.Pagamento pagamento) => null;
 
         #endregion
     }

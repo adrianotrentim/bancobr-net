@@ -150,6 +150,15 @@ namespace BancoBr.CNAB.Base
             return PreencheSegmentoC(segmento, pagamento);
         }
 
+        private RegistroDetalheBase PreencheSegmentoJBase(Pagamento pagamento, int numeroLote)
+        {
+            var segmento = (SegmentoJ)NovoSegmentoJ();
+
+            segmento.LoteServico = numeroLote;
+
+            return PreencheSegmentoJ(segmento, pagamento);
+        }
+
         #endregion
 
         #region ::. Métodos Públicos .::
@@ -181,6 +190,7 @@ namespace BancoBr.CNAB.Base
             var segmentoA = PreencheSegmentoABase(titulo, numeroLote);
             var segmentoB = PreencheSegmentoBBase(titulo, numeroLote);
             var segmentoC = PreencheSegmentoCBase(titulo, numeroLote);
+            var segmentoJ = PreencheSegmentoJBase(titulo, numeroLote);
 
             segmentoA.NumeroRegistro = numeroRegistro;
 
@@ -188,6 +198,7 @@ namespace BancoBr.CNAB.Base
             
             if (segmentoB != null) registros.Add(segmentoB);
             if (segmentoC != null) registros.Add(segmentoC);
+            if (segmentoJ != null) registros.Add(segmentoJ);
 
             return registros;
         }
@@ -196,55 +207,19 @@ namespace BancoBr.CNAB.Base
 
         #region ::. Métodos Herdáveis .::
 
-        public virtual HeaderLoteBase NovoHeaderLote()
-        {
-            return new HeaderLote(this);
-        }
+        public virtual HeaderLoteBase NovoHeaderLote() => new HeaderLote(this);
+        public virtual TrailerLoteBase NovoTrailerLote(Lote lote) => new TrailerLote(lote);
+        public virtual RegistroDetalheBase NovoSegmentoA() => new SegmentoA(this);
+        public virtual RegistroDetalheBase NovoSegmentoB() => new SegmentoB(this);
+        public virtual RegistroDetalheBase NovoSegmentoC() => new SegmentoC(this);
+        public virtual RegistroDetalheBase NovoSegmentoJ() => new SegmentoJ(this);
         
-        public virtual TrailerLoteBase NovoTrailerLote(Lote lote)
-        {
-            return new TrailerLote(lote);
-        }
-
-        public virtual RegistroDetalheBase NovoSegmentoA()
-        {
-            return new SegmentoA(this);
-        }
-
-        public virtual RegistroDetalheBase NovoSegmentoB()
-        {
-            return new SegmentoB(this);
-        }
-
-        public virtual RegistroDetalheBase NovoSegmentoC()
-        {
-            return new SegmentoC(this);
-        }
-
-        public virtual HeaderLoteBase PreencheHeaderLote(HeaderLoteBase headerLote)
-        {
-            return headerLote;
-        }
-
-        public virtual TrailerLoteBase PreencheTrailerLote(TrailerLoteBase trailerLote)
-        {
-            return trailerLote;
-        }
-
-        public virtual RegistroDetalheBase PreencheSegmentoA(RegistroDetalheBase segmento, Pagamento pagamento)
-        {
-            return segmento;
-        }
-
-        public virtual RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Pagamento pagamento)
-        {
-            return segmento;
-        }
-
-        public virtual RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Pagamento pagamento)
-        {
-            return segmento;
-        }
+        public virtual HeaderLoteBase PreencheHeaderLote(HeaderLoteBase headerLote) => headerLote;
+        public virtual TrailerLoteBase PreencheTrailerLote(TrailerLoteBase trailerLote) => trailerLote;
+        public virtual RegistroDetalheBase PreencheSegmentoA(RegistroDetalheBase segmento, Pagamento pagamento) => segmento;
+        public virtual RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Pagamento pagamento) => segmento;
+        public virtual RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Pagamento pagamento) => segmento;
+        public virtual RegistroDetalheBase PreencheSegmentoJ(RegistroDetalheBase segmento, Pagamento pagamento) => segmento;
 
         #endregion
 
