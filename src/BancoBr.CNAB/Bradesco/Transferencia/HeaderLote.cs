@@ -1,9 +1,9 @@
 ﻿using BancoBr.Common.Attributes;
 using BancoBr.Common.Enums;
 
-namespace BancoBr.CNAB.Bradesco.Pagamento
+namespace BancoBr.CNAB.Bradesco.Transferencia
 {
-    public class HeaderLote : Febraban.Pagamento.HeaderLote
+    public class HeaderLote : Febraban.Transferencia.HeaderLote
     {
         public HeaderLote(Common.Instances.Banco banco)
             : base(banco)

@@ -37,11 +37,11 @@ namespace BancoBr.CNAB
         public List<Lote> Lotes { get; set; }
         public RegistroBase Trailer => Banco.NovoTrailerArquivo(this, Lotes);
 
-        #region ::. Blocos de Pagamento .::
+        #region ::. Blocos de Transferencia .::
 
-        public Lote NovoLotePagamento(TipoServicoEnum tipoServico, TipoLancamentoEnum tipoLancamento, FormaPagamentoEnum formaPagamento)
+        public Lote NovoLoteTransferencia(TipoServicoEnum tipoServico, TipoLancamentoEnum tipoLancamento, FormaPagamentoEnum formaPagamento)
         {
-            var lote = Banco.NovoLotePagamento(EmpresaCedente, tipoServico, formaPagamento, tipoLancamento);
+            var lote = Banco.NovoLoteTransferencia(EmpresaCedente, tipoServico, formaPagamento, tipoLancamento);
 
             lote.Header.LoteServico = _numeroLote;
 

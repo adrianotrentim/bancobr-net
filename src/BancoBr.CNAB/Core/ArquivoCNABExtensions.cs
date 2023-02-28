@@ -24,7 +24,7 @@ namespace BancoBr.CNAB.Core
             {
                 arquivo.AppendLine(lote.Header.ExportarCampos());
 
-                foreach (var registro in lote.Registros)
+                foreach (var registro in lote.Detalhe)
                     arquivo.AppendLine(registro.ExportarCampos());
 
                 arquivo.AppendLine(lote.Trailer.ExportarCampos());
@@ -105,21 +105,21 @@ namespace BancoBr.CNAB.Core
 
                     instanciaRegistro = lote.Header;
                 }
-                else if (tipoRegistro == "2") //Registros Iniciais de Lote
+                else if (tipoRegistro == "2") //Detalhe Iniciais de Lote
                 {
 
                 }
-                else if (tipoRegistro == "3") //Registros Detalhe
+                else if (tipoRegistro == "3") //Detalhe Detalhe
                 {
                     var bancoType = cnab.Banco.GetType();
                     var tipoSegmento = linha.Substring(13, 1);
 
                     var registro = (RegistroDetalheBase)bancoType.InvokeMember("NovoSegmento" + tipoSegmento, BindingFlags.InvokeMethod, null, cnab.Banco, null);
-                    lote.Registros.Add(registro);
+                    lote.Detalhe.Add(registro);
 
                     instanciaRegistro = registro;
                 }
-                else if (tipoRegistro == "4") //Registros Finais de Lote
+                else if (tipoRegistro == "4") //Detalhe Finais de Lote
                 {
 
                 }

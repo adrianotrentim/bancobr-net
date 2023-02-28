@@ -6,9 +6,9 @@ using BancoBr.Common.Enums;
 
 namespace BancoBr.Common.Instances
 {
-    public class Pagamento
+    public class Transferencia
     {
-        public Pagamento()
+        public Transferencia()
         {
             TipoMovimento = TipoMovimentoEnum.Inclusao;
             CodigoInstrucao = CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado;
@@ -21,7 +21,7 @@ namespace BancoBr.Common.Instances
 
         /// <summary>
         /// Tipo de operação: DOC ou TED
-        /// Somente aplicável quando a Forma de Pagamento do Lote for 03 - DOC_TED
+        /// Somente aplicável quando a Forma de Transferencia do Lote for 03 - DOC_TED
         /// </summary>
         public TipoDOCTEDEnum TipoDOCTED { get; set; }
 

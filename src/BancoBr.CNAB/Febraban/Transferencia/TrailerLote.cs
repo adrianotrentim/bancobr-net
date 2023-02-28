@@ -2,7 +2,7 @@
 using BancoBr.CNAB.Base;
 using BancoBr.Common.Attributes;
 
-namespace BancoBr.CNAB.Febraban.Pagamento
+namespace BancoBr.CNAB.Febraban.Transferencia
 {
     public class TrailerLote : TrailerLoteBase
     {
@@ -12,10 +12,10 @@ namespace BancoBr.CNAB.Febraban.Pagamento
         }
 
         [CampoCNAB(24, 18)] 
-        public virtual decimal Valor => Lote.Registros.Where(t => t.CodigoSegmento == "A").Sum(t => ((SegmentoA)t).ValorPagamento);
+        public virtual decimal Valor => Lote.Detalhe.Where(t => t.CodigoSegmento == "A").Sum(t => ((SegmentoA)t).ValorPagamento);
 
         [CampoCNAB(42, 18)]
-        public virtual decimal QuantidadeMoeda => Lote.Registros.Where(t => t.TipoRegistro == 3 && t.CodigoSegmento == "A").Sum(t => ((SegmentoA)t).QuantidadeMoeda);
+        public virtual decimal QuantidadeMoeda => Lote.Detalhe.Where(t => t.TipoRegistro == 3 && t.CodigoSegmento == "A").Sum(t => ((SegmentoA)t).QuantidadeMoeda);
 
         [CampoCNAB(60, 6)]
         public virtual int NumeroAvisoDebito { get; set; }

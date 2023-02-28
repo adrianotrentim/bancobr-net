@@ -1,5 +1,5 @@
 ﻿using BancoBr.CNAB.Base;
-using BancoBr.CNAB.Bradesco.Pagamento;
+using BancoBr.CNAB.Bradesco.Transferencia;
 
 namespace BancoBr.CNAB.Bradesco
 {
@@ -10,15 +10,15 @@ namespace BancoBr.CNAB.Bradesco
         {
         }
 
-        #region ::. Bloco de Pagamentos .::
+        #region ::. Bloco de Transferências .::
 
         public override HeaderLoteBase NovoHeaderLote() => new HeaderLote(this);
         public override RegistroDetalheBase NovoSegmentoA() => new SegmentoA(this);
         public override RegistroDetalheBase NovoSegmentoB() => new SegmentoB(this);
 
-        public override RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Common.Instances.Pagamento pagamento) => null;
-        public override RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Common.Instances.Pagamento pagamento) => null;
-        public override RegistroDetalheBase PreencheSegmentoJ(RegistroDetalheBase segmento, Common.Instances.Pagamento pagamento) => null;
+        public override RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Common.Instances.Transferencia transferencia) => null;
+        public override RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Common.Instances.Transferencia transferencia) => null;
+        public override RegistroDetalheBase PreencheSegmentoJ(RegistroDetalheBase segmento, Common.Instances.Transferencia transferencia) => null;
 
         #endregion
     }

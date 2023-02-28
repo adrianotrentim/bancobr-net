@@ -14,15 +14,15 @@ namespace BancoBr.CNAB.Itau
         public override RegistroBase NovoHeaderArquivo(Pessoa empresaCedente, int numeroRemessa) => new HeaderArquivo(this, empresaCedente, numeroRemessa);
         public override RegistroBase NovoTrailerArquivo(ArquivoCNAB arquivoCnab, List<Lote> lotes) => new TrailerArquivo(arquivoCnab, lotes);
 
-        #region ::. Bloco de Pagamentos .::
+        #region ::. Bloco de Transferências .::
 
         //public override HeaderLoteBase NovoHeaderLote() => new HeaderLote(this);
         //public override RegistroDetalheBase NovoSegmentoA() => new SegmentoA(this);
         //public override RegistroDetalheBase NovoSegmentoB() => new SegmentoB(this);
 
-        public override RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Common.Instances.Pagamento pagamento) => null;
-        public override RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Common.Instances.Pagamento pagamento) => null;
-        public override RegistroDetalheBase PreencheSegmentoJ(RegistroDetalheBase segmento, Common.Instances.Pagamento pagamento) => null;
+        public override RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Common.Instances.Transferencia transferencia) => null;
+        public override RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Common.Instances.Transferencia transferencia) => null;
+        public override RegistroDetalheBase PreencheSegmentoJ(RegistroDetalheBase segmento, Common.Instances.Transferencia transferencia) => null;
 
         #endregion
     }

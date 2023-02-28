@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using BancoBr.CNAB.Febraban;
-using BancoBr.CNAB.Febraban.Pagamento;
+using BancoBr.CNAB.Febraban.Transferencia;
 using BancoBr.Common.Core;
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
@@ -23,7 +23,7 @@ namespace BancoBr.CNAB.Base
         public virtual RegistroBase NovoHeaderArquivo(Pessoa empresaCedente, int numeroRemessa) => new HeaderArquivo(this, empresaCedente, numeroRemessa);
         public virtual RegistroBase NovoTrailerArquivo(ArquivoCNAB arquivoCnab, List<Lote> lotes) => new TrailerArquivo(arquivoCnab, lotes);
 
-        #region ::. Bloco de Pagamentos .::
+        #region ::. Bloco de Transferências .::
 
         #region ::. Métodos Privados .::
 
@@ -69,23 +69,23 @@ namespace BancoBr.CNAB.Base
             return trailerLote;
         }
 
-        private RegistroDetalheBase PreencheSegmentoABase(Pagamento pagamento, int numeroLote)
+        private RegistroDetalheBase PreencheSegmentoABase(Transferencia transferencia, int numeroLote)
         {
-            if (_formaPagamento == FormaPagamentoEnum.DOC_TED && pagamento.TipoDOCTED == TipoDOCTEDEnum.NaoAplicavel)
-                throw new InvalidOperationException("Para a forma de pagamento DOC / TED, você deve informar o Tipo de DOC ou TED");
+            if (_formaPagamento == FormaPagamentoEnum.DOC_TED && transferencia.TipoDOCTED == TipoDOCTEDEnum.NaoAplicavel)
+                throw new InvalidOperationException("Para a forma de transferencia DOC / TED, você deve informar o Tipo de DOC ou TED");
 
             var segmento = (SegmentoA)NovoSegmentoA();
 
             segmento.LoteServico = numeroLote;
-            segmento.TipoMovimento = pagamento.TipoMovimento;
-            segmento.CodigoInstrucaoMovimento = pagamento.CodigoInstrucao;
+            segmento.TipoMovimento = transferencia.TipoMovimento;
+            segmento.CodigoInstrucaoMovimento = transferencia.CodigoInstrucao;
 
             switch (_formaPagamento)
             {
-                case FormaPagamentoEnum.DOC_TED when pagamento.TipoDOCTED == TipoDOCTEDEnum.DOC:
+                case FormaPagamentoEnum.DOC_TED when transferencia.TipoDOCTED == TipoDOCTEDEnum.DOC:
                     segmento.CamaraCentralizadora = 18;
                     break;
-                case FormaPagamentoEnum.DOC_TED when pagamento.TipoDOCTED == TipoDOCTEDEnum.TED:
+                case FormaPagamentoEnum.DOC_TED when transferencia.TipoDOCTED == TipoDOCTEDEnum.TED:
                     segmento.CamaraCentralizadora = 700;
                     break;
                 case FormaPagamentoEnum.TEDMesmaTitularidade:
@@ -97,72 +97,72 @@ namespace BancoBr.CNAB.Base
                     break;
             }
 
-            segmento.BancoFavorecido = pagamento.PessoaEmpresaDestino.Banco;
-            segmento.AgenciaFavorecido = pagamento.PessoaEmpresaDestino.NumeroAgencia;
-            segmento.DVAgenciaFavorecido = pagamento.PessoaEmpresaDestino.DVAgencia.Substring(0, 1);
-            segmento.ContaFavorecido = pagamento.PessoaEmpresaDestino.NumeroConta;
-            segmento.DVContaFavorecido = pagamento.PessoaEmpresaDestino.DVConta;
+            segmento.BancoFavorecido = transferencia.PessoaEmpresaDestino.Banco;
+            segmento.AgenciaFavorecido = transferencia.PessoaEmpresaDestino.NumeroAgencia;
+            segmento.DVAgenciaFavorecido = transferencia.PessoaEmpresaDestino.DVAgencia.Substring(0, 1);
+            segmento.ContaFavorecido = transferencia.PessoaEmpresaDestino.NumeroConta;
+            segmento.DVContaFavorecido = transferencia.PessoaEmpresaDestino.DVConta;
 
-            if (pagamento.PessoaEmpresaDestino.DVConta.Length >= 2)
+            if (transferencia.PessoaEmpresaDestino.DVConta.Length >= 2)
             {
-                segmento.DVContaFavorecido = pagamento.PessoaEmpresaDestino.DVConta.Substring(0, 1);
-                segmento.DVAgenciaContaFavorecido = pagamento.PessoaEmpresaDestino.DVConta.Substring(1, 1);
+                segmento.DVContaFavorecido = transferencia.PessoaEmpresaDestino.DVConta.Substring(0, 1);
+                segmento.DVAgenciaContaFavorecido = transferencia.PessoaEmpresaDestino.DVConta.Substring(1, 1);
             }
 
-            segmento.NomeFavorecido = pagamento.PessoaEmpresaDestino.Nome;
-            segmento.NumeroDocumentoEmpresa = pagamento.NumeroDocumento;
-            segmento.DataPagamento = pagamento.DataPagamento;
-            segmento.TipoMoeda = pagamento.Moeda;
-            segmento.QuantidadeMoeda = pagamento.QuantidadeMoeda;
-            segmento.ValorPagamento = pagamento.ValorPagamento;
+            segmento.NomeFavorecido = transferencia.PessoaEmpresaDestino.Nome;
+            segmento.NumeroDocumentoEmpresa = transferencia.NumeroDocumento;
+            segmento.DataPagamento = transferencia.DataPagamento;
+            segmento.TipoMoeda = transferencia.Moeda;
+            segmento.QuantidadeMoeda = transferencia.QuantidadeMoeda;
+            segmento.ValorPagamento = transferencia.ValorPagamento;
 
             switch (segmento.CamaraCentralizadora)
             {
                 case 18:
-                    segmento.CodigoFinalidadeDOC = pagamento.FinalidadeLancamento;
+                    segmento.CodigoFinalidadeDOC = transferencia.FinalidadeLancamento;
                     break;
                 case 700:
-                    segmento.CodigoFinalidadeTED = pagamento.FinalidadeLancamento;
+                    segmento.CodigoFinalidadeTED = transferencia.FinalidadeLancamento;
                     break;
             }
 
-            segmento.AvisoFavorecido = pagamento.AvisoAoFavorecido;
+            segmento.AvisoFavorecido = transferencia.AvisoAoFavorecido;
 
-            return PreencheSegmentoA(segmento, pagamento);
+            return PreencheSegmentoA(segmento, transferencia);
         }
 
-        private RegistroDetalheBase PreencheSegmentoBBase(Pagamento pagamento, int numeroLote)
+        private RegistroDetalheBase PreencheSegmentoBBase(Transferencia transferencia, int numeroLote)
         {
             var segmento = (SegmentoB)NovoSegmentoB();
 
             segmento.LoteServico = numeroLote;
 
-            return PreencheSegmentoB(segmento, pagamento);
+            return PreencheSegmentoB(segmento, transferencia);
         }
 
-        private RegistroDetalheBase PreencheSegmentoCBase(Pagamento pagamento, int numeroLote)
+        private RegistroDetalheBase PreencheSegmentoCBase(Transferencia transferencia, int numeroLote)
         {
             var segmento = (SegmentoC)NovoSegmentoC();
 
             segmento.LoteServico = numeroLote;
 
-            return PreencheSegmentoC(segmento, pagamento);
+            return PreencheSegmentoC(segmento, transferencia);
         }
 
-        private RegistroDetalheBase PreencheSegmentoJBase(Pagamento pagamento, int numeroLote)
+        private RegistroDetalheBase PreencheSegmentoJBase(Transferencia transferencia, int numeroLote)
         {
             var segmento = (SegmentoJ)NovoSegmentoJ();
 
             segmento.LoteServico = numeroLote;
 
-            return PreencheSegmentoJ(segmento, pagamento);
+            return PreencheSegmentoJ(segmento, transferencia);
         }
 
         #endregion
 
         #region ::. Métodos Públicos .::
 
-        public Lote NovoLotePagamento(Pessoa empresaCedente, TipoServicoEnum tipoServico, FormaPagamentoEnum formaPagamento, TipoLancamentoEnum tipoLancamento)
+        public Lote NovoLoteTransferencia(Pessoa empresaCedente, TipoServicoEnum tipoServico, FormaPagamentoEnum formaPagamento, TipoLancamentoEnum tipoLancamento)
         {
             _empresaCedente = empresaCedente;
             _tipoServico = tipoServico;
@@ -170,7 +170,7 @@ namespace BancoBr.CNAB.Base
             _tipoLancamento = tipoLancamento;
 
             if (formaPagamento == FormaPagamentoEnum.CartaoSalario && tipoServico != TipoServicoEnum.PagamentoSalarios)
-                throw new InvalidOperationException("A forma de pagamento Cartão Salário (4), só é permitida para o Tipo de Serviço Pagamento de Salários (30)");
+                throw new InvalidOperationException("A forma de transferencia Cartão Salário (4), só é permitida para o Tipo de Serviço Transferencia de Salários (30)");
 
             var lote = new Lote
             {
@@ -182,7 +182,7 @@ namespace BancoBr.CNAB.Base
             return lote;
         }
 
-        public List<RegistroDetalheBase> NovoPagamento(Pagamento titulo, int numeroLote, int numeroRegistro)
+        public List<RegistroDetalheBase> NovaTransferencia(Transferencia titulo, int numeroLote, int numeroRegistro)
         {
             var registros = new List<RegistroDetalheBase>();
 
@@ -215,10 +215,10 @@ namespace BancoBr.CNAB.Base
 
         public virtual HeaderLoteBase PreencheHeaderLote(HeaderLoteBase headerLote) => headerLote;
         public virtual TrailerLoteBase PreencheTrailerLote(TrailerLoteBase trailerLote) => trailerLote;
-        public virtual RegistroDetalheBase PreencheSegmentoA(RegistroDetalheBase segmento, Pagamento pagamento) => segmento;
-        public virtual RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Pagamento pagamento) => segmento;
-        public virtual RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Pagamento pagamento) => segmento;
-        public virtual RegistroDetalheBase PreencheSegmentoJ(RegistroDetalheBase segmento, Pagamento pagamento) => segmento;
+        public virtual RegistroDetalheBase PreencheSegmentoA(RegistroDetalheBase segmento, Transferencia transferencia) => segmento;
+        public virtual RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Transferencia transferencia) => segmento;
+        public virtual RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Transferencia transferencia) => segmento;
+        public virtual RegistroDetalheBase PreencheSegmentoJ(RegistroDetalheBase segmento, Transferencia transferencia) => segmento;
 
         #endregion
 

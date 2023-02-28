@@ -3,7 +3,7 @@ using BancoBr.CNAB.Base;
 using BancoBr.Common.Attributes;
 using BancoBr.Common.Enums;
 
-namespace BancoBr.CNAB.Febraban.Pagamento
+namespace BancoBr.CNAB.Febraban.Transferencia
 {
     public class SegmentoA : RegistroDetalheBase
     {

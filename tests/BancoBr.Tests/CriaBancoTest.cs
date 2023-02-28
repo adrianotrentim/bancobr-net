@@ -1,7 +1,7 @@
 ﻿using BancoBr.CNAB;
 using BancoBr.CNAB.Core;
 using BancoBr.CNAB.Febraban;
-using BancoBr.CNAB.Febraban.Pagamento;
+using BancoBr.CNAB.Febraban.Transferencia;
 using BancoBr.Common.Core;
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
@@ -54,12 +54,12 @@ namespace BancoBr.Tests
         /// No caso de CEP, é um inteiro. A biblioteca cuidará para adicionar zeros a esquerda se necessário
         /// </summary>
         [Theory, MemberData("CNAB240")]
-        public static void TestePagamento(ArquivoCNAB cnab)
+        public static void TesteTransferencia(ArquivoCNAB cnab)
         {
             var tipoServico = TipoServicoEnum.PagamentoSalarios;
-            var lote = cnab.NovoLotePagamento(tipoServico, TipoLancamentoEnum.DebitoContaCorrente, FormaPagamentoEnum.CreditoConta);
+            var lote = cnab.NovoLoteTransferencia(tipoServico, TipoLancamentoEnum.DebitoContaCorrente, FormaPagamentoEnum.CreditoConta);
 
-            var pagamento1 = new Pagamento
+            var transferencia1 = new Transferencia
             {
                 PessoaEmpresaDestino = new Pessoa
                 {
@@ -88,9 +88,9 @@ namespace BancoBr.Tests
                 ValorPagamento = (decimal)2500.65
             };
 
-            lote.NovoPagamento(pagamento1);
+            lote.NovaTransferencia(transferencia1);
 
-            var pagamento2 = new Pagamento
+            var transferencia2 = new Transferencia
             {
                 PessoaEmpresaDestino = new Pessoa
                 {
@@ -114,7 +114,7 @@ namespace BancoBr.Tests
                 DataPagamento = DateTime.Parse("2023-02-28"),
                 ValorPagamento = (decimal)1830.34
             };
-            lote.NovoPagamento(pagamento2);
+            lote.NovaTransferencia(transferencia2);
 
             var stringArquivo = cnab.Exportar();
 
@@ -142,9 +142,9 @@ namespace BancoBr.Tests
             Assert.Equal(((HeaderLote)cnab.Lotes[0].Header).NumeroConta, ((HeaderLote)cnabLeitura.Lotes[0].Header).NumeroConta);
             Assert.Equal(((HeaderLote)cnab.Lotes[0].Header).NomeEmpresa.RemoveAccents().ToUpper(), ((HeaderLote)cnabLeitura.Lotes[0].Header).NomeEmpresa.Trim());
 
-            Assert.Equal(((SegmentoA)cnab.Lotes[0].Registros[0]).ContaFavorecido, ((SegmentoA)cnabLeitura.Lotes[0].Registros[0]).ContaFavorecido);
-            Assert.Equal(((SegmentoA)cnab.Lotes[0].Registros[0]).NomeFavorecido.RemoveAccents().ToUpper(), ((SegmentoA)cnabLeitura.Lotes[0].Registros[0]).NomeFavorecido.Trim());
-            Assert.Equal(((SegmentoA)cnab.Lotes[0].Registros[0]).ValorPagamento, ((SegmentoA)cnabLeitura.Lotes[0].Registros[0]).ValorPagamento);
+            Assert.Equal(((SegmentoA)cnab.Lotes[0].Detalhe[0]).ContaFavorecido, ((SegmentoA)cnabLeitura.Lotes[0].Detalhe[0]).ContaFavorecido);
+            Assert.Equal(((SegmentoA)cnab.Lotes[0].Detalhe[0]).NomeFavorecido.RemoveAccents().ToUpper(), ((SegmentoA)cnabLeitura.Lotes[0].Detalhe[0]).NomeFavorecido.Trim());
+            Assert.Equal(((SegmentoA)cnab.Lotes[0].Detalhe[0]).ValorPagamento, ((SegmentoA)cnabLeitura.Lotes[0].Detalhe[0]).ValorPagamento);
 
             Assert.Equal(((TrailerLote)cnab.Lotes[0].Trailer).QuantidadeRegistros, ((TrailerLote)cnabLeitura.Lotes[0].Trailer).QuantidadeRegistros);
             Assert.Equal(((TrailerArquivo)cnab.Trailer).QuantidadeRegistros, ((TrailerArquivo)cnabLeitura.Trailer).QuantidadeRegistros);
