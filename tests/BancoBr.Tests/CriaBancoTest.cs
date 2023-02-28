@@ -56,7 +56,7 @@ namespace BancoBr.Tests
         public static void TestePagamentoSalario(ArquivoCNAB cnab)
         {
             var tipoServico = TipoServicoEnum.PagamentoSalarios;
-            var lote = cnab.NovoLote(tipoServico, TipoLancamentoEnum.DebitoContaCorrente, FormaPagamentoEnum.CreditoConta);
+            var lote = cnab.NovoLote(tipoServico, TipoLancamentoEnum.DebitoContaCorrente, FormaLancamentoEnum.CreditoConta);
 
             var movimento1 = new Movimento
             {

@@ -102,7 +102,7 @@ namespace BancoBr.CNAB.Core
 
                     lote = new Lote
                     {
-                        Header = cnab.Banco.NovoHeaderLote((FormaPagamentoEnum)formaPagmanento)
+                        Header = cnab.Banco.NovoHeaderLote((FormaLancamentoEnum)formaPagmanento)
                     };
 
                     cnab.Lotes.Add(lote);
@@ -123,7 +123,7 @@ namespace BancoBr.CNAB.Core
                     switch (lote.Header.Servico)
                     {
                         case TipoServicoEnum.PagamentoSalarios: //Ir Adicionando os tipos que se assemelham com os pagamentos de salários
-                            registro = (RegistroDetalheBase)bancoType.InvokeMember("NovoSegmento" + tipoSegmento, BindingFlags.InvokeMethod, null, cnab.Banco, new object[] { ((HeaderLote)lote.Header).FormaPagamento });
+                            registro = (RegistroDetalheBase)bancoType.InvokeMember("NovoSegmento" + tipoSegmento, BindingFlags.InvokeMethod, null, cnab.Banco, new object[] { ((HeaderLote)lote.Header).FormaLancamento });
                             break;
                     }
 

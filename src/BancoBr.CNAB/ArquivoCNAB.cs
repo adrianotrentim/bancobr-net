@@ -39,9 +39,9 @@ namespace BancoBr.CNAB
 
         #region ::. Blocos de Movimento .::
 
-        public Lote NovoLote(TipoServicoEnum tipoServico, TipoLancamentoEnum tipoLancamento, FormaPagamentoEnum formaPagamento)
+        public Lote NovoLote(TipoServicoEnum tipoServico, TipoLancamentoEnum tipoLancamento, FormaLancamentoEnum formaLancamento)
         {
-            var lote = Banco.NovoLote(EmpresaCedente, tipoServico, formaPagamento, tipoLancamento);
+            var lote = Banco.NovoLote(EmpresaCedente, tipoServico, formaLancamento, tipoLancamento);
 
             lote.Header.LoteServico = _numeroLote;
 

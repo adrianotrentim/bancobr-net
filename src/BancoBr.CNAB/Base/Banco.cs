@@ -11,7 +11,7 @@ namespace BancoBr.CNAB.Base
     {
         private Pessoa _empresaCedente;
         private TipoServicoEnum _tipoServico;
-        private FormaPagamentoEnum _formaPagamento;
+        private FormaLancamentoEnum _formaLancamento;
         private TipoLancamentoEnum _tipoLancamento;
 
         protected Banco(int codigo, string nome, int versaoArquivo)
@@ -24,14 +24,14 @@ namespace BancoBr.CNAB.Base
 
         #region ::. Métodos Públicos .::
 
-        public Lote NovoLote(Pessoa empresaCedente, TipoServicoEnum tipoServico, FormaPagamentoEnum formaPagamento, TipoLancamentoEnum tipoLancamento)
+        public Lote NovoLote(Pessoa empresaCedente, TipoServicoEnum tipoServico, FormaLancamentoEnum formaLancamento, TipoLancamentoEnum tipoLancamento)
         {
             _empresaCedente = empresaCedente;
             _tipoServico = tipoServico;
-            _formaPagamento = formaPagamento;
+            _formaLancamento = formaLancamento;
             _tipoLancamento = tipoLancamento;
 
-            if (formaPagamento == FormaPagamentoEnum.CartaoSalario && tipoServico != TipoServicoEnum.PagamentoSalarios)
+            if (formaLancamento == FormaLancamentoEnum.CartaoSalario && tipoServico != TipoServicoEnum.PagamentoSalarios)
                 throw new InvalidOperationException("A forma de movimento Cartão Salário (4), só é permitida para o Tipo de Serviço Movimento de Salários (30)");
 
             var lote = new Lote
@@ -70,10 +70,10 @@ namespace BancoBr.CNAB.Base
 
         private HeaderLoteBase PreencheHeaderLoteBase()
         {
-            var headerLote = (HeaderLote)NovoHeaderLote(_formaPagamento);
+            var headerLote = (HeaderLote)NovoHeaderLote(_formaLancamento);
 
             headerLote.Servico = _tipoServico;
-            headerLote.FormaPagamento = _formaPagamento;
+            headerLote.FormaLancamento = _formaLancamento;
             headerLote.TipoInscricaoEmpresa = _empresaCedente.TipoPessoa;
             headerLote.InscricaoEmpresa = long.Parse(_empresaCedente.CPF_CNPJ.JustNumbers());
             headerLote.NumeroAgencia = _empresaCedente.NumeroAgencia;
@@ -112,25 +112,25 @@ namespace BancoBr.CNAB.Base
 
         private RegistroDetalheBase PreencheSegmentoABase(Movimento movimento, int numeroLote)
         {
-            if (_formaPagamento == FormaPagamentoEnum.DOC_TED && movimento.TipoDOCTED == TipoDOCTEDEnum.NaoAplicavel)
+            if (_formaLancamento == FormaLancamentoEnum.DOC_TED && movimento.TipoDOCTED == TipoDOCTEDEnum.NaoAplicavel)
                 throw new InvalidOperationException("Para a forma de movimento DOC / TED, você deve informar o Tipo de DOC ou TED");
 
-            var segmento = (SegmentoA)NovoSegmentoA(_formaPagamento);
+            var segmento = (SegmentoA)NovoSegmentoA(_formaLancamento);
 
             segmento.LoteServico = numeroLote;
             segmento.TipoMovimento = movimento.TipoMovimento;
             segmento.CodigoInstrucaoMovimento = movimento.CodigoInstrucao;
 
-            switch (_formaPagamento)
+            switch (_formaLancamento)
             {
-                case FormaPagamentoEnum.DOC_TED when movimento.TipoDOCTED == TipoDOCTEDEnum.DOC:
+                case FormaLancamentoEnum.DOC_TED when movimento.TipoDOCTED == TipoDOCTEDEnum.DOC:
                     segmento.CamaraCentralizadora = 18;
                     break;
-                case FormaPagamentoEnum.DOC_TED when movimento.TipoDOCTED == TipoDOCTEDEnum.TED:
+                case FormaLancamentoEnum.DOC_TED when movimento.TipoDOCTED == TipoDOCTEDEnum.TED:
                     segmento.CamaraCentralizadora = 700;
                     break;
-                case FormaPagamentoEnum.TEDMesmaTitularidade:
-                case FormaPagamentoEnum.TEDOutraTitularidade:
+                case FormaLancamentoEnum.TEDMesmaTitularidade:
+                case FormaLancamentoEnum.TEDOutraTitularidade:
                     segmento.CamaraCentralizadora = 18;
                     break;
                 default:
@@ -174,7 +174,7 @@ namespace BancoBr.CNAB.Base
 
         private RegistroDetalheBase PreencheSegmentoBBase(Movimento movimento, int numeroLote)
         {
-            var segmento = (SegmentoB)NovoSegmentoB(_formaPagamento);
+            var segmento = (SegmentoB)NovoSegmentoB(_formaLancamento);
 
             segmento.LoteServico = numeroLote;
 
@@ -183,7 +183,7 @@ namespace BancoBr.CNAB.Base
 
         private RegistroDetalheBase PreencheSegmentoCBase(Movimento movimento, int numeroLote)
         {
-            var segmento = (SegmentoC)NovoSegmentoC(_formaPagamento);
+            var segmento = (SegmentoC)NovoSegmentoC(_formaLancamento);
 
             segmento.LoteServico = numeroLote;
 
@@ -192,7 +192,7 @@ namespace BancoBr.CNAB.Base
 
         private RegistroDetalheBase PreencheSegmentoJBase(Movimento movimento, int numeroLote)
         {
-            var segmento = (SegmentoJ)NovoSegmentoJ(_formaPagamento);
+            var segmento = (SegmentoJ)NovoSegmentoJ(_formaLancamento);
 
             segmento.LoteServico = numeroLote;
 
@@ -203,11 +203,11 @@ namespace BancoBr.CNAB.Base
 
         #region ::. Métodos Herdáveis .::
 
-        public virtual HeaderLoteBase NovoHeaderLote(FormaPagamentoEnum formaPagamento) => new HeaderLote(this);
-        public virtual RegistroDetalheBase NovoSegmentoA(FormaPagamentoEnum formaPagamento) => new SegmentoA(this);
-        public virtual RegistroDetalheBase NovoSegmentoB(FormaPagamentoEnum formaPagamento) => new SegmentoB(this);
-        public virtual RegistroDetalheBase NovoSegmentoC(FormaPagamentoEnum formaPagamento) => new SegmentoC(this);
-        public virtual RegistroDetalheBase NovoSegmentoJ(FormaPagamentoEnum formaPagamento) => new SegmentoJ(this);
+        public virtual HeaderLoteBase NovoHeaderLote(FormaLancamentoEnum formaLancamento) => new HeaderLote(this);
+        public virtual RegistroDetalheBase NovoSegmentoA(FormaLancamentoEnum formaLancamento) => new SegmentoA(this);
+        public virtual RegistroDetalheBase NovoSegmentoB(FormaLancamentoEnum formaLancamento) => new SegmentoB(this);
+        public virtual RegistroDetalheBase NovoSegmentoC(FormaLancamentoEnum formaLancamento) => new SegmentoC(this);
+        public virtual RegistroDetalheBase NovoSegmentoJ(FormaLancamentoEnum formaLancamento) => new SegmentoJ(this);
         public virtual TrailerLoteBase NovoTrailerLote(Lote lote) => new TrailerLote(lote);
 
         public virtual HeaderLoteBase PreencheHeaderLote(HeaderLoteBase headerLote) => headerLote;
