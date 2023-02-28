@@ -2,11 +2,11 @@
 using BancoBr.Common.Attributes;
 using BancoBr.Common.Enums;
 
-namespace BancoBr.CNAB.Febraban.Transferencia
+namespace BancoBr.CNAB.Febraban
 {
     public class HeaderLote : HeaderLoteBase
     {
-        public HeaderLote(Common.Instances.Banco banco) 
+        public HeaderLote(Common.Instances.Banco banco)
             : base(banco)
         {
             VersaoLote = 46;

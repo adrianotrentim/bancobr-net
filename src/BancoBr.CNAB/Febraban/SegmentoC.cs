@@ -1,7 +1,7 @@
 ﻿using BancoBr.CNAB.Base;
 using BancoBr.Common.Attributes;
 
-namespace BancoBr.CNAB.Febraban.Transferencia
+namespace BancoBr.CNAB.Febraban
 {
     public class SegmentoC : RegistroDetalheBase
     {

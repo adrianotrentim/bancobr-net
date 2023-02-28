@@ -3,7 +3,7 @@ using BancoBr.CNAB.Base;
 using BancoBr.Common.Attributes;
 using BancoBr.Common.Enums;
 
-namespace BancoBr.CNAB.Febraban.Transferencia
+namespace BancoBr.CNAB.Febraban
 {
     public class SegmentoA : RegistroDetalheBase
     {
@@ -52,7 +52,7 @@ namespace BancoBr.CNAB.Febraban.Transferencia
 
         [CampoCNAB(102, 3)]
         public virtual string TipoMoeda { get; set; }
-        
+
         [CampoCNAB(105, 15)]
         public virtual decimal QuantidadeMoeda { get; set; }
 
@@ -84,7 +84,7 @@ namespace BancoBr.CNAB.Febraban.Transferencia
         /// Verificar Nota P005 - CNAB240 FEBRABAN
         /// </summary>
         [CampoCNAB(218, 2)]
-        public virtual string CodigoFinalidadeDOC{ get; set; }
+        public virtual string CodigoFinalidadeDOC { get; set; }
 
         /// <summary>
         /// Verificar Nota P011 - CNAB240 FEBRABAN

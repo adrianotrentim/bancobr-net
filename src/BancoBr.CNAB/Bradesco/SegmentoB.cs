@@ -1,9 +1,9 @@
 ﻿using System;
 using BancoBr.Common.Attributes;
 
-namespace BancoBr.CNAB.Bradesco.Transferencia
+namespace BancoBr.CNAB.Bradesco
 {
-    public class SegmentoB : Febraban.Transferencia.SegmentoB
+    public class SegmentoB : Febraban.SegmentoB
     {
         public SegmentoB(Common.Instances.Banco banco)
             : base(banco)

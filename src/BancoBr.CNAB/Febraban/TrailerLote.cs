@@ -2,7 +2,7 @@
 using BancoBr.CNAB.Base;
 using BancoBr.Common.Attributes;
 
-namespace BancoBr.CNAB.Febraban.Transferencia
+namespace BancoBr.CNAB.Febraban
 {
     public class TrailerLote : TrailerLoteBase
     {
@@ -11,7 +11,7 @@ namespace BancoBr.CNAB.Febraban.Transferencia
         {
         }
 
-        [CampoCNAB(24, 18)] 
+        [CampoCNAB(24, 18)]
         public virtual decimal Valor => Lote.Detalhe.Where(t => t.CodigoSegmento == "A").Sum(t => ((SegmentoA)t).ValorPagamento);
 
         [CampoCNAB(42, 18)]

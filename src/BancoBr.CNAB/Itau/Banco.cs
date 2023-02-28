@@ -20,9 +20,9 @@ namespace BancoBr.CNAB.Itau
         //public override RegistroDetalheBase NovoSegmentoA() => new SegmentoA(this);
         //public override RegistroDetalheBase NovoSegmentoB() => new SegmentoB(this);
 
-        public override RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Common.Instances.Transferencia transferencia) => null;
-        public override RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Common.Instances.Transferencia transferencia) => null;
-        public override RegistroDetalheBase PreencheSegmentoJ(RegistroDetalheBase segmento, Common.Instances.Transferencia transferencia) => null;
+        public override RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Common.Instances.Movimento movimento) => null;
+        public override RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Common.Instances.Movimento movimento) => null;
+        public override RegistroDetalheBase PreencheSegmentoJ(RegistroDetalheBase segmento, Common.Instances.Movimento movimento) => null;
 
         #endregion
     }

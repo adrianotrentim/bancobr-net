@@ -1,7 +1,6 @@
 ﻿using BancoBr.CNAB;
 using BancoBr.CNAB.Core;
 using BancoBr.CNAB.Febraban;
-using BancoBr.CNAB.Febraban.Transferencia;
 using BancoBr.Common.Core;
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
@@ -54,12 +53,12 @@ namespace BancoBr.Tests
         /// No caso de CEP, é um inteiro. A biblioteca cuidará para adicionar zeros a esquerda se necessário
         /// </summary>
         [Theory, MemberData("CNAB240")]
-        public static void TesteTransferencia(ArquivoCNAB cnab)
+        public static void TestePagamentoSalario(ArquivoCNAB cnab)
         {
             var tipoServico = TipoServicoEnum.PagamentoSalarios;
-            var lote = cnab.NovoLoteTransferencia(tipoServico, TipoLancamentoEnum.DebitoContaCorrente, FormaPagamentoEnum.CreditoConta);
+            var lote = cnab.NovoLote(tipoServico, TipoLancamentoEnum.DebitoContaCorrente, FormaPagamentoEnum.CreditoConta);
 
-            var transferencia1 = new Transferencia
+            var movimento1 = new Movimento
             {
                 PessoaEmpresaDestino = new Pessoa
                 {
@@ -88,9 +87,9 @@ namespace BancoBr.Tests
                 ValorPagamento = (decimal)2500.65
             };
 
-            lote.NovaTransferencia(transferencia1);
+            lote.NovoMovimento(movimento1);
 
-            var transferencia2 = new Transferencia
+            var movimento2 = new Movimento
             {
                 PessoaEmpresaDestino = new Pessoa
                 {
@@ -114,9 +113,10 @@ namespace BancoBr.Tests
                 DataPagamento = DateTime.Parse("2023-02-28"),
                 ValorPagamento = (decimal)1830.34
             };
-            lote.NovaTransferencia(transferencia2);
+            lote.NovoMovimento(movimento2);
 
             var stringArquivo = cnab.Exportar();
+            //File.WriteAllText($"c:\\cnab240_{snab.Banco.Codigo}.txt", stringArquivo);
 
             #region ::. Testes Básicos .::
 
@@ -148,6 +148,8 @@ namespace BancoBr.Tests
 
             Assert.Equal(((TrailerLote)cnab.Lotes[0].Trailer).QuantidadeRegistros, ((TrailerLote)cnabLeitura.Lotes[0].Trailer).QuantidadeRegistros);
             Assert.Equal(((TrailerArquivo)cnab.Trailer).QuantidadeRegistros, ((TrailerArquivo)cnabLeitura.Trailer).QuantidadeRegistros);
+
+            File.Delete(fileName);
 
             #endregion
         }

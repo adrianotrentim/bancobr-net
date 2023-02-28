@@ -4,8 +4,10 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using BancoBr.CNAB.Base;
+using BancoBr.CNAB.Febraban;
 using BancoBr.Common.Attributes;
 using BancoBr.Common.Core;
+using BancoBr.Common.Enums;
 using BancoBr.Common.Interfaces.CNAB;
 
 namespace BancoBr.CNAB.Core
@@ -96,9 +98,11 @@ namespace BancoBr.CNAB.Core
                 }
                 else if (tipoRegistro == "1") //Header de Lote
                 {
+                    var formaPagmanento = Convert.ToInt32(linha.Substring(11, 2));
+
                     lote = new Lote
                     {
-                        Header = cnab.Banco.NovoHeaderLote()
+                        Header = cnab.Banco.NovoHeaderLote((FormaPagamentoEnum)formaPagmanento)
                     };
 
                     cnab.Lotes.Add(lote);
@@ -114,7 +118,15 @@ namespace BancoBr.CNAB.Core
                     var bancoType = cnab.Banco.GetType();
                     var tipoSegmento = linha.Substring(13, 1);
 
-                    var registro = (RegistroDetalheBase)bancoType.InvokeMember("NovoSegmento" + tipoSegmento, BindingFlags.InvokeMethod, null, cnab.Banco, null);
+                    RegistroDetalheBase registro = null;
+
+                    switch (lote.Header.Servico)
+                    {
+                        case TipoServicoEnum.PagamentoSalarios: //Ir Adicionando os tipos que se assemelham com os pagamentos de salários
+                            registro = (RegistroDetalheBase)bancoType.InvokeMember("NovoSegmento" + tipoSegmento, BindingFlags.InvokeMethod, null, cnab.Banco, new object[] { ((HeaderLote)lote.Header).FormaPagamento });
+                            break;
+                    }
+
                     lote.Detalhe.Add(registro);
 
                     instanciaRegistro = registro;

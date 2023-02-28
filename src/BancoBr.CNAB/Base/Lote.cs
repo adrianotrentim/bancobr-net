@@ -18,9 +18,9 @@ namespace BancoBr.CNAB.Base
 
         #region ::. Bloco de Transferências .::
 
-        public void NovaTransferencia(Transferencia titulo)
+        public void NovoMovimento(Movimento titulo)
         {
-            Detalhe.AddRange(((Banco)Header.Banco).NovaTransferencia(titulo, Header.LoteServico, _numeroRegistro));
+            Detalhe.AddRange(((Banco)Header.Banco).NovoMovimento(titulo, Header.LoteServico, _numeroRegistro));
 
             _numeroRegistro = Detalhe.Count + 1;
         }

@@ -2,7 +2,7 @@
 using BancoBr.Common.Attributes;
 using BancoBr.Common.Enums;
 
-namespace BancoBr.CNAB.Febraban.Transferencia
+namespace BancoBr.CNAB.Febraban
 {
     public class SegmentoB : RegistroDetalheBase
     {
