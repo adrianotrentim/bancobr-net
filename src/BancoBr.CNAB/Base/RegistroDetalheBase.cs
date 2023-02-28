@@ -11,9 +11,9 @@ namespace BancoBr.CNAB.Base
         }
 
         [CampoCNAB(9, 5)]
-        public int NumeroRegistro { get; set; }
+        public virtual int NumeroRegistro { get; set; }
 
         [CampoCNAB(14, 1)]
-        public string CodigoSegmento { get; set; }
+        public virtual string CodigoSegmento { get; set; }
     }
 }

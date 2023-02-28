@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using BancoBr.CNAB.Base;
 using BancoBr.Common.Attributes;
-using BancoBr.Common.Enums;
 
 namespace BancoBr.CNAB.Itau
 {
@@ -21,6 +19,6 @@ namespace BancoBr.CNAB.Itau
         #endregion
 
         [CampoCNAB(30, 211)]
-        public new string CNAB2 { get; set; }
+        public override string CNAB2 { get; set; }
     }
 }

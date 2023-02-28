@@ -13,6 +13,9 @@ namespace BancoBr.CNAB.Itau
         #region ::. Propriedades Desativadas .::
 
         [CampoCNAB(true)]
+        private new string Convenio { get; set; }
+
+        [CampoCNAB(true)]
         private new string DVAgencia { get; set; }
 
         [CampoCNAB(true)]
@@ -30,34 +33,34 @@ namespace BancoBr.CNAB.Itau
         #endregion
 
         [CampoCNAB(9, 6)]
-        public new string CNAB1 { get; set; }
+        public override string CNAB1 { get; set; }
 
         [CampoCNAB(15, 3)]
-        public new int VersaoArquivo { get; set; }
+        public override int VersaoArquivo { get; set; }
 
         [CampoCNAB(33, 20)]
-        public new string CNAB2 { get; set; }
+        public override string CNAB2 { get; set; }
         
         [CampoCNAB(53, 5)]
-        public new int NumeroAgencia { get; set; }
+        public override int NumeroAgencia { get; set; }
 
         [CampoCNAB(58, 1)]
-        public new string CNAB3 { get; set; }
+        public override string CNAB3 { get; set; }
 
         [CampoCNAB(59, 12)]
-        public new int NumeroConta { get; set; }
+        public override int NumeroConta { get; set; }
 
         [CampoCNAB(71, 1)]
-        public new string CNAB4 { get; set; }
+        public string CNAB4 { get; set; }
 
         [CampoCNAB(72, 1)]
-        public new string DVConta { get; set; }
+        public override string DVConta { get; set; }
 
         [CampoCNAB(133, 10)]
-        public new string CNAB5 { get; set; }
+        public string CNAB5 { get; set; }
 
         [CampoCNAB(158, 9)]
-        public new int CNAB6 { get; set; }
+        public int CNAB6 { get; set; }
 
         [CampoCNAB(172, 69)]
         public string CNAB7 { get; set; }

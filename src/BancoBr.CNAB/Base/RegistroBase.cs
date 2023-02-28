@@ -14,12 +14,12 @@ namespace BancoBr.CNAB.Base
         }
 
         [CampoCNAB(1, 3)]
-        public int CodigoBanco { get; set; }
+        public virtual int CodigoBanco { get; set; }
 
         [CampoCNAB(4, 4)]
-        public int LoteServico { get; set; }
+        public virtual int LoteServico { get; set; }
 
         [CampoCNAB(8, 1)]
-        public int TipoRegistro { get; set; }
+        public virtual int TipoRegistro { get; set; }
     }
 }

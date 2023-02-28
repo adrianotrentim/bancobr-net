@@ -1,7 +1,5 @@
 ﻿using System;
-using BancoBr.CNAB.Base;
 using BancoBr.Common.Attributes;
-using BancoBr.Common.Enums;
 
 namespace BancoBr.CNAB.Bradesco.Pagamento
 {

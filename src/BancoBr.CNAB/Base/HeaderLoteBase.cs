@@ -13,9 +13,9 @@ namespace BancoBr.CNAB.Base
         }
 
         [CampoCNAB(9, 1)]
-        public string Operacao { get; set; }
+        public virtual string Operacao { get; set; }
 
         [CampoCNAB(10, 2)]
-        public TipoServicoEnum Servico { get; set; }
+        public virtual TipoServicoEnum Servico { get; set; }
     }
 }

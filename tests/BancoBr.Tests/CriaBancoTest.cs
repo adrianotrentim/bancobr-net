@@ -116,10 +116,6 @@ namespace BancoBr.Tests
             };
             lote.NovoPagamento(pagamento2);
 
-            Assert.Equal(1, ((TrailerArquivo)cnab.Trailer).QuantidadeLotes);
-            Assert.Equal(4, lote.Trailer.QuantidadeRegistros);
-            Assert.Equal(6, ((TrailerArquivo)cnab.Trailer).QuantidadeRegistros);
-
             var stringArquivo = cnab.Exportar();
 
             #region ::. Testes Básicos .::

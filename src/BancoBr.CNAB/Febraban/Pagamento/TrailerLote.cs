@@ -12,18 +12,18 @@ namespace BancoBr.CNAB.Febraban.Pagamento
         }
 
         [CampoCNAB(24, 18)] 
-        public decimal Valor => Lote.Registros.Where(t => t.CodigoSegmento == "A").Sum(t => ((SegmentoA)t).ValorPagamento);
+        public virtual decimal Valor => Lote.Registros.Where(t => t.CodigoSegmento == "A").Sum(t => ((SegmentoA)t).ValorPagamento);
 
         [CampoCNAB(42, 18)]
-        public decimal QuantidadeMoeda => Lote.Registros.Where(t => t.TipoRegistro == 3 && t.CodigoSegmento == "A").Sum(t => ((SegmentoA)t).QuantidadeMoeda);
+        public virtual decimal QuantidadeMoeda => Lote.Registros.Where(t => t.TipoRegistro == 3 && t.CodigoSegmento == "A").Sum(t => ((SegmentoA)t).QuantidadeMoeda);
 
         [CampoCNAB(60, 6)]
-        public int NumeroAvisoDebito { get; set; }
+        public virtual int NumeroAvisoDebito { get; set; }
 
         [CampoCNAB(66, 165)]
-        public string CNAB2 { get; set; }
+        public virtual string CNAB2 { get; set; }
 
         [CampoCNAB(231, 10)]
-        public string Ocorrencias { get; set; }
+        public virtual string Ocorrencias { get; set; }
     }
 }

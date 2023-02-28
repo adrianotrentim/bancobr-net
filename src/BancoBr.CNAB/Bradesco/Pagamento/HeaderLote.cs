@@ -20,6 +20,6 @@ namespace BancoBr.CNAB.Bradesco.Pagamento
         #endregion
 
         [CampoCNAB(223, 8)]
-        public new string CNAB2 { get; set; }
+        public override string CNAB2 { get; set; }
     }
 }

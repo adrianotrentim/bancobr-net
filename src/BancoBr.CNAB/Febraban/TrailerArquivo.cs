@@ -19,18 +19,18 @@ namespace BancoBr.CNAB.Febraban
         }
 
         [CampoCNAB(9, 9)]
-        public int CNAB1 { get; set; }
+        public virtual int CNAB1 { get; set; }
 
         [CampoCNAB(18, 6)]
-        public int QuantidadeLotes => _lotes.Count;
+        public virtual int QuantidadeLotes => _lotes.Count;
 
         [CampoCNAB(24, 6)]
-        public int QuantidadeRegistros => _lotes.Sum(l => l.Trailer.QuantidadeRegistros) + 2; //2 = Header de Arquivo + Trailer de Arquivo
+        public virtual int QuantidadeRegistros => _lotes.Sum(l => l.Trailer.QuantidadeRegistros) + 2; //2 = Header de Arquivo + Trailer de Arquivo
 
         [CampoCNAB(30, 6)]
-        public int QuantidadeContasConciliacao => 0;
+        public virtual int QuantidadeContasConciliacao => 0;
 
         [CampoCNAB(36, 205)]
-        public int CNAB2 { get; set; }
+        public virtual string CNAB2 { get; set; }
     }
 }
