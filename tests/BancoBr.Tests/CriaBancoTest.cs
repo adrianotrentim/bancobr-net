@@ -53,10 +53,10 @@ namespace BancoBr.Tests
         /// No caso de CEP, é um inteiro. A biblioteca cuidará para adicionar zeros a esquerda se necessário
         /// </summary>
         [Theory, MemberData("CNAB240")]
-        public static void TestePagamentoSalario(ArquivoCNAB cnab)
+        public static void TestePagamentoTransferencia_e_Salario(ArquivoCNAB cnab)
         {
             var tipoServico = TipoServicoEnum.PagamentoSalarios;
-            var lote = cnab.NovoLote(tipoServico, TipoLancamentoEnum.DebitoContaCorrente, FormaLancamentoEnum.CreditoConta);
+            var lote = cnab.NovoLote(tipoServico, TipoLancamentoEnum.DebitoContaCorrente, FormaLancamentoEnum.CreditoContaMesmoBanco);
 
             var movimento1 = new Movimento
             {

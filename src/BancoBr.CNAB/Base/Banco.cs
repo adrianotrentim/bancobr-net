@@ -96,18 +96,14 @@ namespace BancoBr.CNAB.Base
             headerLote.UFEmpresa = _empresaCedente.UF;
             headerLote.TipoLancamento = _tipoLancamento;
 
-            PreencheHeaderLote(headerLote);
-
-            return headerLote;
+            return PreencheHeaderLote(headerLote);
         }
 
         private TrailerLoteBase PreencheTrailerLoteBase(Lote lote)
         {
             var trailerLote = (TrailerLote)NovoTrailerLote(lote);
 
-            PreencheTrailerLote(trailerLote);
-
-            return trailerLote;
+            return PreencheTrailerLote(trailerLote);
         }
 
         private RegistroDetalheBase PreencheSegmentoABase(Movimento movimento, int numeroLote)

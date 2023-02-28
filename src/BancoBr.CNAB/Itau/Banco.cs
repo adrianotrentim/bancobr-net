@@ -1,4 +1,6 @@
-﻿using BancoBr.CNAB.Base;
+﻿using System;
+using BancoBr.CNAB.Base;
+using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
 using System.Collections.Generic;
 
@@ -16,7 +18,25 @@ namespace BancoBr.CNAB.Itau
 
         #region ::. Bloco de Transferências .::
 
-        //public override HeaderLoteBase NovoHeaderLote() => new HeaderLote(this);
+        public override HeaderLoteBase NovoHeaderLote(FormaLancamentoEnum formaLancamento)
+        {
+            switch (formaLancamento)
+            {
+                case FormaLancamentoEnum.OPDisposicao:
+                case FormaLancamentoEnum.DOC_TED:
+                case FormaLancamentoEnum.TEDOutraTitularidade:
+                case FormaLancamentoEnum.TEDMesmaTitularidade:
+                case FormaLancamentoEnum.TEDContaInvestimento:
+                case FormaLancamentoEnum.CreditoContaMesmoBanco:
+                case FormaLancamentoEnum.PIXTransferencia:
+                    return new HeaderLote_DocTedPixCredConta(this);
+                default:
+                    throw new InvalidOperationException("Não Implementado");
+            }
+        }
+
+        public override TrailerLoteBase NovoTrailerLote(Lote lote) => new TrailerLote(lote);
+
         //public override RegistroDetalheBase NovoSegmentoA() => new SegmentoA(this);
         //public override RegistroDetalheBase NovoSegmentoB() => new SegmentoB(this);
 

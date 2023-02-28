@@ -2,11 +2,11 @@
 {
     public enum FormaLancamentoEnum
     {
-        CreditoConta = 1,
+        CreditoContaMesmoBanco = 1,
         ChequePagamento = 2,
         DOC_TED = 3,
         CartaoSalario = 4, //Somente para tipo de Serviço = 30
-        CreditoContaPoupanca = 5,
+        CreditoContaPoupancaMesmoBanco = 5,
         OPDisposicao = 10,
         PagamentoTributosCodigoBarra = 11,
         TributoDARFNormal = 16,
