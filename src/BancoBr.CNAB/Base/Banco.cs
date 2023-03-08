@@ -173,6 +173,16 @@ namespace BancoBr.CNAB.Base
             var segmento = (SegmentoB)NovoSegmentoB(_formaLancamento);
 
             segmento.LoteServico = numeroLote;
+            
+            segmento.TipoInscricaoFavorecido = movimento.PessoaEmpresaDestino.TipoPessoa;
+            segmento.InscricaoFavorecido = long.Parse(movimento.PessoaEmpresaDestino.CPF_CNPJ.JustNumbers());
+            segmento.EnderecoFavorecido = movimento.PessoaEmpresaDestino.Endereco;
+            segmento.NumeroEnderecoFavorecido = movimento.PessoaEmpresaDestino.NumeroEndereco;
+            segmento.ComplementoEnderecoFavorecido = movimento.PessoaEmpresaDestino.ComplementoEndereco;
+            segmento.BairroFavorecido = movimento.PessoaEmpresaDestino.Bairro;
+            segmento.CidadeFavorecido = movimento.PessoaEmpresaDestino.Cidade;
+            segmento.CEPFavorecido = movimento.PessoaEmpresaDestino.CEP;
+            segmento.UFFavorecido = movimento.PessoaEmpresaDestino.UF;
 
             return PreencheSegmentoB(segmento, movimento);
         }

@@ -17,12 +17,6 @@ namespace BancoBr.CNAB.Bradesco
         [CampoCNAB(true)]
         private new string Informacao12 { get; set; }
 
-        [CampoCNAB(true)]
-        private new int CodigoUGCentralizadora { get; set; }
-
-        [CampoCNAB(true)]
-        private new int IdentificacaoBancoSPB { get; set; }
-
         #endregion
 
         [CampoCNAB(128, 8)]
@@ -46,7 +40,13 @@ namespace BancoBr.CNAB.Bradesco
         [CampoCNAB(211, 15)]
         public string DocumentoFavorecido { get; set; }
 
-        [CampoCNAB(226, 15)]
-        public string CNAB2 { get; set; }
+        [CampoCNAB(226, 1)]
+        public int AvisoFavorecido { get; set; }
+
+        [CampoCNAB(227, 6)]
+        public override int CodigoUGCentralizadora { get; set; }
+
+        [CampoCNAB(233, 8)]
+        public override int IdentificacaoBancoSPB { get; set; }
     }
 }
