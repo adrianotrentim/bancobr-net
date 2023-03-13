@@ -6,7 +6,7 @@ namespace BancoBr.CNAB.Bradesco
     public sealed class Banco : Base.Banco
     {
         public Banco()
-            : base(237, "Banco Bradesco SA", 80)
+            : base(237, "BRADESCO", 89)
         {
         }
 

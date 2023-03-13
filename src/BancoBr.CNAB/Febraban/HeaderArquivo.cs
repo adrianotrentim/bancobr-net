@@ -19,6 +19,8 @@ namespace BancoBr.CNAB.Febraban
             HoraGeracao = DateTime.Now;
             TipoRemessaRetorno = TipoArquivoEnum.Remessa;
             VersaoArquivo = banco.VersaoArquivo;
+            NomeBanco = banco.Nome;
+            DensidadeArquivo = 6250;
 
             if (empresaCedente != null)
             {

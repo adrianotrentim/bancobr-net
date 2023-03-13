@@ -54,12 +54,28 @@ namespace BancoBr.CNAB.Base
             var segmentoJ = PreencheSegmentoJBase(movimento, numeroLote);
 
             segmentoA.NumeroRegistro = numeroRegistro;
-
             registros.Add(segmentoA);
 
-            if (segmentoB != null) registros.Add(segmentoB);
-            if (segmentoC != null) registros.Add(segmentoC);
-            if (segmentoJ != null) registros.Add(segmentoJ);
+            if (segmentoB != null)
+            {
+                numeroRegistro++;
+                segmentoB.NumeroRegistro = numeroRegistro;
+                registros.Add(segmentoB);
+            }
+
+            if (segmentoC != null)
+            {
+                numeroRegistro++;
+                segmentoC.NumeroRegistro = numeroRegistro;
+                registros.Add(segmentoC);
+            }
+
+            if (segmentoJ != null)
+            {
+                numeroRegistro++;
+                segmentoJ.NumeroRegistro = numeroRegistro;
+                registros.Add(segmentoJ);
+            }
 
             return registros;
         }
@@ -80,6 +96,7 @@ namespace BancoBr.CNAB.Base
             headerLote.DVAgencia = _empresaCedente.DVAgencia;
             headerLote.NumeroConta = _empresaCedente.NumeroConta;
             headerLote.DVConta = _empresaCedente.DVConta;
+            headerLote.Convenio = _empresaCedente.Convenio;
 
             if (_empresaCedente.DVConta.Length >= 2)
             {
