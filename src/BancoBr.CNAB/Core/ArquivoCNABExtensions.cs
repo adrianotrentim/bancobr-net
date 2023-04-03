@@ -153,6 +153,8 @@ namespace BancoBr.CNAB.Core
                     .OrderBy(p => ((CampoCNABAttribute)p.GetCustomAttributes(typeof(CampoCNABAttribute), true)[0]).Posicao)
                     .ToList();
 
+                instanciaRegistro.Registro = linha;
+
                 foreach (var campo in listaCampos)
                 {
                     var campoCNAB = ((CampoCNABAttribute)campo.GetCustomAttributes(typeof(CampoCNABAttribute), true)[0]);

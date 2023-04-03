@@ -82,7 +82,7 @@ namespace BancoBr.Tests
                 CodigoInstrucao = CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado, //Valor Padrão, pode ser ignorado a setagem desta propriedade
                 FinalidadeLancamento = "01", //Verificar nota P005 e P011 do CNAB240 FEBRABAN
                 NumeroDocumento = "5637",
-                DataPagamento = DateTime.Parse("2023-02-28"),
+                DataPagamento = DateTime.Parse("2023-04-28"),
                 Moeda = "BRL", //Valor Padrão, pode ser ignorado a setagem desta propriedade
                 ValorPagamento = (decimal)2500.65
             };
@@ -110,7 +110,7 @@ namespace BancoBr.Tests
                     DVConta = "7"
                 },
                 NumeroDocumento = "6598",
-                DataPagamento = DateTime.Parse("2023-02-28"),
+                DataPagamento = DateTime.Parse("2023-04-28"),
                 ValorPagamento = (decimal)1830.34
             };
             lote.NovoMovimento(movimento2);

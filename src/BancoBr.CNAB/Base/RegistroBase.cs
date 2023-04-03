@@ -21,5 +21,8 @@ namespace BancoBr.CNAB.Base
 
         [CampoCNAB(8, 1)]
         public virtual int TipoRegistro { get; set; }
+
+        [CampoCNAB(true)]
+        public string Registro { get; set; }
     }
 }
