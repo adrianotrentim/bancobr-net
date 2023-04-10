@@ -7,57 +7,57 @@ namespace BancoBr.Common.Enums
 {
     public enum TipoServicoEnum
     {
-        [Description("Cobrança")]
+        [Description("01 - Cobrança")]
         Cobranca = 1,
-        [Description("Bloqueto Eletrônico")]
+        [Description("03 - Bloqueto Eletrônico")]
         BloquetoEletronico = 3,
-        [Description("Conciliação Bancária")]
+        [Description("04 - Conciliação Bancária")]
         ConciliacaoBancaria = 4,
-        [Description("Débitos")]
+        [Description("05 - Débitos")]
         Debitos = 5,
-        [Description("Custódia de Cheques")]
+        [Description("06 - Custódia de Cheques")]
         CustodiaCheques = 6,
-        [Description("Gestão de Caixa")]
+        [Description("07 - Gestão de Caixa")]
         GestaoCaixa = 7,
-        [Description("Consulta Margem")]
+        [Description("08 - Consulta Margem")]
         ConsultaMargem = 8,
-        [Description("Averbação de Consignados")]
+        [Description("09 - Averbação de Consignados")]
         AverbacaoConsignacao = 9,
-        [Description("Pagamento de Dividendos")]
+        [Description("10 - Pagamento de Dividendos")]
         PagamentoDividentos = 10,
-        [Description("Manutenção de Consignação")]
+        [Description("11 - Manutenção de Consignação")]
         ManutencaoConsignacao = 11,
-        [Description("Consignação de Parcela")]
+        [Description("12 - Consignação de Parcela")]
         ConsignacaoParcela = 12,
-        [Description("Glosa de Consignação")]
+        [Description("13 - Glosa de Consignação")]
         GlosaConsignacao = 13,
-        [Description("Consulta de Tributos")]
+        [Description("14 - Consulta de Tributos")]
         ConsultaTributos = 14,
-        [Description("Pagamento de Fornecedores")]
+        [Description("20 - Pagamento de Fornecedores")]
         PagamentoFornecedor = 20,
-        [Description("Pagamento de Tributos")]
+        [Description("22 - Pagamento de Tributos")]
         Tributos = 22,
-        [Description("Compror")]
+        [Description("25 - Compror")]
         Compror = 25,
-        [Description("Compror Rotativo")]
+        [Description("26 - Compror Rotativo")]
         ComprorRotativo = 26,
-        [Description("Alegação do Sacado")]
+        [Description("29 - Alegação do Sacado")]
         AlegacaoSacado = 29,
-        [Description("Pagamento de Salários")]
+        [Description("30 - Pagamento de Salários")]
         PagamentoSalarios = 30,
-        [Description("Vendor")]
+        [Description("40 - Vendor")]
         Vendor = 40,
-        [Description("Vendor a Termo")]
+        [Description("41 - Vendor a Termo")]
         VendorTermo = 41,
-        [Description("Pagamento de Sinistros")]
+        [Description("50 - Pagamento de Sinistros")]
         PagamentoSinitro = 50,
-        [Description("Despesas de Viagens")]
+        [Description("60 - Despesas de Viagens")]
         DespesaViagem = 60,
-        [Description("Pagamento de Representantes / Vendedores")]
+        [Description("80 - Pagamento de Representantes / Vendedores")]
         PagamentoRepresentanteVendedor = 80,
-        [Description("Pagamento de Benefícios")]
+        [Description("90 - Pagamento de Benefícios")]
         PagamentoBeneficio = 90,
-        [Description("Pagamento Diversos")]
+        [Description("98 - Pagamento Diversos")]
         PagamentoDiverso = 98
     }
 }

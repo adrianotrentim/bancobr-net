@@ -4,61 +4,61 @@ namespace BancoBr.Common.Enums
 {
     public enum FormaLancamentoEnum
     {
-        [Description("Crédito em Conta Corrente - Mesmo Banco")]
+        [Description("01 - Crédito em Conta Corrente - Mesmo Banco")]
         CreditoContaMesmoBanco = 1,
-        [Description("Cheque de Pagamento")]
+        [Description("02 - Cheque de Pagamento")]
         ChequePagamento = 2,
-        [Description("DOC / TED")]
+        [Description("03 - DOC / TED")]
         DOC_TED = 3,
-        [Description("Cartão Salário")]
+        [Description("04 - Cartão Salário")]
         CartaoSalario = 4, //Somente para tipo de Serviço = 30
-        [Description("Crédito Conta Poupança - Mesmo Banco")]
+        [Description("05 - Crédito Conta Poupança - Mesmo Banco")]
         CreditoContaPoupancaMesmoBanco = 5,
-        [Description("O.P. Disposição")]
+        [Description("10 - O.P. Disposição")]
         OPDisposicao = 10,
-        [Description("Trib. Código de Barras")]
+        [Description("11 - Trib. Código de Barras")]
         PagamentoTributosCodigoBarra = 11,
-        [Description("DARF Normal")]
+        [Description("16 - DARF Normal")]
         TributoDARFNormal = 16,
-        [Description("GPS")]
+        [Description("17 - GPS")]
         TributoGPS = 17,
-        [Description("DARF Simples")]
+        [Description("18 - DARF Simples")]
         TributoDARFSimples = 18,
-        [Description("IPTU")]
+        [Description("19 - IPTU")]
         TributoIPTU = 19,
-        [Description("Pagamento Autenticado")]
+        [Description("20 - Pagamento Autenticado")]
         PagamentoAutenticado = 20,
-        [Description("DARJ")]
+        [Description("21 - DARJ")]
         TributoDARJ = 21,
-        [Description("GARE SP - ICMS")]
+        [Description("22 - GARE SP - ICMS")]
         TributoGARE_SP_ICMS = 22,
-        [Description("GARE SP - DR")]
+        [Description("23 - GARE SP - DR")]
         TributoGARE_SP_DR = 23,
-        [Description("GARE SP - ITCMD")]
+        [Description("24 - GARE SP - ITCMD")]
         TributoGARE_SP_ITCMD = 24,
-        [Description("IPVA")]
+        [Description("25 - IPVA")]
         TributoIPVA = 25,
-        [Description("Licenciamento de Veículos")]
+        [Description("26 - Licenciamento de Veículos")]
         TributoLicenciamento = 26,
-        [Description("DPVAT")]
+        [Description("27 - DPVAT")]
         TributoDPVAT = 27,
-        [Description("Liquidação Título - Mesmo Banco")]
+        [Description("30 - Liquidação Título - Mesmo Banco")]
         LiquidacaoProprioBanco = 30,
-        [Description("Pagamento Título - Outro Banco")]
+        [Description("31 - Pagamento Título - Outro Banco")]
         PagamentoTituloOutroBanco = 31,
-        [Description("Extrato Conta Corrente")]
+        [Description("40 - Extrato Conta Corrente")]
         ExtratoContaCorrente = 40,
-        [Description("TED Dif. Titularidade")]
+        [Description("41 - TED Dif. Titularidade")]
         TEDOutraTitularidade = 41,
-        [Description("TED - Mesma Titularidade")]
+        [Description("43 - TED - Mesma Titularidade")]
         TEDMesmaTitularidade = 43,
-        [Description("TED - Conta Investimento")]
+        [Description("44 - TED - Conta Investimento")]
         TEDContaInvestimento = 44,
-        [Description("PIX Transferência")]
+        [Description("45 - PIX Transferência")]
         PIXTransferencia = 45,
-        [Description("PIX QR Code")]
+        [Description("47 - PIX QR Code")]
         PIXQrCode = 47,
-        [Description("Débito Conta Corrente")]
+        [Description("50 - Débito Conta Corrente")]
         DebitoContaCorrente = 50
     }
 }
