@@ -134,6 +134,38 @@ namespace BancoBr.CNAB.Base
             segmento.TipoMovimento = movimento.TipoMovimento;
             segmento.CodigoInstrucaoMovimento = movimento.CodigoInstrucao;
 
+            switch (segmento.TipoMovimento)
+            {
+                case TipoMovimentoEnum.Inclusao:
+                    if (
+                        segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheBloqueado && 
+                        segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado
+                        )
+                        throw new Exception($"Para movimento de inclusão, favor utilizar os códigos de instrução:\r\n" +
+                                            $"{CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado.GetDescription()}\r\n" +
+                                            $"{CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheBloqueado.GetDescription()}");
+                    break;
+
+                case TipoMovimentoEnum.Alteracao:
+                    if (
+                        segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.AlteracaoPagamentoLiberadoParaBloqueio &&
+                        segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.AlteracaoPagamentoBloqueadoParaLiberacao &&
+                        segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.AlteracaoValorTitulo &&
+                        segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.AlteracaoDataPagamento &&
+                        segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.PagamentoDiretoFornecedor_Baixar
+                    )
+                        throw new Exception($"Para movimento de alteração, favor utilizar os códigos de instrução:\r\n" +
+                                            $"{CodigoInstrucaoMovimentoEnum.AlteracaoPagamentoLiberadoParaBloqueio.GetDescription()}\r\n" +
+                                            $"{CodigoInstrucaoMovimentoEnum.AlteracaoPagamentoBloqueadoParaLiberacao.GetDescription()}\r\n" +
+                                            $"{CodigoInstrucaoMovimentoEnum.AlteracaoValorTitulo.GetDescription()}\r\n" +
+                                            $"{CodigoInstrucaoMovimentoEnum.AlteracaoDataPagamento.GetDescription()}\r\n" +
+                                            $"{CodigoInstrucaoMovimentoEnum.PagamentoDiretoFornecedor_Baixar.GetDescription()}");
+                    break;
+                case TipoMovimentoEnum.Exclusao:
+                    segmento.CodigoInstrucaoMovimento = CodigoInstrucaoMovimentoEnum.ExclusaoRegistroDetalheIncluidoAnteriormente;
+                    break;
+            }
+
             switch (_formaLancamento)
             {
                 case FormaLancamentoEnum.DOC_TED when movimento.TipoDOCTED == TipoDOCTEDEnum.DOC:
