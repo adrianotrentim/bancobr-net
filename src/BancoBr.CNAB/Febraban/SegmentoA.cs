@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using BancoBr.CNAB.Base;
+using BancoBr.CNAB.Core;
 using BancoBr.Common.Attributes;
 using BancoBr.Common.Enums;
 
@@ -103,5 +105,29 @@ namespace BancoBr.CNAB.Febraban
 
         [CampoCNAB(231, 10)]
         public virtual string Ocorrencias { get; set; }
+
+        [CampoCNAB(true)]
+        public Dictionary<string, string> ListaOcorrenciasRetorno
+        {
+            get
+            {
+                var ocorrencias = Ocorrencias;
+                var listaOcorrencias = new Dictionary<string, string>();
+
+                while (true)
+                {
+                    if (string.IsNullOrEmpty(ocorrencias))
+                        break;
+
+                    var ocorrencia = ocorrencias.Substring(0, 2);
+
+                    listaOcorrencias.Add(ocorrencia, CodigoOcorrenciasRetorno.Ocorrencias[ocorrencia]);
+
+                    ocorrencias = ocorrencias.Substring(2, ocorrencias.Length - 2);
+                }
+
+                return listaOcorrencias;
+            }
+        }
     }
 }

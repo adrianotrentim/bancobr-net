@@ -89,6 +89,9 @@ namespace BancoBr.CNAB.Core
 
             foreach (var linha in linhas)
             {
+                if (string.IsNullOrEmpty(linha))
+                    continue;
+
                 var tipoRegistro = linha.Substring(7, 1);
                 RegistroBase instanciaRegistro = null;
 
@@ -165,7 +168,7 @@ namespace BancoBr.CNAB.Core
                     object valueObject = null;
 
                     if (campo.PropertyType == typeof(string))
-                        valueObject = linha.Substring(campoCNAB.Posicao-1, campoCNAB.Tamanho);
+                        valueObject = linha.Substring(campoCNAB.Posicao-1, campoCNAB.Tamanho).Trim();
                     else if (campo.PropertyType.IsEnum)
                         valueObject = Enum.ToObject(campo.PropertyType, Convert.ToInt32(linha.Substring(campoCNAB.Posicao - 1, campoCNAB.Tamanho)));
                     else if (campo.PropertyType == typeof(int) || campo.PropertyType == typeof(int?) || campo.PropertyType == typeof(long) || campo.PropertyType == typeof(long?))
