@@ -10,8 +10,8 @@ namespace BancoBr.CNAB.Bradesco
         {
         }
 
-        public override HeaderLoteBase NovoHeaderLote(FormaLancamentoEnum formaLancamento) => new HeaderLote(this);
-        public override RegistroDetalheBase NovoSegmentoB(FormaLancamentoEnum formaLancamento) => new SegmentoB(this);
+        public override HeaderLoteBase NovoHeaderLote(TipoLancamentoEnum tipoLancamento) => new HeaderLote(this);
+        public override RegistroDetalheBase NovoSegmentoB(TipoLancamentoEnum tipoLancamento) => new SegmentoB(this);
 
         public override RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Common.Instances.Movimento movimento) => null;
         public override RegistroDetalheBase PreencheSegmentoJ(RegistroDetalheBase segmento, Common.Instances.Movimento movimento) => null;

@@ -92,7 +92,7 @@ namespace BancoBr.CNAB.Febraban
         /// Verificar Nota P011 - CNAB240 FEBRABAN
         /// </summary>
         [CampoCNAB(220, 5)]
-        public virtual string CodigoFinalidadeTED { get; set; }
+        public virtual FinalidadeTEDEnum CodigoFinalidadeTED { get; set; }
 
         [CampoCNAB(225, 2)]
         public virtual string CodigoFinalidadeComplementar { get; set; }

@@ -56,7 +56,7 @@ namespace BancoBr.Tests
         public static void TestePagamentoTransferencia_e_Salario(ArquivoCNAB cnab)
         {
             var tipoServico = TipoServicoEnum.PagamentoSalarios;
-            var lote = cnab.NovoLote(tipoServico, TipoLancamentoEnum.DebitoContaCorrente, FormaLancamentoEnum.CreditoContaMesmoBanco);
+            var lote = cnab.NovoLote(tipoServico, LocalDebitoEnum.DebitoContaCorrente, TipoLancamentoEnum.PIXTransferencia);
 
             var movimento1 = new Movimento
             {
@@ -80,7 +80,6 @@ namespace BancoBr.Tests
                 },
                 TipoMovimento = TipoMovimentoEnum.Inclusao, //Valor Padrão, pode ser ignorado a setagem desta propriedade
                 CodigoInstrucao = CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado, //Valor Padrão, pode ser ignorado a setagem desta propriedade
-                FinalidadeLancamento = "01", //Verificar nota P005 e P011 do CNAB240 FEBRABAN
                 NumeroDocumento = "5637",
                 DataPagamento = DateTime.Parse("2023-04-28"),
                 Moeda = "BRL", //Valor Padrão, pode ser ignorado a setagem desta propriedade

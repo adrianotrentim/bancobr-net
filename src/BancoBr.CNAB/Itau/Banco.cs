@@ -18,18 +18,16 @@ namespace BancoBr.CNAB.Itau
 
         #region ::. Bloco de Transferências .::
 
-        public override HeaderLoteBase NovoHeaderLote(FormaLancamentoEnum formaLancamento)
+        public override HeaderLoteBase NovoHeaderLote(TipoLancamentoEnum tipoLancamento)
         {
-            switch (formaLancamento)
+            switch (tipoLancamento)
             {
-                case FormaLancamentoEnum.OPDisposicao:
-                case FormaLancamentoEnum.DOC_TED:
-                case FormaLancamentoEnum.TEDOutraTitularidade:
-                case FormaLancamentoEnum.TEDMesmaTitularidade:
-                case FormaLancamentoEnum.TEDContaInvestimento:
-                case FormaLancamentoEnum.CreditoContaMesmoBanco:
-                case FormaLancamentoEnum.PIXTransferencia:
-                    return new HeaderLote_DocTedPixCredConta(this);
+                case TipoLancamentoEnum.OrdemPagamento:
+                case TipoLancamentoEnum.TEDOutraTitularidade:
+                case TipoLancamentoEnum.TEDMesmaTitularidade:
+                case TipoLancamentoEnum.CreditoContaMesmoBanco:
+                case TipoLancamentoEnum.PIXTransferencia:
+                    return new HeaderLote_TedPixCredConta(this);
                 default:
                     throw new InvalidOperationException("Não Implementado");
             }

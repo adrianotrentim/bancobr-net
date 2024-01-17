@@ -11,8 +11,8 @@ namespace BancoBr.CNAB.Base
     {
         private Pessoa _empresaCedente;
         private TipoServicoEnum _tipoServico;
-        private FormaLancamentoEnum _formaLancamento;
         private TipoLancamentoEnum _tipoLancamento;
+        private LocalDebitoEnum _localDebito;
 
         protected Banco(int codigo, string nome, int versaoArquivo)
             : base(codigo, nome, versaoArquivo)
@@ -24,14 +24,14 @@ namespace BancoBr.CNAB.Base
 
         #region ::. Métodos Públicos .::
 
-        public Lote NovoLote(Pessoa empresaCedente, TipoServicoEnum tipoServico, FormaLancamentoEnum formaLancamento, TipoLancamentoEnum tipoLancamento)
+        public Lote NovoLote(Pessoa empresaCedente, TipoServicoEnum tipoServico, TipoLancamentoEnum tipoLancamento, LocalDebitoEnum localDebito)
         {
             _empresaCedente = empresaCedente;
             _tipoServico = tipoServico;
-            _formaLancamento = formaLancamento;
             _tipoLancamento = tipoLancamento;
+            _localDebito = localDebito;
 
-            if (formaLancamento == FormaLancamentoEnum.CartaoSalario && tipoServico != TipoServicoEnum.PagamentoSalarios)
+            if (tipoLancamento == TipoLancamentoEnum.CartaoSalario && tipoServico != TipoServicoEnum.PagamentoSalarios)
                 throw new InvalidOperationException("A forma de movimento Cartão Salário (4), só é permitida para o Tipo de Serviço Movimento de Salários (30)");
 
             var lote = new Lote
@@ -86,10 +86,10 @@ namespace BancoBr.CNAB.Base
 
         private HeaderLoteBase PreencheHeaderLoteBase()
         {
-            var headerLote = (HeaderLote)NovoHeaderLote(_formaLancamento);
+            var headerLote = (HeaderLote)NovoHeaderLote(_tipoLancamento);
 
             headerLote.Servico = _tipoServico;
-            headerLote.FormaLancamento = _formaLancamento;
+            headerLote.TipoLancamento = _tipoLancamento;
             headerLote.TipoInscricaoEmpresa = _empresaCedente.TipoPessoa;
             headerLote.InscricaoEmpresa = long.Parse(_empresaCedente.CPF_CNPJ.JustNumbers());
             headerLote.NumeroAgencia = _empresaCedente.NumeroAgencia;
@@ -111,7 +111,7 @@ namespace BancoBr.CNAB.Base
             headerLote.CidadeEmpresa = _empresaCedente.Cidade;
             headerLote.CEPEmpresa = _empresaCedente.CEP;
             headerLote.UFEmpresa = _empresaCedente.UF;
-            headerLote.TipoLancamento = _tipoLancamento;
+            headerLote.LocalDebito = _localDebito;
 
             return PreencheHeaderLote(headerLote);
         }
@@ -125,10 +125,15 @@ namespace BancoBr.CNAB.Base
 
         private RegistroDetalheBase PreencheSegmentoABase(Movimento movimento, int numeroLote)
         {
-            if (_formaLancamento == FormaLancamentoEnum.DOC_TED && movimento.TipoDOCTED == TipoDOCTEDEnum.NaoAplicavel)
-                throw new InvalidOperationException("Para a forma de movimento DOC / TED, você deve informar o Tipo de DOC ou TED");
+            if (
+                (_tipoLancamento == TipoLancamentoEnum.TEDMesmaTitularidade ||
+                _tipoLancamento == TipoLancamentoEnum.TEDOutraTitularidade)
+                && 
+                movimento.CodigoFinalidadeTED == FinalidadeTEDEnum.NaoAplicavel
+                )
+                throw new InvalidOperationException("Para a forma de movimento TED, você deve informar uma Finalidade");
 
-            var segmento = (SegmentoA)NovoSegmentoA(_formaLancamento);
+            var segmento = (SegmentoA)NovoSegmentoA(_tipoLancamento);
 
             segmento.LoteServico = numeroLote;
             segmento.TipoMovimento = movimento.TipoMovimento;
@@ -166,17 +171,14 @@ namespace BancoBr.CNAB.Base
                     break;
             }
 
-            switch (_formaLancamento)
+            switch (_tipoLancamento)
             {
-                case FormaLancamentoEnum.DOC_TED when movimento.TipoDOCTED == TipoDOCTEDEnum.DOC:
+                case TipoLancamentoEnum.TEDMesmaTitularidade:
+                case TipoLancamentoEnum.TEDOutraTitularidade:
                     segmento.CamaraCentralizadora = 18;
                     break;
-                case FormaLancamentoEnum.DOC_TED when movimento.TipoDOCTED == TipoDOCTEDEnum.TED:
-                    segmento.CamaraCentralizadora = 700;
-                    break;
-                case FormaLancamentoEnum.TEDMesmaTitularidade:
-                case FormaLancamentoEnum.TEDOutraTitularidade:
-                    segmento.CamaraCentralizadora = 18;
+                case TipoLancamentoEnum.PIXTransferencia:
+                    segmento.CamaraCentralizadora = 9;
                     break;
                 default:
                     segmento.CamaraCentralizadora = 0;
@@ -205,10 +207,7 @@ namespace BancoBr.CNAB.Base
             switch (segmento.CamaraCentralizadora)
             {
                 case 18:
-                    segmento.CodigoFinalidadeDOC = movimento.FinalidadeLancamento;
-                    break;
-                case 700:
-                    segmento.CodigoFinalidadeTED = movimento.FinalidadeLancamento;
+                    segmento.CodigoFinalidadeTED = movimento.CodigoFinalidadeTED;
                     break;
             }
 
@@ -219,7 +218,7 @@ namespace BancoBr.CNAB.Base
 
         private RegistroDetalheBase PreencheSegmentoBBase(Movimento movimento, int numeroLote)
         {
-            var segmento = (SegmentoB)NovoSegmentoB(_formaLancamento);
+            var segmento = (SegmentoB)NovoSegmentoB(_tipoLancamento);
 
             segmento.LoteServico = numeroLote;
             
@@ -238,7 +237,7 @@ namespace BancoBr.CNAB.Base
 
         private RegistroDetalheBase PreencheSegmentoCBase(Movimento movimento, int numeroLote)
         {
-            var segmento = (SegmentoC)NovoSegmentoC(_formaLancamento);
+            var segmento = (SegmentoC)NovoSegmentoC(_tipoLancamento);
 
             segmento.LoteServico = numeroLote;
 
@@ -247,7 +246,7 @@ namespace BancoBr.CNAB.Base
 
         private RegistroDetalheBase PreencheSegmentoJBase(Movimento movimento, int numeroLote)
         {
-            var segmento = (SegmentoJ)NovoSegmentoJ(_formaLancamento);
+            var segmento = (SegmentoJ)NovoSegmentoJ(_tipoLancamento);
 
             segmento.LoteServico = numeroLote;
 
@@ -258,11 +257,11 @@ namespace BancoBr.CNAB.Base
 
         #region ::. Métodos Herdáveis .::
 
-        public virtual HeaderLoteBase NovoHeaderLote(FormaLancamentoEnum formaLancamento) => new HeaderLote(this);
-        public virtual RegistroDetalheBase NovoSegmentoA(FormaLancamentoEnum formaLancamento) => new SegmentoA(this);
-        public virtual RegistroDetalheBase NovoSegmentoB(FormaLancamentoEnum formaLancamento) => new SegmentoB(this);
-        public virtual RegistroDetalheBase NovoSegmentoC(FormaLancamentoEnum formaLancamento) => new SegmentoC(this);
-        public virtual RegistroDetalheBase NovoSegmentoJ(FormaLancamentoEnum formaLancamento) => new SegmentoJ(this);
+        public virtual HeaderLoteBase NovoHeaderLote(TipoLancamentoEnum tipoLancamento) => new HeaderLote(this);
+        public virtual RegistroDetalheBase NovoSegmentoA(TipoLancamentoEnum tipoLancamento) => new SegmentoA(this);
+        public virtual RegistroDetalheBase NovoSegmentoB(TipoLancamentoEnum tipoLancamento) => new SegmentoB(this);
+        public virtual RegistroDetalheBase NovoSegmentoC(TipoLancamentoEnum tipoLancamento) => new SegmentoC(this);
+        public virtual RegistroDetalheBase NovoSegmentoJ(TipoLancamentoEnum tipoLancamento) => new SegmentoJ(this);
         public virtual TrailerLoteBase NovoTrailerLote(Lote lote) => new TrailerLote(lote);
 
         public virtual HeaderLoteBase PreencheHeaderLote(HeaderLoteBase headerLote) => headerLote;

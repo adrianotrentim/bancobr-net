@@ -1,6 +1,6 @@
 ﻿namespace BancoBr.Common.Enums
 {
-    public enum TipoDOCTEDEnum
+    public enum TipoOperacaoEnum
     {
         NaoAplicavel = 0,
         DOC = 1,

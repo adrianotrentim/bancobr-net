@@ -18,12 +18,7 @@ namespace BancoBr.Common.Instances
 
         public Pessoa PessoaEmpresaDestino { get; set; }
         public TipoMovimentoEnum TipoMovimento { get; set; }
-
-        /// <summary>
-        /// Tipo de operação: DOC ou TED
-        /// Somente aplicável quando a Forma de Movimento do Lote for 03 - DOC_TED
-        /// </summary>
-        public TipoDOCTEDEnum TipoDOCTED { get; set; }
+        public TipoLancamentoEnum TipoLancamento { get; set; }
 
         public CodigoInstrucaoMovimentoEnum CodigoInstrucao { get; set; }
         public string NumeroDocumento { get; set; }
@@ -35,7 +30,7 @@ namespace BancoBr.Common.Instances
         /// <summary>
         /// Finalidade da Operação para DOC ou TED - Verificar nota P005 e P001 do CNAB240
         /// </summary>
-        public string FinalidadeLancamento { get; set; }
+        public FinalidadeTEDEnum CodigoFinalidadeTED { get; set; }
 
         public AvisoFavorecidoEnum AvisoAoFavorecido { get; set; }
     }

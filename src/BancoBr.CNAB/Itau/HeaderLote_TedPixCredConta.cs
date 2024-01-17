@@ -3,9 +3,9 @@ using BancoBr.Common.Enums;
 
 namespace BancoBr.CNAB.Itau
 {
-    public class HeaderLote_DocTedPixCredConta : Febraban.HeaderLote
+    public class HeaderLote_TedPixCredConta : Febraban.HeaderLote
     {
-        public HeaderLote_DocTedPixCredConta(Common.Instances.Banco banco)
+        public HeaderLote_TedPixCredConta(Common.Instances.Banco banco)
             : base(banco)
         {
             VersaoLote = 40;
@@ -27,7 +27,7 @@ namespace BancoBr.CNAB.Itau
         private new string Informacao1 { get; set; }
 
         [CampoCNAB(true)]
-        private new TipoLancamentoEnum TipoLancamento { get; set; }
+        private new LocalDebitoEnum LocalDebito { get; set; }
 
         #endregion
 

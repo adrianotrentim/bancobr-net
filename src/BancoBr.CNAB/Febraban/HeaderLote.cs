@@ -14,7 +14,7 @@ namespace BancoBr.CNAB.Febraban
         }
 
         [CampoCNAB(12, 2)]
-        public virtual FormaLancamentoEnum FormaLancamento { get; set; }
+        public virtual TipoLancamentoEnum TipoLancamento { get; set; }
 
         [CampoCNAB(14, 3)]
         public virtual int VersaoLote { get; set; }
@@ -71,7 +71,7 @@ namespace BancoBr.CNAB.Febraban
         public virtual string UFEmpresa { get; set; }
 
         [CampoCNAB(223, 2)]
-        public TipoLancamentoEnum TipoLancamento { get; set; }
+        public LocalDebitoEnum LocalDebito { get; set; }
 
         [CampoCNAB(225, 6)]
         public virtual string CNAB2 { get; set; }
