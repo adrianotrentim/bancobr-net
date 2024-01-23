@@ -52,10 +52,14 @@ namespace BancoBr.CNAB.Core
             {
                 var campoCNAB = ((CampoCNABAttribute)campo.GetCustomAttributes(typeof(CampoCNABAttribute), true)[0]);
                 var charPrrenchimento = campoCNAB.CharPreenchimento?.ToString();
+                var alinhamentoPreenchimento = campoCNAB.AlinhamentoPreenchimento;
                 var valueString = "";
 
                 if (campo.PropertyType == typeof(string))
-                    valueString = (campo.GetValue(registro, null)?.ToString() ?? "").RemoveAccents().ToUpper().Truncate(campoCNAB.Tamanho).PadRight(campoCNAB.Tamanho, string.IsNullOrEmpty(charPrrenchimento) ? ' ' : charPrrenchimento[0]);
+                    if (alinhamentoPreenchimento == AlinhamentoPreenchimentoEnum.PreencherADireita)
+                        valueString = (campo.GetValue(registro, null)?.ToString() ?? "").RemoveAccents().ToUpper().Truncate(campoCNAB.Tamanho).PadRight(campoCNAB.Tamanho, string.IsNullOrEmpty(charPrrenchimento) ? ' ' : charPrrenchimento[0]);
+                    else
+                        valueString = (campo.GetValue(registro, null)?.ToString() ?? "").RemoveAccents().ToUpper().Truncate(campoCNAB.Tamanho).PadLeft(campoCNAB.Tamanho, string.IsNullOrEmpty(charPrrenchimento) ? ' ' : charPrrenchimento[0]);
                 else if (campo.PropertyType.IsEnum)
                     valueString = ((int)(campo.GetValue(registro, null) ?? 0)).ToString().Truncate(campoCNAB.Tamanho).PadLeft(campoCNAB.Tamanho, string.IsNullOrEmpty(charPrrenchimento) ? '0' : charPrrenchimento[0]);
                 else if (campo.PropertyType == typeof(int) || campo.PropertyType == typeof(int?) || campo.PropertyType == typeof(long) || campo.PropertyType == typeof(long?))
@@ -126,7 +130,7 @@ namespace BancoBr.CNAB.Core
                     switch (lote.Header.Servico)
                     {
                         case TipoServicoEnum.PagamentoSalarios: //Ir Adicionando os tipos que se assemelham com os pagamentos de salários
-                            registro = (RegistroDetalheBase)bancoType.InvokeMember("NovoSegmento" + tipoSegmento, BindingFlags.InvokeMethod, null, cnab.Banco, new object[] { ((HeaderLote)lote.Header).TipoLancamento });
+                            registro = (RegistroDetalheBase)bancoType.InvokeMember("NovoSegmento" + tipoSegmento, BindingFlags.InvokeMethod, null, cnab.Banco, new object[] { ((HeaderLote_PagamentoTransferencia)lote.Header).TipoLancamento });
                             break;
                     }
 

@@ -1,12 +1,16 @@
-﻿using BancoBr.CNAB.Base;
+﻿/*
+ * Pagamento Através de Crédito em Conta, Cheque, OP, DOC, TED ou Pagamento com Autenticação
+ */
+
+using BancoBr.CNAB.Base;
 using BancoBr.Common.Attributes;
 using BancoBr.Common.Enums;
 
 namespace BancoBr.CNAB.Febraban
 {
-    public class HeaderLote : HeaderLoteBase
+    public class HeaderLote_PagamentoTransferencia : HeaderLoteBase
     {
-        public HeaderLote(Common.Instances.Banco banco)
+        public HeaderLote_PagamentoTransferencia(Common.Instances.Banco banco)
             : base(banco)
         {
             VersaoLote = 46;

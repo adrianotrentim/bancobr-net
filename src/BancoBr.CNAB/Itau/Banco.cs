@@ -27,7 +27,7 @@ namespace BancoBr.CNAB.Itau
                 case TipoLancamentoEnum.TEDMesmaTitularidade:
                 case TipoLancamentoEnum.CreditoContaMesmoBanco:
                 case TipoLancamentoEnum.PIXTransferencia:
-                    return new HeaderLote_TedPixCredConta(this);
+                    return new HeaderLote_TED(this);
                 default:
                     throw new InvalidOperationException("Não Implementado");
             }
@@ -36,7 +36,7 @@ namespace BancoBr.CNAB.Itau
         public override TrailerLoteBase NovoTrailerLote(Lote lote) => new TrailerLote(lote);
 
         //public override RegistroDetalheBase NovoSegmentoA() => new SegmentoA(this);
-        //public override RegistroDetalheBase NovoSegmentoB() => new SegmentoB(this);
+        //public override RegistroDetalheBase NovoSegmentoB() => new SegmentoB_DadosBancarios(this);
 
         public override RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Common.Instances.Movimento movimento) => null;
         public override RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Common.Instances.Movimento movimento) => null;

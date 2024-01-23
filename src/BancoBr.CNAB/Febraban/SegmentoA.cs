@@ -25,23 +25,11 @@ namespace BancoBr.CNAB.Febraban
         [CampoCNAB(18, 3)]
         public virtual int CamaraCentralizadora { get; set; }
 
-        [CampoCNAB(21, 3)]
-        public virtual int BancoFavorecido { get; set; }
-
-        [CampoCNAB(24, 5)]
-        public virtual int AgenciaFavorecido { get; set; }
-
-        [CampoCNAB(29, 1)]
-        public virtual string DVAgenciaFavorecido { get; set; }
-
-        [CampoCNAB(30, 12)]
-        public virtual int ContaFavorecido { get; set; }
-
-        [CampoCNAB(42, 1)]
-        public virtual string DVContaFavorecido { get; set; }
-
-        [CampoCNAB(43, 1)]
-        public virtual string DVAgenciaContaFavorecido { get; set; }
+        /*
+         *
+         * 21 a 43 - Implementar nas classes Herdadas
+         *
+         */
 
         [CampoCNAB(44, 30)]
         public virtual string NomeFavorecido { get; set; }
@@ -87,12 +75,12 @@ namespace BancoBr.CNAB.Febraban
         /// </summary>
         [CampoCNAB(218, 2)]
         public virtual string CodigoFinalidadeDOC { get; set; }
-
-        /// <summary>
-        /// Verificar Nota P011 - CNAB240 FEBRABAN
-        /// </summary>
-        [CampoCNAB(220, 5)]
-        public virtual FinalidadeTEDEnum CodigoFinalidadeTED { get; set; }
+        
+        /*
+         *
+         * 220 a 225 - Implementar nas classes Herdadas
+         *
+         */
 
         [CampoCNAB(225, 2)]
         public virtual string CodigoFinalidadeComplementar { get; set; }

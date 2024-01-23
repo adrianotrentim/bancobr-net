@@ -20,8 +20,23 @@ namespace BancoBr.CNAB.Febraban
         [CampoCNAB(16, 2)]
         public virtual CodigoInstrucaoMovimentoEnum CodigoInstrucaoMovimento { get; set; }
 
-        [CampoCNAB(18, 44)]
-        public virtual string CodigoBarra { get; set; }
+        [CampoCNAB(18, 3)]
+        public virtual int BancoCodigoBarra { get; set; }
+
+        [CampoCNAB(21, 1)]
+        public virtual int MoedaCodigoBarra { get; set; }
+
+        [CampoCNAB(22, 1)]
+        public virtual int DVCodigoBarra { get; set; }
+
+        [CampoCNAB(23, 4)]
+        public virtual int FatorVencimentoCodigoBarra { get; set; }
+
+        [CampoCNAB(27, 10)]
+        public virtual decimal ValorCodigoBarra { get; set; }
+
+        [CampoCNAB(37, 25, '0', AlinhamentoPreenchimentoEnum.PreencherAEsquerda)]
+        public virtual string CampoLivreCodigoBarra { get; set; }
 
         [CampoCNAB(62, 30)]
         public virtual string NomeBeneficiario { get; set; }

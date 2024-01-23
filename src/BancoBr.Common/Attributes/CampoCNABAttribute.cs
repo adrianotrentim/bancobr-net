@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using BancoBr.Common.Enums;
 
 namespace BancoBr.Common.Attributes
 {
@@ -11,6 +12,7 @@ namespace BancoBr.Common.Attributes
         public int Posicao { get; }
         public int Tamanho { get; }
         public char? CharPreenchimento { get; }
+        public AlinhamentoPreenchimentoEnum AlinhamentoPreenchimento { get; set; }
         public string Formatacao { get; }
 
         public CampoCNABAttribute(int posicao, int tamanho)
@@ -31,6 +33,14 @@ namespace BancoBr.Common.Attributes
             Tamanho = tamanho;
             Posicao = posicao;
             CharPreenchimento = charPreenchimento;
+        }
+
+        public CampoCNABAttribute(int posicao, int tamanho, char charPreenchimento, AlinhamentoPreenchimentoEnum alinhamentoPreenchimento)
+        {
+            Tamanho = tamanho;
+            Posicao = posicao;
+            CharPreenchimento = charPreenchimento;
+            AlinhamentoPreenchimento = alinhamentoPreenchimento;
         }
 
         public CampoCNABAttribute(int posicao, int tamanho, char charPreenchimento, string formatacao)

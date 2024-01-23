@@ -3,9 +3,9 @@ using BancoBr.Common.Enums;
 
 namespace BancoBr.CNAB.Itau
 {
-    public class HeaderLote_TedPixCredConta : Febraban.HeaderLote
+    public class HeaderLote_TED : Febraban.HeaderLote_PagamentoTransferencia
     {
-        public HeaderLote_TedPixCredConta(Common.Instances.Banco banco)
+        public HeaderLote_TED(Common.Instances.Banco banco)
             : base(banco)
         {
             VersaoLote = 40;

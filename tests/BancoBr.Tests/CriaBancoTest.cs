@@ -80,10 +80,13 @@ namespace BancoBr.Tests
                 },
                 TipoMovimento = TipoMovimentoEnum.Inclusao, //Valor Padrão, pode ser ignorado a setagem desta propriedade
                 CodigoInstrucao = CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado, //Valor Padrão, pode ser ignorado a setagem desta propriedade
-                NumeroDocumento = "5637",
-                DataPagamento = DateTime.Parse("2023-04-28"),
-                Moeda = "BRL", //Valor Padrão, pode ser ignorado a setagem desta propriedade
-                ValorPagamento = (decimal)2500.65
+                MovimentoPagamentoTransferencia = new MovimentoPagamentoTransferencia
+                {
+                    NumeroDocumento = "5637",
+                    DataPagamento = DateTime.Parse("2023-04-28"),
+                    Moeda = "BRL", //Valor Padrão, pode ser ignorado a setagem desta propriedade
+                    ValorPagamento = (decimal)2500.65
+                }
             };
 
             lote.NovoMovimento(movimento1);
@@ -108,9 +111,12 @@ namespace BancoBr.Tests
                     NumeroConta = 98765,
                     DVConta = "7"
                 },
-                NumeroDocumento = "6598",
-                DataPagamento = DateTime.Parse("2023-04-28"),
-                ValorPagamento = (decimal)1830.34
+                MovimentoPagamentoTransferencia = new MovimentoPagamentoTransferencia
+                {
+                    NumeroDocumento = "6598",
+                    DataPagamento = DateTime.Parse("2023-04-28"),
+                    ValorPagamento = (decimal)1830.34
+                }
             };
             lote.NovoMovimento(movimento2);
 
