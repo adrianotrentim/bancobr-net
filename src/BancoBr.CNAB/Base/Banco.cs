@@ -393,6 +393,7 @@ namespace BancoBr.CNAB.Base
                 case TipoLancamentoEnum.OrdemPagamento:
                 case TipoLancamentoEnum.TEDMesmaTitularidade:
                 case TipoLancamentoEnum.TEDOutraTitularidade:
+                case TipoLancamentoEnum.PIXTransferencia:
                     return new HeaderLote_Transferencia(this);
                 case TipoLancamentoEnum.LiquidacaoProprioBanco:
                 case TipoLancamentoEnum.PagamentoTituloOutroBanco:

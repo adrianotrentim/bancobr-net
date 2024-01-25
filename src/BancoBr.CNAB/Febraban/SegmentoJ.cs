@@ -59,7 +59,7 @@ namespace BancoBr.CNAB.Febraban
         [CampoCNAB(153, 15)]
         public virtual decimal ValorPagamento { get; set; }
 
-        [CampoCNAB(168, 5)]
+        [CampoCNAB(168, 15)]
         public virtual int QuantidadeMoeda { get; set; }
 
         [CampoCNAB(183, 20)]
