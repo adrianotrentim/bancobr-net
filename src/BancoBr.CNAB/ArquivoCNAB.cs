@@ -45,6 +45,9 @@ namespace BancoBr.CNAB
         /// <exception cref="Exception"></exception>
         public ArquivoCNAB(BancoEnum banco, Correntista correntista, int numeroRemessa, LocalDebitoEnum localDebito, TipoServicoEnum tipoServico, List<Movimento> movimentos)
         {
+            if (movimentos.Any(t => t.TipoLancamento == 0))
+                throw new Exception($"O(s) movimento(s) de número(s) {string.Join(", ", movimentos.Where(t => t.TipoLancamento == 0).Select(t => t.NumeroDocumento))} não possui(em) tipo de lançamento!");
+
             switch (banco)
             {
                 case BancoEnum.BradescoSA:

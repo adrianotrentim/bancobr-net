@@ -32,9 +32,6 @@ namespace BancoBr.CNAB.Bradesco
             }
         }
 
-        public override RegistroDetalheBase NovoSegmentoB(TipoLancamentoEnum tipoLancamento) => new SegmentoB_Transferencia(this);
-
         public override RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Common.Instances.Movimento movimento) => null;
-        public override RegistroDetalheBase PreencheSegmentoJ(RegistroDetalheBase segmento, Common.Instances.Movimento movimento) => null;
     }
 }

@@ -61,6 +61,7 @@ namespace BancoBr.CNAB.Base
                 case TipoLancamentoEnum.OrdemPagamento:
                 case TipoLancamentoEnum.TEDMesmaTitularidade:
                 case TipoLancamentoEnum.TEDOutraTitularidade:
+                case TipoLancamentoEnum.PIXTransferencia:
                     segmentoA = PreencheSegmentoABase(movimento, numeroLote);
                     segmentoB = PreencheSegmentoBBase(movimento, numeroLote);
                     segmentoC = PreencheSegmentoCBase(movimento, numeroLote);
@@ -348,7 +349,7 @@ namespace BancoBr.CNAB.Base
             segmento.NomeBeneficiario = movimento.Favorecido.Nome;
 
             var fator = segmento.FatorVencimentoCodigoBarra;
-            var dataBase = DateTime.Parse("10/07/1997");
+            var dataBase = DateTime.Parse("07/10/1997");
             segmento.DataVencimento = dataBase.AddDays(fator);
 
             segmento.ValorTitulo = ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).ValorCodigoBarra;

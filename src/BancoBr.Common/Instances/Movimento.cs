@@ -49,10 +49,6 @@ namespace BancoBr.Common.Instances
         public string DVAgencia { get; set; }
         public int NumeroConta { get; set; }
         public string DVConta { get; set; }
-
-        /// <summary>
-        /// Finalidade da Operação para TED - Verificar nota P011 do CNAB240
-        /// </summary>
         public FinalidadeTEDEnum CodigoFinalidadeTED { get; set; }
     }
 
@@ -86,7 +82,7 @@ namespace BancoBr.Common.Instances
         /// <summary>
         /// Valor do código de barras
         /// </summary>
-        public int ValorCodigoBarra { get; set; }
+        public decimal ValorCodigoBarra { get; set; }
 
         /// <summary>
         /// Campo Livre do código de barras - 25 posições
