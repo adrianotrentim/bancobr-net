@@ -124,15 +124,7 @@ namespace BancoBr.CNAB.Core
                 {
                     var bancoType = cnab.Banco.GetType();
                     var tipoSegmento = linha.Substring(13, 1);
-
-                    RegistroDetalheBase registro = null;
-
-                    switch (lote.Header.Servico)
-                    {
-                        case TipoServicoEnum.PagamentoSalarios: //Ir Adicionando os tipos que se assemelham com os pagamentos de salários
-                            registro = (RegistroDetalheBase)bancoType.InvokeMember("NovoSegmento" + tipoSegmento, BindingFlags.InvokeMethod, null, cnab.Banco, new object[] { ((HeaderLote_PagamentoTransferencia)lote.Header).TipoLancamento });
-                            break;
-                    }
+                    var registro = (RegistroDetalheBase)bancoType.InvokeMember("NovoSegmento" + tipoSegmento, BindingFlags.InvokeMethod, null, cnab.Banco, new object[] { ((HeaderLote_Transferencia)lote.Header).TipoLancamento });
 
                     lote.Detalhe.Add(registro);
 

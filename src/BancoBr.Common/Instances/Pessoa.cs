@@ -2,7 +2,7 @@
 
 namespace BancoBr.Common.Instances
 {
-    public class Pessoa
+    public abstract class Pessoa
     {
         public TipoInscricaoCPFCNPJEnum TipoPessoa { get; set; }
         public string CPF_CNPJ { get; set; }
@@ -14,7 +14,15 @@ namespace BancoBr.Common.Instances
         public string Bairro { get; set; }
         public string Cidade { get; set; }
         public string UF { get; set; }
+    }
 
+    public class Favorecido : Pessoa
+    {
+        
+    }
+
+    public class Correntista : Pessoa
+    {
         public int Banco { get; set; }
         public string Convenio { get; set; }
         public int NumeroAgencia { get; set; }

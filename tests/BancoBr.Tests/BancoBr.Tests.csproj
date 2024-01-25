@@ -27,4 +27,8 @@
     <ProjectReference Include="..\..\src\BancoBr.Common\BancoBr.Common.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="ArquivosGerados\" />
+  </ItemGroup>
+
 </Project>

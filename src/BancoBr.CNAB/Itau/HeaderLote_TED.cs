@@ -3,7 +3,7 @@ using BancoBr.Common.Enums;
 
 namespace BancoBr.CNAB.Itau
 {
-    public class HeaderLote_TED : Febraban.HeaderLote_PagamentoTransferencia
+    public class HeaderLote_TED : Febraban.HeaderLote_Transferencia
     {
         public HeaderLote_TED(Common.Instances.Banco banco)
             : base(banco)

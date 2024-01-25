@@ -3,9 +3,9 @@ using BancoBr.Common.Enums;
 
 namespace BancoBr.CNAB.Bradesco
 {
-    public class HeaderLote_PagamentoTransferencia : Febraban.HeaderLote_PagamentoTransferencia
+    public class HeaderLote_Transferencia : Febraban.HeaderLote_Transferencia
     {
-        public HeaderLote_PagamentoTransferencia(Common.Instances.Banco banco)
+        public HeaderLote_Transferencia(Common.Instances.Banco banco)
             : base(banco)
         {
             VersaoLote = 45;

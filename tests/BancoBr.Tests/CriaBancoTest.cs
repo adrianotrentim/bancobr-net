@@ -19,11 +19,11 @@ namespace BancoBr.Tests
             {
                 var numeroArquivo = 1;
 
-                var empresa = new Pessoa
+                var empresa = new Correntista()
                 {
                     TipoPessoa = TipoInscricaoCPFCNPJEnum.CNPJ,
                     CPF_CNPJ = "12.345.678/0001-00",
-                    Nome = "Empresa BancoBR.Net",
+                    Nome = "Correntista BancoBR.Net",
                     Endereco = "Rua Teste BancoBR.Net",
                     NumeroEndereco = "567",
                     ComplementoEndereco = "Compl. End.",
@@ -40,11 +40,13 @@ namespace BancoBr.Tests
 
                 return new[]
                 {
-                    new object[] { new ArquivoCNAB(BancoEnum.BradescoSA, empresa, numeroArquivo) },
+                    new object[] { BancoEnum.BradescoSA, empresa, numeroArquivo, LocalDebitoEnum.DebitoContaCorrente, TipoServicoEnum.PagamentoFornecedor },
                     //new object[] { new ArquivoCNAB(BancoEnum.Itau, empresa, numeroArquivo) }
                 };
             }
         }
+
+        #region ::. Criação dos Movimentos .::
 
         /// <summary>
         /// Todas as informações podem ser adicionadas com formatações e acentos, pois a biblioteca cuidará de retira-los
@@ -52,76 +54,84 @@ namespace BancoBr.Tests
         ///
         /// No caso de CEP, é um inteiro. A biblioteca cuidará para adicionar zeros a esquerda se necessário
         /// </summary>
-        [Theory, MemberData("CNAB240")]
-        public static void TestePagamentoTransferencia_e_Salario(ArquivoCNAB cnab)
+        public static List<Movimento> CriarMovimentoTransferenciaTED()
         {
-            var tipoServico = TipoServicoEnum.PagamentoSalarios;
-            var lote = cnab.NovoLote(tipoServico, LocalDebitoEnum.DebitoContaCorrente, TipoLancamentoEnum.PIXTransferencia);
-
-            var movimento1 = new Movimento
+            return new List<Movimento>
             {
-                PessoaEmpresaDestino = new Pessoa
+                new Movimento
                 {
-                    TipoPessoa = TipoInscricaoCPFCNPJEnum.CPF,
-                    CPF_CNPJ = "123.456.789-00",
-                    Nome = "Colaborador A BancoBR.Net",
-                    Endereco = "Rua Teste Colaborador A BancoBR.Net",
-                    NumeroEndereco = "765",
-                    ComplementoEndereco = "Compl.Colab A",
-                    Bairro = "Bairro A",
-                    CEP = 7654321,
-                    Cidade = "São Paulo",
-                    UF = "SP",
-                    Banco = 341,
-                    NumeroAgencia = 528,
-                    DVAgencia = "0",
-                    NumeroConta = 54321,
-                    DVConta = "8"
-                },
-                TipoMovimento = TipoMovimentoEnum.Inclusao, //Valor Padrão, pode ser ignorado a setagem desta propriedade
-                CodigoInstrucao = CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado, //Valor Padrão, pode ser ignorado a setagem desta propriedade
-                MovimentoPagamentoTransferencia = new MovimentoPagamentoTransferencia
-                {
+                    Favorecido = new Favorecido
+                    {
+                        TipoPessoa = TipoInscricaoCPFCNPJEnum.CPF,
+                        CPF_CNPJ = "123.456.789-00",
+                        Nome = "Fornecedor A BancoBR.Net",
+                        Endereco = "Rua Teste Fornecedor A BancoBR.Net",
+                        NumeroEndereco = "765",
+                        ComplementoEndereco = "Compl.Fornec. A",
+                        Bairro = "Bairro A",
+                        CEP = 7654321,
+                        Cidade = "São Paulo",
+                        UF = "SP"
+                    },
+                    TipoLancamento = TipoLancamentoEnum.TEDOutraTitularidade,
+                    TipoMovimento = TipoMovimentoEnum.Inclusao, //Valor Padrão, pode ser ignorado a setagem desta propriedade
+                    CodigoInstrucao = CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado, //Valor Padrão, pode ser ignorado a setagem desta propriedade
                     NumeroDocumento = "5637",
                     DataPagamento = DateTime.Parse("2023-04-28"),
+                    ValorPagamento = (decimal)2500.65,
                     Moeda = "BRL", //Valor Padrão, pode ser ignorado a setagem desta propriedade
-                    ValorPagamento = (decimal)2500.65
-                }
-            };
-
-            lote.NovoMovimento(movimento1);
-
-            var movimento2 = new Movimento
-            {
-                PessoaEmpresaDestino = new Pessoa
-                {
-                    TipoPessoa = TipoInscricaoCPFCNPJEnum.CPF,
-                    CPF_CNPJ = "123.456.789-00",
-                    Nome = "Colaborador B BancoBR.Net",
-                    Endereco = "Rua Teste Colaborador B BancoBR.Net",
-                    NumeroEndereco = "765",
-                    ComplementoEndereco = "Compl.Colab B",
-                    Bairro = "Bairro B",
-                    CEP = 98765432,
-                    Cidade = "São Paulo",
-                    UF = "SP",
-                    Convenio = "",
-                    NumeroAgencia = 135,
-                    DVAgencia = "0",
-                    NumeroConta = 98765,
-                    DVConta = "7"
+                    MovimentoItem = new MovimentoItemTransferenciaTED
+                    {
+                        CodigoFinalidadeTED = FinalidadeTEDEnum.CreditoEmConta,
+                        Banco = 341,
+                        NumeroAgencia = 528,
+                        DVAgencia = "0",
+                        NumeroConta = 54321,
+                        DVConta = "8"
+                    }
                 },
-                MovimentoPagamentoTransferencia = new MovimentoPagamentoTransferencia
+                new Movimento
                 {
+                    Favorecido = new Favorecido()
+                    {
+                        TipoPessoa = TipoInscricaoCPFCNPJEnum.CPF,
+                        CPF_CNPJ = "123.456.789-00",
+                        Nome = "Fornecedor B BancoBR.Net",
+                        Endereco = "Rua Teste Fornecedor B BancoBR.Net",
+                        NumeroEndereco = "765",
+                        ComplementoEndereco = "Compl.Fornec. B",
+                        Bairro = "Bairro B",
+                        CEP = 98765432,
+                        Cidade = "São Paulo",
+                        UF = "SP",
+
+                    },
+                    TipoLancamento = TipoLancamentoEnum.PIXTransferencia,
                     NumeroDocumento = "6598",
                     DataPagamento = DateTime.Parse("2023-04-28"),
-                    ValorPagamento = (decimal)1830.34
+                    ValorPagamento = (decimal)1830.34,
+                    MovimentoItem = new MovimentoItemTransferenciaPIX
+                    {
+                        TipoChavePIX = FormaIniciacaoEnum.PIX_Email,
+                        ChavePIX = "adriano@divsoft.com.br"
+                    }
                 }
             };
-            lote.NovoMovimento(movimento2);
+        }
 
+        #endregion
+
+        [Theory, MemberData("CNAB240")]
+        public static void CriarCNAB240(BancoEnum banco, Correntista correntista, int numeroArquivo, LocalDebitoEnum localDebito, TipoServicoEnum tipoServico)
+        {
+            var movimentos = new List<Movimento>();
+            movimentos.AddRange(CriarMovimentoTransferenciaTED());
+
+            var cnab = new ArquivoCNAB(banco, correntista, numeroArquivo, localDebito, tipoServico, movimentos);
             var stringArquivo = cnab.Exportar();
-            //File.WriteAllText($"c:\\cnab240_{snab.Banco.Codigo}.txt", stringArquivo);
+
+            var path = AppDomain.CurrentDomain.BaseDirectory + "..\\..\\..\\ArquivosGerados";
+            File.WriteAllText(Path.Combine(path, $"cnab240_{banco}.txt"), stringArquivo);
 
             #region ::. Testes Básicos .::
 
@@ -131,20 +141,21 @@ namespace BancoBr.Tests
 
             #endregion
 
-            var fileName = Path.GetTempFileName();
-            File.WriteAllText(fileName, stringArquivo);
+            //var fileName = Path.GetTempFileName();
+            //File.WriteAllText(fileName, stringArquivo);
         }
 
         [Theory, MemberData("CNAB240")]
-        public static void TesteImportacaoRetornoPagamentoTransferencia_e_Salario(ArquivoCNAB cnab)
+        public static void ImportacaoRetorno(BancoEnum banco, Correntista correntista, int numeroArquivo, LocalDebitoEnum localDebito, TipoServicoEnum tipoServico)
         {
             #region ::. Exportando e Importando o Arquivo
 
-            var fileName = Path.GetTempFileName();
+            var path = AppDomain.CurrentDomain.BaseDirectory + "..\\..\\..\\ArquivosGerados";
+            var fileName = Path.Combine(path, $"cnab240_{banco}.txt");
 
             var linhas = File.ReadLines(fileName);
 
-            var cnabLeitura = new ArquivoCNAB((BancoEnum)cnab.Banco.Codigo, cnab.EmpresaCedente, 0);
+            var cnabLeitura = new ArquivoCNAB(banco, correntista);
             cnabLeitura.Importar(linhas);
 
             //Assert.Equal(((HeaderArquivo)cnab.Header).NumeroConta, ((HeaderArquivo)cnabLeitura.Header).NumeroConta);

@@ -9,7 +9,7 @@ namespace BancoBr.CNAB.Febraban
 {
     public class HeaderArquivo : RegistroBase
     {
-        public HeaderArquivo(Common.Instances.Banco banco, Pessoa empresaCedente, int numeroRemessa)
+        public HeaderArquivo(Common.Instances.Banco banco, Correntista correntista, int numeroRemessa)
             : base(banco)
         {
             LoteServico = 0;
@@ -22,19 +22,19 @@ namespace BancoBr.CNAB.Febraban
             NomeBanco = banco.Nome;
             DensidadeArquivo = 6250;
 
-            if (empresaCedente != null)
+            if (correntista != null)
             {
-                TipoInscricaoCpfcnpj = empresaCedente.TipoPessoa;
-                InscricaoEmpresa = long.Parse(empresaCedente.CPF_CNPJ.JustNumbers());
-                Convenio = empresaCedente.Convenio;
-                NumeroAgencia = empresaCedente.NumeroAgencia;
-                NomeEmpresa = empresaCedente.Nome;
-                DVAgencia = empresaCedente.DVAgencia;
-                NumeroConta = empresaCedente.NumeroConta;
-                DVConta = empresaCedente.DVConta.Substring(0, 1);
+                TipoInscricaoCpfcnpj = correntista.TipoPessoa;
+                InscricaoEmpresa = long.Parse(correntista.CPF_CNPJ.JustNumbers());
+                Convenio = correntista.Convenio;
+                NumeroAgencia = correntista.NumeroAgencia;
+                NomeEmpresa = correntista.Nome;
+                DVAgencia = correntista.DVAgencia;
+                NumeroConta = correntista.NumeroConta;
+                DVConta = correntista.DVConta.Substring(0, 1);
 
-                if (empresaCedente.DVConta.Length >= 2)
-                    DVAgenciaConta = empresaCedente.DVConta.Substring(1, 1);
+                if (correntista.DVConta.Length >= 2)
+                    DVAgenciaConta = correntista.DVConta.Substring(1, 1);
             }
         }
 

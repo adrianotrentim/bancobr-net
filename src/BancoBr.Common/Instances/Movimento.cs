@@ -12,47 +12,53 @@ namespace BancoBr.Common.Instances
         {
             TipoMovimento = TipoMovimentoEnum.Inclusao;
             CodigoInstrucao = CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado;
-        }
 
-        public Pessoa PessoaEmpresaDestino { get; set; }
-        public TipoMovimentoEnum TipoMovimento { get; set; }
-        public TipoLancamentoEnum TipoLancamento { get; set; }
-        public CodigoInstrucaoMovimentoEnum CodigoInstrucao { get; set; }
-
-        
-        public MovimentoPagamentoTransferencia MovimentoPagamentoTransferencia { get; set; }
-        public MovimentoTituloCodigoBarra MovimentoTituloCodigoBarra { get; set; }
-        
-
-        public AvisoFavorecidoEnum AvisoAoFavorecido { get; set; }
-    }
-
-    public class MovimentoPagamentoTransferencia
-    {
-        public MovimentoPagamentoTransferencia()
-        {
             Moeda = "BRL";
             QuantidadeMoeda = 0;
         }
 
-        public string NumeroDocumento { get; set; }
-        public DateTime DataPagamento { get; set; }
+        public Favorecido Favorecido { get; set; }
+        public TipoMovimentoEnum TipoMovimento { get; set; }
+        public TipoLancamentoEnum TipoLancamento { get; set; }
+        public CodigoInstrucaoMovimentoEnum CodigoInstrucao { get; set; }
+
         public string Moeda { get; set; }
         public int QuantidadeMoeda { get; set; }
+        public DateTime DataPagamento { get; set; }
+        public string NumeroDocumento { get; set; }
         public decimal ValorPagamento { get; set; }
+        
+        public MovimentoItem MovimentoItem { get; set; }
+        public AvisoFavorecidoEnum AvisoAoFavorecido { get; set; }
+    }
+
+    public class MovimentoItem
+    {
+    }
+
+    public class MovimentoItemTransferenciaPIX : MovimentoItem
+    {
+        public FormaIniciacaoEnum TipoChavePIX { get; set; }
+        public string ChavePIX { get; set; }
+    }
+
+    public class MovimentoItemTransferenciaTED : MovimentoItem
+    {
+        public int Banco { get; set; }
+        public int NumeroAgencia { get; set; }
+        public string DVAgencia { get; set; }
+        public int NumeroConta { get; set; }
+        public string DVConta { get; set; }
 
         /// <summary>
         /// Finalidade da Operação para TED - Verificar nota P011 do CNAB240
         /// </summary>
         public FinalidadeTEDEnum CodigoFinalidadeTED { get; set; }
-
-        public FormaIniciacaoEnum TipoChavePIX { get; set; }
-        public string ChavePIX { get; set; }
     }
 
-    public class MovimentoTituloCodigoBarra
+    public class MovimentoItemPagamentoTituloCodigoBarra : MovimentoItem
     {
-        public MovimentoTituloCodigoBarra()
+        public MovimentoItemPagamentoTituloCodigoBarra()
         {
             MoedaCodigoBarra = 9;
         }
@@ -87,12 +93,7 @@ namespace BancoBr.Common.Instances
         /// </summary>
         public string CampoLivreCodigoBarra { get; set; }
 
-        public decimal ValorTitulo { get; set; }
         public decimal Desconto { get; set; }
         public decimal Acrescimo { get; set; }
-        public DateTime DataPagamento { get; set; }
-        public decimal ValorPagamento { get; set; }
-        public int QuantidadeMoeda { get; set; }
-        public string NumeroDocumento { get; set; }
     }
 }

@@ -22,7 +22,8 @@ namespace BancoBr.CNAB.Bradesco
                 case TipoLancamentoEnum.OrdemPagamento:
                 case TipoLancamentoEnum.TEDMesmaTitularidade:
                 case TipoLancamentoEnum.TEDOutraTitularidade:
-                    return new HeaderLote_PagamentoTransferencia(this);
+                case TipoLancamentoEnum.PIXTransferencia:
+                    return new HeaderLote_Transferencia(this);
                 case TipoLancamentoEnum.LiquidacaoProprioBanco:
                 case TipoLancamentoEnum.PagamentoTituloOutroBanco:
                     return new HeaderLote_PagamentoTitulo(this);

@@ -9,7 +9,7 @@ namespace BancoBr.CNAB.Base
 {
     public abstract class Banco : Common.Instances.Banco
     {
-        private Pessoa _empresaCedente;
+        private Correntista _empresa;
         private TipoServicoEnum _tipoServico;
         private TipoLancamentoEnum _tipoLancamento;
         private LocalDebitoEnum _localDebito;
@@ -19,14 +19,14 @@ namespace BancoBr.CNAB.Base
         {
         }
 
-        public virtual RegistroBase NovoHeaderArquivo(Pessoa empresaCedente, int numeroRemessa) => new HeaderArquivo(this, empresaCedente, numeroRemessa);
+        public virtual RegistroBase NovoHeaderArquivo(Correntista correntista, int numeroRemessa) => new HeaderArquivo(this, correntista, numeroRemessa);
         public virtual RegistroBase NovoTrailerArquivo(ArquivoCNAB arquivoCnab, List<Lote> lotes) => new TrailerArquivo(arquivoCnab, lotes);
 
         #region ::. Métodos Públicos .::
 
-        public Lote NovoLote(Pessoa empresaCedente, TipoServicoEnum tipoServico, TipoLancamentoEnum tipoLancamento, LocalDebitoEnum localDebito)
+        public Lote NovoLote(Correntista correntista, TipoServicoEnum tipoServico, TipoLancamentoEnum tipoLancamento, LocalDebitoEnum localDebito)
         {
-            _empresaCedente = empresaCedente;
+            _empresa = correntista;
             _tipoServico = tipoServico;
             _tipoLancamento = tipoLancamento;
             _localDebito = localDebito;
@@ -48,11 +48,29 @@ namespace BancoBr.CNAB.Base
         {
             var registros = new List<RegistroDetalheBase>();
 
-            var segmentoA = PreencheSegmentoABase(movimento, numeroLote);
-            var segmentoB = PreencheSegmentoBBase(movimento, numeroLote);
-            var segmentoC = PreencheSegmentoCBase(movimento, numeroLote);
-            var segmentoJ = PreencheSegmentoJBase(movimento, numeroLote);
-            var segmentoJ52 = PreencheSegmentoJ52Base(movimento, numeroLote);
+            RegistroDetalheBase segmentoA = null;
+            RegistroDetalheBase segmentoB = null;
+            RegistroDetalheBase segmentoC = null;
+            RegistroDetalheBase segmentoJ = null;
+            RegistroDetalheBase segmentoJ52 = null;
+
+            switch (_tipoLancamento)
+            {
+                case TipoLancamentoEnum.CreditoContaMesmoBanco:
+                case TipoLancamentoEnum.CreditoContaPoupancaMesmoBanco:
+                case TipoLancamentoEnum.OrdemPagamento:
+                case TipoLancamentoEnum.TEDMesmaTitularidade:
+                case TipoLancamentoEnum.TEDOutraTitularidade:
+                    segmentoA = PreencheSegmentoABase(movimento, numeroLote);
+                    segmentoB = PreencheSegmentoBBase(movimento, numeroLote);
+                    segmentoC = PreencheSegmentoCBase(movimento, numeroLote);
+                    break;
+                case TipoLancamentoEnum.LiquidacaoProprioBanco:
+                case TipoLancamentoEnum.PagamentoTituloOutroBanco:
+                    segmentoJ = PreencheSegmentoJBase(movimento, numeroLote);
+                    segmentoJ52 = PreencheSegmentoJ52Base(movimento, numeroLote);
+                    break;
+            }
 
             if (segmentoA != null)
             {
@@ -100,58 +118,58 @@ namespace BancoBr.CNAB.Base
         {
             var headerLote = NovoHeaderLote(_tipoLancamento);
 
-            if (headerLote is HeaderLote_PagamentoTransferencia)
+            if (headerLote is HeaderLote_Transferencia)
             {
-                ((HeaderLote_PagamentoTransferencia)headerLote).Servico = _tipoServico;
-                ((HeaderLote_PagamentoTransferencia)headerLote).TipoLancamento = _tipoLancamento;
-                ((HeaderLote_PagamentoTransferencia)headerLote).TipoInscricaoEmpresa = _empresaCedente.TipoPessoa;
-                ((HeaderLote_PagamentoTransferencia)headerLote).InscricaoEmpresa = long.Parse(_empresaCedente.CPF_CNPJ.JustNumbers());
-                ((HeaderLote_PagamentoTransferencia)headerLote).NumeroAgencia = _empresaCedente.NumeroAgencia;
-                ((HeaderLote_PagamentoTransferencia)headerLote).DVAgencia = _empresaCedente.DVAgencia;
-                ((HeaderLote_PagamentoTransferencia)headerLote).NumeroConta = _empresaCedente.NumeroConta;
-                ((HeaderLote_PagamentoTransferencia)headerLote).DVConta = _empresaCedente.DVConta;
-                ((HeaderLote_PagamentoTransferencia)headerLote).Convenio = _empresaCedente.Convenio;
+                ((HeaderLote_Transferencia)headerLote).Servico = _tipoServico;
+                ((HeaderLote_Transferencia)headerLote).TipoLancamento = _tipoLancamento;
+                ((HeaderLote_Transferencia)headerLote).TipoInscricaoEmpresa = _empresa.TipoPessoa;
+                ((HeaderLote_Transferencia)headerLote).InscricaoEmpresa = long.Parse(_empresa.CPF_CNPJ.JustNumbers());
+                ((HeaderLote_Transferencia)headerLote).NumeroAgencia = _empresa.NumeroAgencia;
+                ((HeaderLote_Transferencia)headerLote).DVAgencia = _empresa.DVAgencia;
+                ((HeaderLote_Transferencia)headerLote).NumeroConta = _empresa.NumeroConta;
+                ((HeaderLote_Transferencia)headerLote).DVConta = _empresa.DVConta;
+                ((HeaderLote_Transferencia)headerLote).Convenio = _empresa.Convenio;
 
-                if (_empresaCedente.DVConta.Length >= 2)
+                if (_empresa.DVConta.Length >= 2)
                 {
-                    ((HeaderLote_PagamentoTransferencia)headerLote).DVConta = _empresaCedente.DVConta.Substring(0, 1);
-                    ((HeaderLote_PagamentoTransferencia)headerLote).DVAgenciaConta = _empresaCedente.DVConta.Substring(1, 1);
+                    ((HeaderLote_Transferencia)headerLote).DVConta = _empresa.DVConta.Substring(0, 1);
+                    ((HeaderLote_Transferencia)headerLote).DVAgenciaConta = _empresa.DVConta.Substring(1, 1);
                 }
 
-                ((HeaderLote_PagamentoTransferencia)headerLote).NomeEmpresa = _empresaCedente.Nome;
-                ((HeaderLote_PagamentoTransferencia)headerLote).EnderecoEmpresa = _empresaCedente.Endereco;
-                ((HeaderLote_PagamentoTransferencia)headerLote).NumeroEnderecoEmpresa = _empresaCedente.NumeroEndereco;
-                ((HeaderLote_PagamentoTransferencia)headerLote).ComplementoEnderecoEmpresa = _empresaCedente.ComplementoEndereco;
-                ((HeaderLote_PagamentoTransferencia)headerLote).CidadeEmpresa = _empresaCedente.Cidade;
-                ((HeaderLote_PagamentoTransferencia)headerLote).CEPEmpresa = _empresaCedente.CEP;
-                ((HeaderLote_PagamentoTransferencia)headerLote).UFEmpresa = _empresaCedente.UF;
-                ((HeaderLote_PagamentoTransferencia)headerLote).LocalDebito = _localDebito;
+                ((HeaderLote_Transferencia)headerLote).NomeEmpresa = _empresa.Nome;
+                ((HeaderLote_Transferencia)headerLote).EnderecoEmpresa = _empresa.Endereco;
+                ((HeaderLote_Transferencia)headerLote).NumeroEnderecoEmpresa = _empresa.NumeroEndereco;
+                ((HeaderLote_Transferencia)headerLote).ComplementoEnderecoEmpresa = _empresa.ComplementoEndereco;
+                ((HeaderLote_Transferencia)headerLote).CidadeEmpresa = _empresa.Cidade;
+                ((HeaderLote_Transferencia)headerLote).CEPEmpresa = _empresa.CEP;
+                ((HeaderLote_Transferencia)headerLote).UFEmpresa = _empresa.UF;
+                ((HeaderLote_Transferencia)headerLote).LocalDebito = _localDebito;
             }
             else if (headerLote is HeaderLote_PagamentoTitulo)
             {
                 ((HeaderLote_PagamentoTitulo)headerLote).Servico = _tipoServico;
                 ((HeaderLote_PagamentoTitulo)headerLote).TipoLancamento = _tipoLancamento;
-                ((HeaderLote_PagamentoTitulo)headerLote).TipoInscricaoEmpresa = _empresaCedente.TipoPessoa;
-                ((HeaderLote_PagamentoTitulo)headerLote).InscricaoEmpresa = long.Parse(_empresaCedente.CPF_CNPJ.JustNumbers());
-                ((HeaderLote_PagamentoTitulo)headerLote).NumeroAgencia = _empresaCedente.NumeroAgencia;
-                ((HeaderLote_PagamentoTitulo)headerLote).DVAgencia = _empresaCedente.DVAgencia;
-                ((HeaderLote_PagamentoTitulo)headerLote).NumeroConta = _empresaCedente.NumeroConta;
-                ((HeaderLote_PagamentoTitulo)headerLote).DVConta = _empresaCedente.DVConta;
-                ((HeaderLote_PagamentoTitulo)headerLote).Convenio = _empresaCedente.Convenio;
+                ((HeaderLote_PagamentoTitulo)headerLote).TipoInscricaoEmpresa = _empresa.TipoPessoa;
+                ((HeaderLote_PagamentoTitulo)headerLote).InscricaoEmpresa = long.Parse(_empresa.CPF_CNPJ.JustNumbers());
+                ((HeaderLote_PagamentoTitulo)headerLote).NumeroAgencia = _empresa.NumeroAgencia;
+                ((HeaderLote_PagamentoTitulo)headerLote).DVAgencia = _empresa.DVAgencia;
+                ((HeaderLote_PagamentoTitulo)headerLote).NumeroConta = _empresa.NumeroConta;
+                ((HeaderLote_PagamentoTitulo)headerLote).DVConta = _empresa.DVConta;
+                ((HeaderLote_PagamentoTitulo)headerLote).Convenio = _empresa.Convenio;
 
-                if (_empresaCedente.DVConta.Length >= 2)
+                if (_empresa.DVConta.Length >= 2)
                 {
-                    ((HeaderLote_PagamentoTitulo)headerLote).DVConta = _empresaCedente.DVConta.Substring(0, 1);
-                    ((HeaderLote_PagamentoTitulo)headerLote).DVAgenciaConta = _empresaCedente.DVConta.Substring(1, 1);
+                    ((HeaderLote_PagamentoTitulo)headerLote).DVConta = _empresa.DVConta.Substring(0, 1);
+                    ((HeaderLote_PagamentoTitulo)headerLote).DVAgenciaConta = _empresa.DVConta.Substring(1, 1);
                 }
 
-                ((HeaderLote_PagamentoTitulo)headerLote).NomeEmpresa = _empresaCedente.Nome;
-                ((HeaderLote_PagamentoTitulo)headerLote).EnderecoEmpresa = _empresaCedente.Endereco;
-                ((HeaderLote_PagamentoTitulo)headerLote).NumeroEnderecoEmpresa = _empresaCedente.NumeroEndereco;
-                ((HeaderLote_PagamentoTitulo)headerLote).ComplementoEnderecoEmpresa = _empresaCedente.ComplementoEndereco;
-                ((HeaderLote_PagamentoTitulo)headerLote).CidadeEmpresa = _empresaCedente.Cidade;
-                ((HeaderLote_PagamentoTitulo)headerLote).CEPEmpresa = _empresaCedente.CEP;
-                ((HeaderLote_PagamentoTitulo)headerLote).UFEmpresa = _empresaCedente.UF;
+                ((HeaderLote_PagamentoTitulo)headerLote).NomeEmpresa = _empresa.Nome;
+                ((HeaderLote_PagamentoTitulo)headerLote).EnderecoEmpresa = _empresa.Endereco;
+                ((HeaderLote_PagamentoTitulo)headerLote).NumeroEnderecoEmpresa = _empresa.NumeroEndereco;
+                ((HeaderLote_PagamentoTitulo)headerLote).ComplementoEnderecoEmpresa = _empresa.ComplementoEndereco;
+                ((HeaderLote_PagamentoTitulo)headerLote).CidadeEmpresa = _empresa.Cidade;
+                ((HeaderLote_PagamentoTitulo)headerLote).CEPEmpresa = _empresa.CEP;
+                ((HeaderLote_PagamentoTitulo)headerLote).UFEmpresa = _empresa.UF;
             }
 
             return PreencheHeaderLote(headerLote);
@@ -166,14 +184,11 @@ namespace BancoBr.CNAB.Base
 
         private RegistroDetalheBase PreencheSegmentoABase(Movimento movimento, int numeroLote)
         {
-            if (movimento.MovimentoPagamentoTransferencia == null)
-                return null;
-
             if (
                 (_tipoLancamento == TipoLancamentoEnum.TEDMesmaTitularidade ||
                 _tipoLancamento == TipoLancamentoEnum.TEDOutraTitularidade)
                 &&
-                movimento.MovimentoPagamentoTransferencia.CodigoFinalidadeTED == FinalidadeTEDEnum.NaoAplicavel
+                ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).CodigoFinalidadeTED == FinalidadeTEDEnum.NaoAplicavel
                 )
                 throw new InvalidOperationException("Para a forma de movimento TED, você deve informar uma Finalidade");
 
@@ -221,16 +236,16 @@ namespace BancoBr.CNAB.Base
                 case TipoLancamentoEnum.TEDOutraTitularidade:
                     segmento.CamaraCentralizadora = 18;
 
-                    ((SegmentoA_Transferencia)segmento).BancoFavorecido = movimento.PessoaEmpresaDestino.Banco;
-                    ((SegmentoA_Transferencia)segmento).AgenciaFavorecido = movimento.PessoaEmpresaDestino.NumeroAgencia;
-                    ((SegmentoA_Transferencia)segmento).DVAgenciaFavorecido = movimento.PessoaEmpresaDestino.DVAgencia.Substring(0, 1);
-                    ((SegmentoA_Transferencia)segmento).ContaFavorecido = movimento.PessoaEmpresaDestino.NumeroConta;
-                    ((SegmentoA_Transferencia)segmento).DVContaFavorecido = movimento.PessoaEmpresaDestino.DVConta;
+                    ((SegmentoA_Transferencia)segmento).BancoFavorecido = ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).Banco;
+                    ((SegmentoA_Transferencia)segmento).AgenciaFavorecido = ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).NumeroAgencia;
+                    ((SegmentoA_Transferencia)segmento).DVAgenciaFavorecido = ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).DVAgencia.Substring(0, 1);
+                    ((SegmentoA_Transferencia)segmento).ContaFavorecido = ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).NumeroConta;
+                    ((SegmentoA_Transferencia)segmento).DVContaFavorecido = ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).DVConta;
 
-                    if (movimento.PessoaEmpresaDestino.DVConta.Length >= 2)
+                    if (((MovimentoItemTransferenciaTED)movimento.MovimentoItem).DVConta.Length >= 2)
                     {
-                        ((SegmentoA_Transferencia)segmento).DVContaFavorecido = movimento.PessoaEmpresaDestino.DVConta.Substring(0, 1);
-                        ((SegmentoA_Transferencia)segmento).DVAgenciaContaFavorecido = movimento.PessoaEmpresaDestino.DVConta.Substring(1, 1);
+                        ((SegmentoA_Transferencia)segmento).DVContaFavorecido = ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).DVConta.Substring(0, 1);
+                        ((SegmentoA_Transferencia)segmento).DVAgenciaContaFavorecido = ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).DVConta.Substring(1, 1);
                     }
 
                     break;
@@ -240,12 +255,12 @@ namespace BancoBr.CNAB.Base
                     break;
             }
 
-            segmento.NomeFavorecido = movimento.PessoaEmpresaDestino.Nome;
-            segmento.NumeroDocumentoEmpresa = movimento.MovimentoPagamentoTransferencia.NumeroDocumento;
-            segmento.DataPagamento = movimento.MovimentoPagamentoTransferencia.DataPagamento;
-            segmento.TipoMoeda = movimento.MovimentoPagamentoTransferencia.Moeda;
-            segmento.QuantidadeMoeda = movimento.MovimentoPagamentoTransferencia.QuantidadeMoeda;
-            segmento.ValorPagamento = movimento.MovimentoPagamentoTransferencia.ValorPagamento;
+            segmento.NomeFavorecido = movimento.Favorecido.Nome;
+            segmento.NumeroDocumentoEmpresa = movimento.NumeroDocumento;
+            segmento.DataPagamento = movimento.DataPagamento;
+            segmento.ValorPagamento = movimento.ValorPagamento;
+            segmento.TipoMoeda = movimento.Moeda;
+            segmento.QuantidadeMoeda = movimento.QuantidadeMoeda;
 
             switch (segmento.CamaraCentralizadora)
             {
@@ -256,7 +271,7 @@ namespace BancoBr.CNAB.Base
                         _tipoLancamento == TipoLancamentoEnum.CreditoContaPoupancaMesmoBanco ||
                         _tipoLancamento == TipoLancamentoEnum.CreditoContaMesmoBanco
                     )
-                        ((SegmentoA_Transferencia)segmento).CodigoFinalidadeTED = movimento.MovimentoPagamentoTransferencia.CodigoFinalidadeTED;
+                        ((SegmentoA_Transferencia)segmento).CodigoFinalidadeTED = ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).CodigoFinalidadeTED;
                     break;
             }
 
@@ -267,9 +282,6 @@ namespace BancoBr.CNAB.Base
 
         private RegistroDetalheBase PreencheSegmentoBBase(Movimento movimento, int numeroLote)
         {
-            if (movimento.MovimentoPagamentoTransferencia == null)
-                return null;
-
             if (
                 _tipoLancamento == TipoLancamentoEnum.CreditoContaMesmoBanco ||
                 _tipoLancamento == TipoLancamentoEnum.CreditoContaPoupancaMesmoBanco ||
@@ -282,15 +294,15 @@ namespace BancoBr.CNAB.Base
 
                 segmento.LoteServico = numeroLote;
 
-                segmento.TipoInscricaoFavorecido = movimento.PessoaEmpresaDestino.TipoPessoa;
-                segmento.InscricaoFavorecido = long.Parse(movimento.PessoaEmpresaDestino.CPF_CNPJ.JustNumbers());
-                segmento.EnderecoFavorecido = movimento.PessoaEmpresaDestino.Endereco;
-                segmento.NumeroEnderecoFavorecido = movimento.PessoaEmpresaDestino.NumeroEndereco;
-                segmento.ComplementoEnderecoFavorecido = movimento.PessoaEmpresaDestino.ComplementoEndereco;
-                segmento.BairroFavorecido = movimento.PessoaEmpresaDestino.Bairro;
-                segmento.CidadeFavorecido = movimento.PessoaEmpresaDestino.Cidade;
-                segmento.CEPFavorecido = movimento.PessoaEmpresaDestino.CEP;
-                segmento.UFFavorecido = movimento.PessoaEmpresaDestino.UF;
+                segmento.TipoInscricaoFavorecido = movimento.Favorecido.TipoPessoa;
+                segmento.InscricaoFavorecido = long.Parse(movimento.Favorecido.CPF_CNPJ.JustNumbers());
+                segmento.EnderecoFavorecido = movimento.Favorecido.Endereco;
+                segmento.NumeroEnderecoFavorecido = movimento.Favorecido.NumeroEndereco;
+                segmento.ComplementoEnderecoFavorecido = movimento.Favorecido.ComplementoEndereco;
+                segmento.BairroFavorecido = movimento.Favorecido.Bairro;
+                segmento.CidadeFavorecido = movimento.Favorecido.Cidade;
+                segmento.CEPFavorecido = movimento.Favorecido.CEP;
+                segmento.UFFavorecido = movimento.Favorecido.UF;
 
                 return PreencheSegmentoB(segmento, movimento);
             }
@@ -303,8 +315,8 @@ namespace BancoBr.CNAB.Base
 
                 segmento.LoteServico = numeroLote;
 
-                segmento.FormaIniciacao = movimento.MovimentoPagamentoTransferencia.TipoChavePIX;
-                segmento.ChavePIX = movimento.MovimentoPagamentoTransferencia.ChavePIX;
+                segmento.FormaIniciacao = ((MovimentoItemTransferenciaPIX)movimento.MovimentoItem).TipoChavePIX;
+                segmento.ChavePIX = ((MovimentoItemTransferenciaPIX)movimento.MovimentoItem).ChavePIX;
 
                 return PreencheSegmentoB(segmento, movimento);
             }
@@ -314,9 +326,6 @@ namespace BancoBr.CNAB.Base
 
         private RegistroDetalheBase PreencheSegmentoCBase(Movimento movimento, int numeroLote)
         {
-            if (movimento.MovimentoPagamentoTransferencia == null)
-                return null;
-
             var segmento = (SegmentoC)NovoSegmentoC(_tipoLancamento);
 
             segmento.LoteServico = numeroLote;
@@ -326,52 +335,46 @@ namespace BancoBr.CNAB.Base
 
         private RegistroDetalheBase PreencheSegmentoJBase(Movimento movimento, int numeroLote)
         {
-            if (movimento.MovimentoTituloCodigoBarra == null)
-                return null;
-
             var segmento = (SegmentoJ)NovoSegmentoJ(_tipoLancamento);
 
             segmento.LoteServico = numeroLote;
 
-            segmento.BancoCodigoBarra = movimento.MovimentoTituloCodigoBarra.BancoCodigoBarra;
-            segmento.MoedaCodigoBarra = movimento.MovimentoTituloCodigoBarra.MoedaCodigoBarra;
-            segmento.DVCodigoBarra = movimento.MovimentoTituloCodigoBarra.DVCodigoBarra;
-            segmento.FatorVencimentoCodigoBarra = movimento.MovimentoTituloCodigoBarra.FatorVencimentoCodigoBarra;
-            segmento.ValorCodigoBarra = movimento.MovimentoTituloCodigoBarra.ValorCodigoBarra;
-            segmento.CampoLivreCodigoBarra = movimento.MovimentoTituloCodigoBarra.CampoLivreCodigoBarra;
-            segmento.NomeBeneficiario = movimento.PessoaEmpresaDestino.Nome;
+            segmento.BancoCodigoBarra = ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).BancoCodigoBarra;
+            segmento.MoedaCodigoBarra = ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).MoedaCodigoBarra;
+            segmento.DVCodigoBarra = ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).DVCodigoBarra;
+            segmento.FatorVencimentoCodigoBarra = ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).FatorVencimentoCodigoBarra;
+            segmento.ValorCodigoBarra = ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).ValorCodigoBarra;
+            segmento.CampoLivreCodigoBarra = ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).CampoLivreCodigoBarra;
+            segmento.NomeBeneficiario = movimento.Favorecido.Nome;
 
             var fator = segmento.FatorVencimentoCodigoBarra;
             var dataBase = DateTime.Parse("10/07/1997");
             segmento.DataVencimento = dataBase.AddDays(fator);
 
-            segmento.ValorTitulo = movimento.MovimentoTituloCodigoBarra.ValorTitulo;
-            segmento.ValorDesconto = movimento.MovimentoTituloCodigoBarra.Desconto;
-            segmento.ValorAcrescimo = movimento.MovimentoTituloCodigoBarra.Acrescimo;
-            segmento.DataPagamento = movimento.MovimentoTituloCodigoBarra.DataPagamento;
-            segmento.ValorPagamento = movimento.MovimentoTituloCodigoBarra.ValorPagamento;
-            segmento.QuantidadeMoeda = movimento.MovimentoTituloCodigoBarra.QuantidadeMoeda;
-            segmento.CodigoDocumentoNaEmpresa = movimento.MovimentoTituloCodigoBarra.NumeroDocumento;
+            segmento.ValorTitulo = ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).ValorCodigoBarra;
+            segmento.ValorDesconto = ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).Desconto;
+            segmento.ValorAcrescimo = ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).Acrescimo;
+            segmento.DataPagamento = movimento.DataPagamento;
+            segmento.ValorPagamento = movimento.ValorPagamento;
+            segmento.QuantidadeMoeda = movimento.QuantidadeMoeda;
+            segmento.CodigoDocumentoNaEmpresa = movimento.NumeroDocumento;
 
             return PreencheSegmentoJ(segmento, movimento);
         }
 
         private RegistroDetalheBase PreencheSegmentoJ52Base(Movimento movimento, int numeroLote)
         {
-            if (movimento.MovimentoTituloCodigoBarra == null)
-                return null;
-
             var segmento = (SegmentoJ52_Boleto)NovoSegmentoJ52(_tipoLancamento);
 
             segmento.LoteServico = numeroLote;
 
-            segmento.TipoInscricaoSacado = _empresaCedente.TipoPessoa;
-            segmento.InscricaoSacado = long.Parse(_empresaCedente.CPF_CNPJ.JustNumbers());
-            segmento.NomeSacado = _empresaCedente.Nome;
+            segmento.TipoInscricaoSacado = _empresa.TipoPessoa;
+            segmento.InscricaoSacado = long.Parse(_empresa.CPF_CNPJ.JustNumbers());
+            segmento.NomeSacado = _empresa.Nome;
 
-            segmento.TipoInscricaoCedente = movimento.PessoaEmpresaDestino.TipoPessoa;
-            segmento.InscricaoSacado = long.Parse(movimento.PessoaEmpresaDestino.CPF_CNPJ.JustNumbers());
-            segmento.NomeSacado = movimento.PessoaEmpresaDestino.Nome;
+            segmento.TipoInscricaoCedente = movimento.Favorecido.TipoPessoa;
+            segmento.InscricaoSacado = long.Parse(movimento.Favorecido.CPF_CNPJ.JustNumbers());
+            segmento.NomeSacado = movimento.Favorecido.Nome;
 
             return PreencheSegmentoJ52(segmento, movimento);
         }
@@ -389,7 +392,7 @@ namespace BancoBr.CNAB.Base
                 case TipoLancamentoEnum.OrdemPagamento:
                 case TipoLancamentoEnum.TEDMesmaTitularidade:
                 case TipoLancamentoEnum.TEDOutraTitularidade:
-                    return new HeaderLote_PagamentoTransferencia(this);
+                    return new HeaderLote_Transferencia(this);
                 case TipoLancamentoEnum.LiquidacaoProprioBanco:
                 case TipoLancamentoEnum.PagamentoTituloOutroBanco:
                     return new HeaderLote_PagamentoTitulo(this);
