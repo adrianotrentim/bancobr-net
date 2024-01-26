@@ -1,7 +1,4 @@
-﻿using BancoBr.Common.Attributes;
-using BancoBr.Common.Enums;
-
-namespace BancoBr.CNAB.Bradesco
+﻿namespace BancoBr.CNAB.Bradesco
 {
     public class HeaderLote_Transferencia : Febraban.HeaderLote_Transferencia
     {
