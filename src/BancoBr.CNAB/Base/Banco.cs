@@ -186,9 +186,10 @@ namespace BancoBr.CNAB.Base
         private RegistroDetalheBase PreencheSegmentoABase(Movimento movimento, int numeroLote)
         {
             if (
-                (_tipoLancamento == TipoLancamentoEnum.TEDMesmaTitularidade ||
-                _tipoLancamento == TipoLancamentoEnum.TEDOutraTitularidade)
-                &&
+                (
+                    _tipoLancamento == TipoLancamentoEnum.TEDMesmaTitularidade ||
+                    _tipoLancamento == TipoLancamentoEnum.TEDOutraTitularidade
+                ) &&
                 ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).CodigoFinalidadeTED == FinalidadeTEDEnum.NaoAplicavel
                 )
                 throw new InvalidOperationException("Para a forma de movimento TED, você deve informar uma Finalidade");
@@ -235,6 +236,16 @@ namespace BancoBr.CNAB.Base
             {
                 case TipoLancamentoEnum.TEDMesmaTitularidade:
                 case TipoLancamentoEnum.TEDOutraTitularidade:
+                case TipoLancamentoEnum.CreditoContaMesmoBanco:
+                case TipoLancamentoEnum.CreditoContaPoupancaMesmoBanco:
+
+                    if (
+                        ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).Banco == 0 ||
+                        ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).NumeroAgencia == 0 ||
+                        ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).NumeroConta == 0
+                    )
+                        throw new Exception($"Os dados para transferência estão ausentes (Banco, Agencia, Conta Corrente)  - Docto: {movimento.NumeroDocumento}");
+                    
                     segmento.CamaraCentralizadora = 18;
 
                     ((SegmentoA_Transferencia)segmento).BancoFavorecido = ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).Banco;
@@ -312,6 +323,9 @@ namespace BancoBr.CNAB.Base
                 _tipoLancamento == TipoLancamentoEnum.PIXTransferencia
             )
             {
+                if (string.IsNullOrEmpty(((MovimentoItemTransferenciaPIX)movimento.MovimentoItem).ChavePIX))
+                    throw new Exception($"Os dados para o PIX estão ausentes - Docto: {movimento.NumeroDocumento}");
+
                 var segmento = (SegmentoB_PIX)NovoSegmentoB(_tipoLancamento);
 
                 segmento.LoteServico = numeroLote;
@@ -336,6 +350,17 @@ namespace BancoBr.CNAB.Base
 
         private RegistroDetalheBase PreencheSegmentoJBase(Movimento movimento, int numeroLote)
         {
+            if (
+                ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).BancoCodigoBarra == 0 ||
+                ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).MoedaCodigoBarra == 0 ||
+                ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).DVCodigoBarra == 0 ||
+                ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).FatorVencimentoCodigoBarra == 0 ||
+                ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).ValorCodigoBarra == 0 ||
+                string.IsNullOrEmpty(((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).CampoLivreCodigoBarra)
+                
+                )
+                throw new Exception($"Os dados para o pagamento do título estão ausentes - Docto: {movimento.NumeroDocumento}");
+
             var segmento = (SegmentoJ)NovoSegmentoJ(_tipoLancamento);
 
             segmento.LoteServico = numeroLote;

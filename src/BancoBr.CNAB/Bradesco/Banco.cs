@@ -13,25 +13,6 @@ namespace BancoBr.CNAB.Bradesco
         {
         }
 
-        public override HeaderLoteBase NovoHeaderLote(TipoLancamentoEnum tipoLancamento)
-        {
-            switch (tipoLancamento)
-            {
-                case TipoLancamentoEnum.CreditoContaMesmoBanco:
-                case TipoLancamentoEnum.CreditoContaPoupancaMesmoBanco:
-                case TipoLancamentoEnum.OrdemPagamento:
-                case TipoLancamentoEnum.TEDMesmaTitularidade:
-                case TipoLancamentoEnum.TEDOutraTitularidade:
-                case TipoLancamentoEnum.PIXTransferencia:
-                    return new HeaderLote_Transferencia(this);
-                case TipoLancamentoEnum.LiquidacaoProprioBanco:
-                case TipoLancamentoEnum.PagamentoTituloOutroBanco:
-                    return new HeaderLote_PagamentoTitulo(this);
-                default:
-                    throw new Exception("Tipo de lançamento não implementado");
-            }
-        }
-
         public override RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Common.Instances.Movimento movimento) => null;
     }
 }
