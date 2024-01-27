@@ -5,7 +5,7 @@ namespace BancoBr.CNAB.Base
 {
     public class Lote
     {
-        private int _numeroRegistro = 1;
+        private int _numeroRegistro = 0;
 
         public Lote()
         {
@@ -16,15 +16,11 @@ namespace BancoBr.CNAB.Base
         public List<RegistroDetalheBase> Detalhe { get; set; }
         public TrailerLoteBase Trailer { get; set; }
 
-        #region ::. Bloco de Transferências .::
-
         public void AdicionarMovimento(Movimento titulo)
         {
             Detalhe.AddRange(((Banco)Header.Banco).NovoMovimento(titulo, Header.LoteServico, _numeroRegistro));
 
-            _numeroRegistro = Detalhe.Count + 1;
+            _numeroRegistro = Detalhe.Count;
         }
-
-        #endregion
     }
 }

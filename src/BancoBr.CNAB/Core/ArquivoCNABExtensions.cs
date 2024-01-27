@@ -33,6 +33,7 @@ namespace BancoBr.CNAB.Core
             }
 
             arquivo.Append(cnab.Trailer.ExportarCampos());
+            arquivo.AppendLine("");
 
             return arquivo.ToString();
         }

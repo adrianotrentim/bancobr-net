@@ -14,8 +14,11 @@ namespace BancoBr.CNAB.Febraban
             CodigoRegistroOpcional = 52;
         }
 
-        [CampoCNAB(15, 3)]
-        public virtual TipoMovimentoEnum TipoMovimento { get; set; }
+        [CampoCNAB(15, 1)]
+        public virtual string CNAB1 { get; set; }
+
+        [CampoCNAB(16, 2)]
+        public virtual int CodigoMovimentoRemessa { get; set; }
 
         [CampoCNAB(18, 2)] 
         public virtual int CodigoRegistroOpcional { get; set; }
@@ -48,6 +51,6 @@ namespace BancoBr.CNAB.Febraban
         public virtual string NomeSacadorAvalista { get; set; }
 
         [CampoCNAB(188, 53)]
-        public virtual string CNAB1 { get; set; }
+        public virtual string CNAB2 { get; set; }
     }
 }

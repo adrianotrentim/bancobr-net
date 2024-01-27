@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Runtime.Serialization;
 using BancoBr.CNAB.Base;
 using BancoBr.Common.Attributes;
 
@@ -12,10 +13,14 @@ namespace BancoBr.CNAB.Febraban
         }
 
         [CampoCNAB(24, 18)]
-        public virtual decimal Valor => Lote.Detalhe.Where(t => t.CodigoSegmento == "A").Sum(t => ((SegmentoA)t).ValorPagamento);
+        public virtual decimal Valor =>
+            Lote.Detalhe.Where(t => t is SegmentoA).Sum(t => ((SegmentoA)t).ValorPagamento) +
+            Lote.Detalhe.Where(t => t is SegmentoJ).Sum(t => ((SegmentoJ)t).ValorPagamento);
 
         [CampoCNAB(42, 18)]
-        public virtual decimal QuantidadeMoeda => Lote.Detalhe.Where(t => t.TipoRegistro == 3 && t.CodigoSegmento == "A").Sum(t => ((SegmentoA)t).QuantidadeMoeda);
+        public virtual decimal QuantidadeMoeda =>
+            Lote.Detalhe.Where(t => t is SegmentoA).Sum(t => ((SegmentoA)t).QuantidadeMoeda) +
+            Lote.Detalhe.Where(t => t is SegmentoJ).Sum(t => ((SegmentoJ)t).QuantidadeMoeda);
 
         [CampoCNAB(60, 6)]
         public virtual int NumeroAvisoDebito { get; set; }

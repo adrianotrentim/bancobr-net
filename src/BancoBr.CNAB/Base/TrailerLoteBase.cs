@@ -20,7 +20,7 @@ namespace BancoBr.CNAB.Base
         [CampoCNAB(9, 9)]
         public virtual string CNAB1 { get; set; }
 
-        [CampoCNAB(18, 6)]
-        public virtual int QuantidadeRegistros => Lote.Detalhe.Count + 2; //2 = Header de Lote + Trailer de Lote
+        [CampoCNAB(18, 6)] 
+        public virtual int QuantidadeRegistros => Lote.Detalhe.Count;
     }
 }

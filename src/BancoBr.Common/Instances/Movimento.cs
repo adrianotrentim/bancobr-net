@@ -50,6 +50,7 @@ namespace BancoBr.Common.Instances
         public int NumeroConta { get; set; }
         public string DVConta { get; set; }
         public FinalidadeTEDEnum CodigoFinalidadeTED { get; set; }
+        public TipoContaEnum TipoConta { get; set; }
     }
 
     public class MovimentoItemPagamentoTituloCodigoBarra : MovimentoItem

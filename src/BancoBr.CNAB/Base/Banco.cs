@@ -384,6 +384,7 @@ namespace BancoBr.CNAB.Base
             segmento.ValorPagamento = movimento.ValorPagamento;
             segmento.QuantidadeMoeda = movimento.QuantidadeMoeda;
             segmento.CodigoDocumentoNaEmpresa = movimento.NumeroDocumento;
+            segmento.CodigoMoeda = ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).MoedaCodigoBarra;
 
             return PreencheSegmentoJ(segmento, movimento);
         }
@@ -399,8 +400,8 @@ namespace BancoBr.CNAB.Base
             segmento.NomeSacado = _empresa.Nome;
 
             segmento.TipoInscricaoCedente = movimento.Favorecido.TipoPessoa;
-            segmento.InscricaoSacado = long.Parse(movimento.Favorecido.CPF_CNPJ.JustNumbers());
-            segmento.NomeSacado = movimento.Favorecido.Nome;
+            segmento.InscricaoCedente = long.Parse(movimento.Favorecido.CPF_CNPJ.JustNumbers());
+            segmento.NomeCedente = movimento.Favorecido.Nome;
 
             return PreencheSegmentoJ52(segmento, movimento);
         }
