@@ -13,7 +13,7 @@ namespace BancoBr.CNAB.Itau
         {
         }
 
-        public override RegistroBase NovoHeaderArquivo(Correntista correntista, int numeroRemessa) => new HeaderArquivo(this, correntista, numeroRemessa);
+        public override RegistroBase NovoHeaderArquivo(Correntista correntista, int numeroRemessa, List<Movimento> movimentos) => new HeaderArquivo(this, correntista, numeroRemessa);
         public override RegistroBase NovoTrailerArquivo(ArquivoCNAB arquivoCnab, List<Lote> lotes) => new TrailerArquivo(arquivoCnab, lotes);
 
         #region ::. Bloco de Transferências .::

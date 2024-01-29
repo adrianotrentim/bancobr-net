@@ -33,7 +33,7 @@ namespace BancoBr.CNAB
             }
 
             Correntista = correntista;
-            Header = Banco.NovoHeaderArquivo(correntista, 0);
+            Header = Banco.NovoHeaderArquivo(correntista, 0, null);
             Lotes = new List<Lote>();
         }
 
@@ -61,7 +61,7 @@ namespace BancoBr.CNAB
             }
 
             Correntista = correntista;
-            Header = Banco.NovoHeaderArquivo(correntista, numeroRemessa);
+            Header = Banco.NovoHeaderArquivo(correntista, numeroRemessa, movimentos);
 
             GerarLotes(tipoServico, localDebito, movimentos);
         }

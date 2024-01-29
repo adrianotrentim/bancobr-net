@@ -19,8 +19,7 @@ namespace BancoBr.CNAB.Base
         {
         }
 
-        public virtual RegistroBase NovoHeaderArquivo(Correntista correntista, int numeroRemessa) => new HeaderArquivo(this, correntista, numeroRemessa);
-        public virtual RegistroBase NovoTrailerArquivo(ArquivoCNAB arquivoCnab, List<Lote> lotes) => new TrailerArquivo(arquivoCnab, lotes);
+        
 
         #region ::. Métodos Públicos .::
 
@@ -409,6 +408,9 @@ namespace BancoBr.CNAB.Base
         #endregion
 
         #region ::. Métodos Herdáveis .::
+
+        public virtual RegistroBase NovoHeaderArquivo(Correntista correntista, int numeroRemessa, List<Movimento> movimentos) => new HeaderArquivo(this, correntista, numeroRemessa);
+        public virtual RegistroBase NovoTrailerArquivo(ArquivoCNAB arquivoCnab, List<Lote> lotes) => new TrailerArquivo(arquivoCnab, lotes);
 
         public virtual HeaderLoteBase NovoHeaderLote(TipoLancamentoEnum tipoLancamento)
         {

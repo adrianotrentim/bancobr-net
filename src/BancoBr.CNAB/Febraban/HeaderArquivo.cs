@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using BancoBr.CNAB.Base;
 using BancoBr.Common.Attributes;
 using BancoBr.Common.Core;
