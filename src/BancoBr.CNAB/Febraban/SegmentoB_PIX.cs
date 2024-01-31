@@ -11,8 +11,11 @@ namespace BancoBr.CNAB.Febraban
         {
         }
 
-        [CampoCNAB(15, 3)]
+        [CampoCNAB(15, 2)]
         public virtual FormaIniciacaoEnum FormaIniciacao { get; set; }
+
+        [CampoCNAB(17, 1)]
+        public virtual string BRANCO1 { get; set; }
 
         [CampoCNAB(33, 35)]
         public virtual string TX_ID { get; set; }

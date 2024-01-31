@@ -25,7 +25,8 @@ namespace BancoBr.CNAB.Febraban
         public virtual int QuantidadeLotes => _lotes.Count;
 
         [CampoCNAB(24, 6)]
-        public virtual int QuantidadeRegistros => _lotes.Sum(l => l.Trailer.QuantidadeRegistros) + 2; //2 = Header de Arquivo + Trailer de Arquivo
+        public virtual int QuantidadeRegistros => _lotes.Sum(l => l.Trailer.QuantidadeRegistros) + 
+                                                  2; //+ 2, porque inclui Header de Arquivo e Trailer de Arquivo
 
         [CampoCNAB(30, 6)]
         public virtual int QuantidadeContasConciliacao => 0;

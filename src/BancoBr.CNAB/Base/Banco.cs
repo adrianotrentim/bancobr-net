@@ -329,6 +329,8 @@ namespace BancoBr.CNAB.Base
 
                 segmento.LoteServico = numeroLote;
 
+                segmento.TipoInscricaoFavorecido = movimento.Favorecido.TipoPessoa;
+                segmento.InscricaoFavorecido = long.Parse(movimento.Favorecido.CPF_CNPJ.JustNumbers());
                 segmento.FormaIniciacao = ((MovimentoItemTransferenciaPIX)movimento.MovimentoItem).TipoChavePIX;
                 segmento.ChavePIX = ((MovimentoItemTransferenciaPIX)movimento.MovimentoItem).ChavePIX;
 

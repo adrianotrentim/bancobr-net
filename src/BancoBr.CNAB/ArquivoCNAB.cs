@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using BancoBr.CNAB.Base;
+using BancoBr.CNAB.Febraban;
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
 using Banco = BancoBr.CNAB.Base.Banco;
@@ -33,7 +34,9 @@ namespace BancoBr.CNAB
             }
 
             Correntista = correntista;
-            Header = Banco.NovoHeaderArquivo(correntista, 0, null);
+
+            Header  = Banco.NovoHeaderArquivo(correntista, 0, null);
+
             Lotes = new List<Lote>();
         }
 
