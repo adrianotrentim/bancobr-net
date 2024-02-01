@@ -4,7 +4,7 @@ using BancoBr.Common.Enums;
 
 namespace BancoBr.CNAB.Base
 {
-    public class HeaderLoteBase : RegistroBase
+    public abstract class HeaderLoteBase : RegistroBase
     {
         protected HeaderLoteBase(Common.Instances.Banco banco)
             : base(banco)

@@ -5,8 +5,8 @@ namespace BancoBr.CNAB.Itau
 {
     public class HeaderArquivo : Febraban.HeaderArquivo
     {
-        public HeaderArquivo(Common.Instances.Banco banco, Correntista correntista, int numeroRemessa)
-            : base(banco, correntista, numeroRemessa)
+        public HeaderArquivo(Common.Instances.Banco banco)
+            : base(banco)
         {
         }
 

@@ -10,33 +10,9 @@ namespace BancoBr.CNAB.Febraban
 {
     public class HeaderArquivo : RegistroBase
     {
-        public HeaderArquivo(Common.Instances.Banco banco, Correntista correntista, int numeroRemessa)
+        public HeaderArquivo(Common.Instances.Banco banco)
             : base(banco)
         {
-            LoteServico = 0;
-            TipoRegistro = 0;
-            NumeroSequencialArquivo = numeroRemessa;
-            DataGeracao = DateTime.Now;
-            HoraGeracao = DateTime.Now;
-            TipoRemessaRetorno = TipoArquivoEnum.Remessa;
-            VersaoArquivo = banco.VersaoArquivo;
-            NomeBanco = banco.Nome;
-            DensidadeArquivo = 6250;
-
-            if (correntista != null)
-            {
-                TipoInscricaoCpfcnpj = correntista.TipoPessoa;
-                InscricaoEmpresa = long.Parse(correntista.CPF_CNPJ.JustNumbers());
-                Convenio = correntista.Convenio;
-                NumeroAgencia = correntista.NumeroAgencia;
-                NomeEmpresa = correntista.Nome;
-                DVAgencia = correntista.DVAgencia;
-                NumeroConta = correntista.NumeroConta;
-                DVConta = correntista.DVConta.Substring(0, 1);
-
-                if (correntista.DVConta.Length >= 2)
-                    DVAgenciaConta = correntista.DVConta.Substring(1, 1);
-            }
         }
 
         [CampoCNAB(9, 9)]

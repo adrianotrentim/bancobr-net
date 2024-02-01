@@ -8,17 +8,17 @@ namespace BancoBr.CNAB.Itau
 {
     public class Banco : Base.Banco
     {
-        public Banco()
-            : base(341, "Banco Itaú", 80)
+        public Banco(Correntista empresa)
+            : base(empresa, 341, "Banco Itaú", 80)
         {
         }
 
-        public override RegistroBase NovoHeaderArquivo(Correntista correntista, int numeroRemessa, List<Movimento> movimentos) => new HeaderArquivo(this, correntista, numeroRemessa);
-        public override RegistroBase NovoTrailerArquivo(ArquivoCNAB arquivoCnab, List<Lote> lotes) => new TrailerArquivo(arquivoCnab, lotes);
+        internal override Febraban.HeaderArquivo NovoHeaderArquivo(int numeroRemessa, List<Movimento> movimentos) => new HeaderArquivo(this);
+        internal override Febraban.TrailerArquivo NovoTrailerArquivo(ArquivoCNAB arquivoCnab, List<Lote> lotes) => new TrailerArquivo(arquivoCnab, lotes);
 
         #region ::. Bloco de Transferências .::
 
-        public override HeaderLoteBase NovoHeaderLote(TipoLancamentoEnum tipoLancamento)
+        internal override HeaderLoteBase NovoHeaderLote(TipoLancamentoEnum tipoLancamento)
         {
             switch (tipoLancamento)
             {
@@ -33,14 +33,14 @@ namespace BancoBr.CNAB.Itau
             }
         }
 
-        public override TrailerLoteBase NovoTrailerLote(Lote lote) => new TrailerLote(lote);
+        internal override TrailerLoteBase NovoTrailerLote(Lote lote) => new TrailerLote(lote);
 
         //public override RegistroDetalheBase NovoSegmentoA() => new SegmentoA(this);
         //public override RegistroDetalheBase NovoSegmentoB() => new SegmentoB_DadosBancarios(this);
 
-        public override RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Common.Instances.Movimento movimento) => null;
-        public override RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Common.Instances.Movimento movimento) => null;
-        public override RegistroDetalheBase PreencheSegmentoJ(RegistroDetalheBase segmento, Common.Instances.Movimento movimento) => null;
+        internal override RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Common.Instances.Movimento movimento) => null;
+        internal override RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Common.Instances.Movimento movimento) => null;
+        internal override RegistroDetalheBase PreencheSegmentoJ(RegistroDetalheBase segmento, Common.Instances.Movimento movimento) => null;
 
         #endregion
     }

@@ -9,23 +9,19 @@ namespace BancoBr.CNAB.Base
 {
     public abstract class Banco : Common.Instances.Banco
     {
-        private Correntista _empresa;
         private TipoServicoEnum _tipoServico;
         private TipoLancamentoEnum _tipoLancamento;
         private LocalDebitoEnum _localDebito;
 
-        protected Banco(int codigo, string nome, int versaoArquivo)
-            : base(codigo, nome, versaoArquivo)
+        protected Banco(Correntista empresa, int codigo, string nome, int versaoArquivo)
+            : base(empresa, codigo, nome, versaoArquivo)
         {
         }
-
         
-
         #region ::. Métodos Públicos .::
 
-        public Lote NovoLote(Correntista correntista, TipoServicoEnum tipoServico, TipoLancamentoEnum tipoLancamento, LocalDebitoEnum localDebito)
+        internal Lote NovoLote(TipoServicoEnum tipoServico, TipoLancamentoEnum tipoLancamento, LocalDebitoEnum localDebito)
         {
-            _empresa = correntista;
             _tipoServico = tipoServico;
             _tipoLancamento = tipoLancamento;
             _localDebito = localDebito;
@@ -43,7 +39,7 @@ namespace BancoBr.CNAB.Base
             return lote;
         }
 
-        public List<RegistroDetalheBase> NovoMovimento(Movimento movimento, int numeroLote, int numeroRegistro)
+        internal List<RegistroDetalheBase> NovoMovimento(Movimento movimento, int numeroLote, int numeroRegistro)
         {
             var registros = new List<RegistroDetalheBase>();
 
@@ -114,6 +110,36 @@ namespace BancoBr.CNAB.Base
 
         #region ::. Métodos Privados .::
 
+        private HeaderArquivo PreencheHeaderArquivoBase(HeaderArquivo headerArquivo, int numeroRemessa, List<Movimento> movimentos)
+        {
+            headerArquivo.LoteServico = 0;
+            headerArquivo.TipoRegistro = 0;
+            headerArquivo.NumeroSequencialArquivo = numeroRemessa;
+            headerArquivo.DataGeracao = DateTime.Now;
+            headerArquivo.HoraGeracao = DateTime.Now;
+            headerArquivo.TipoRemessaRetorno = TipoArquivoEnum.Remessa;
+            headerArquivo.VersaoArquivo = VersaoArquivo;
+            headerArquivo.NomeBanco = Nome;
+            headerArquivo.DensidadeArquivo = 6250;
+
+            if (Empresa != null)
+            {
+                headerArquivo.TipoInscricaoCpfcnpj = Empresa.TipoPessoa;
+                headerArquivo.InscricaoEmpresa = long.Parse(Empresa.CPF_CNPJ.JustNumbers());
+                headerArquivo.Convenio = Empresa.Convenio;
+                headerArquivo.NumeroAgencia = Empresa.NumeroAgencia;
+                headerArquivo.NomeEmpresa = Empresa.Nome;
+                headerArquivo.DVAgencia = Empresa.DVAgencia;
+                headerArquivo.NumeroConta = Empresa.NumeroConta;
+                headerArquivo.DVConta = Empresa.DVConta.Substring(0, 1);
+
+                if (Empresa.DVConta.Length >= 2)
+                    headerArquivo.DVAgenciaConta = Empresa.DVConta.Substring(1, 1);
+            }
+
+            return PreencheHeaderArquivo(headerArquivo, movimentos);
+        }
+
         private HeaderLoteBase PreencheHeaderLoteBase()
         {
             var headerLote = NovoHeaderLote(_tipoLancamento);
@@ -122,64 +148,57 @@ namespace BancoBr.CNAB.Base
             {
                 ((HeaderLote_Transferencia)headerLote).Servico = _tipoServico;
                 ((HeaderLote_Transferencia)headerLote).TipoLancamento = _tipoLancamento;
-                ((HeaderLote_Transferencia)headerLote).TipoInscricaoEmpresa = _empresa.TipoPessoa;
-                ((HeaderLote_Transferencia)headerLote).InscricaoEmpresa = long.Parse(_empresa.CPF_CNPJ.JustNumbers());
-                ((HeaderLote_Transferencia)headerLote).NumeroAgencia = _empresa.NumeroAgencia;
-                ((HeaderLote_Transferencia)headerLote).DVAgencia = _empresa.DVAgencia;
-                ((HeaderLote_Transferencia)headerLote).NumeroConta = _empresa.NumeroConta;
-                ((HeaderLote_Transferencia)headerLote).DVConta = _empresa.DVConta;
-                ((HeaderLote_Transferencia)headerLote).Convenio = _empresa.Convenio;
+                ((HeaderLote_Transferencia)headerLote).TipoInscricaoEmpresa = Empresa.TipoPessoa;
+                ((HeaderLote_Transferencia)headerLote).InscricaoEmpresa = long.Parse(Empresa.CPF_CNPJ.JustNumbers());
+                ((HeaderLote_Transferencia)headerLote).NumeroAgencia = Empresa.NumeroAgencia;
+                ((HeaderLote_Transferencia)headerLote).DVAgencia = Empresa.DVAgencia;
+                ((HeaderLote_Transferencia)headerLote).NumeroConta = Empresa.NumeroConta;
+                ((HeaderLote_Transferencia)headerLote).DVConta = Empresa.DVConta;
+                ((HeaderLote_Transferencia)headerLote).Convenio = Empresa.Convenio;
 
-                if (_empresa.DVConta.Length >= 2)
+                if (Empresa.DVConta.Length >= 2)
                 {
-                    ((HeaderLote_Transferencia)headerLote).DVConta = _empresa.DVConta.Substring(0, 1);
-                    ((HeaderLote_Transferencia)headerLote).DVAgenciaConta = _empresa.DVConta.Substring(1, 1);
+                    ((HeaderLote_Transferencia)headerLote).DVConta = Empresa.DVConta.Substring(0, 1);
+                    ((HeaderLote_Transferencia)headerLote).DVAgenciaConta = Empresa.DVConta.Substring(1, 1);
                 }
 
-                ((HeaderLote_Transferencia)headerLote).NomeEmpresa = _empresa.Nome;
-                ((HeaderLote_Transferencia)headerLote).EnderecoEmpresa = _empresa.Endereco;
-                ((HeaderLote_Transferencia)headerLote).NumeroEnderecoEmpresa = _empresa.NumeroEndereco;
-                ((HeaderLote_Transferencia)headerLote).ComplementoEnderecoEmpresa = _empresa.ComplementoEndereco;
-                ((HeaderLote_Transferencia)headerLote).CidadeEmpresa = _empresa.Cidade;
-                ((HeaderLote_Transferencia)headerLote).CEPEmpresa = _empresa.CEP;
-                ((HeaderLote_Transferencia)headerLote).UFEmpresa = _empresa.UF;
+                ((HeaderLote_Transferencia)headerLote).NomeEmpresa = Empresa.Nome;
+                ((HeaderLote_Transferencia)headerLote).EnderecoEmpresa = Empresa.Endereco;
+                ((HeaderLote_Transferencia)headerLote).NumeroEnderecoEmpresa = Empresa.NumeroEndereco;
+                ((HeaderLote_Transferencia)headerLote).ComplementoEnderecoEmpresa = Empresa.ComplementoEndereco;
+                ((HeaderLote_Transferencia)headerLote).CidadeEmpresa = Empresa.Cidade;
+                ((HeaderLote_Transferencia)headerLote).CEPEmpresa = Empresa.CEP;
+                ((HeaderLote_Transferencia)headerLote).UFEmpresa = Empresa.UF;
                 ((HeaderLote_Transferencia)headerLote).LocalDebito = _localDebito;
             }
             else if (headerLote is HeaderLote_PagamentoTitulo)
             {
                 ((HeaderLote_PagamentoTitulo)headerLote).Servico = _tipoServico;
                 ((HeaderLote_PagamentoTitulo)headerLote).TipoLancamento = _tipoLancamento;
-                ((HeaderLote_PagamentoTitulo)headerLote).TipoInscricaoEmpresa = _empresa.TipoPessoa;
-                ((HeaderLote_PagamentoTitulo)headerLote).InscricaoEmpresa = long.Parse(_empresa.CPF_CNPJ.JustNumbers());
-                ((HeaderLote_PagamentoTitulo)headerLote).NumeroAgencia = _empresa.NumeroAgencia;
-                ((HeaderLote_PagamentoTitulo)headerLote).DVAgencia = _empresa.DVAgencia;
-                ((HeaderLote_PagamentoTitulo)headerLote).NumeroConta = _empresa.NumeroConta;
-                ((HeaderLote_PagamentoTitulo)headerLote).DVConta = _empresa.DVConta;
-                ((HeaderLote_PagamentoTitulo)headerLote).Convenio = _empresa.Convenio;
+                ((HeaderLote_PagamentoTitulo)headerLote).TipoInscricaoEmpresa = Empresa.TipoPessoa;
+                ((HeaderLote_PagamentoTitulo)headerLote).InscricaoEmpresa = long.Parse(Empresa.CPF_CNPJ.JustNumbers());
+                ((HeaderLote_PagamentoTitulo)headerLote).NumeroAgencia = Empresa.NumeroAgencia;
+                ((HeaderLote_PagamentoTitulo)headerLote).DVAgencia = Empresa.DVAgencia;
+                ((HeaderLote_PagamentoTitulo)headerLote).NumeroConta = Empresa.NumeroConta;
+                ((HeaderLote_PagamentoTitulo)headerLote).DVConta = Empresa.DVConta;
+                ((HeaderLote_PagamentoTitulo)headerLote).Convenio = Empresa.Convenio;
 
-                if (_empresa.DVConta.Length >= 2)
+                if (Empresa.DVConta.Length >= 2)
                 {
-                    ((HeaderLote_PagamentoTitulo)headerLote).DVConta = _empresa.DVConta.Substring(0, 1);
-                    ((HeaderLote_PagamentoTitulo)headerLote).DVAgenciaConta = _empresa.DVConta.Substring(1, 1);
+                    ((HeaderLote_PagamentoTitulo)headerLote).DVConta = Empresa.DVConta.Substring(0, 1);
+                    ((HeaderLote_PagamentoTitulo)headerLote).DVAgenciaConta = Empresa.DVConta.Substring(1, 1);
                 }
 
-                ((HeaderLote_PagamentoTitulo)headerLote).NomeEmpresa = _empresa.Nome;
-                ((HeaderLote_PagamentoTitulo)headerLote).EnderecoEmpresa = _empresa.Endereco;
-                ((HeaderLote_PagamentoTitulo)headerLote).NumeroEnderecoEmpresa = _empresa.NumeroEndereco;
-                ((HeaderLote_PagamentoTitulo)headerLote).ComplementoEnderecoEmpresa = _empresa.ComplementoEndereco;
-                ((HeaderLote_PagamentoTitulo)headerLote).CidadeEmpresa = _empresa.Cidade;
-                ((HeaderLote_PagamentoTitulo)headerLote).CEPEmpresa = _empresa.CEP;
-                ((HeaderLote_PagamentoTitulo)headerLote).UFEmpresa = _empresa.UF;
+                ((HeaderLote_PagamentoTitulo)headerLote).NomeEmpresa = Empresa.Nome;
+                ((HeaderLote_PagamentoTitulo)headerLote).EnderecoEmpresa = Empresa.Endereco;
+                ((HeaderLote_PagamentoTitulo)headerLote).NumeroEnderecoEmpresa = Empresa.NumeroEndereco;
+                ((HeaderLote_PagamentoTitulo)headerLote).ComplementoEnderecoEmpresa = Empresa.ComplementoEndereco;
+                ((HeaderLote_PagamentoTitulo)headerLote).CidadeEmpresa = Empresa.Cidade;
+                ((HeaderLote_PagamentoTitulo)headerLote).CEPEmpresa = Empresa.CEP;
+                ((HeaderLote_PagamentoTitulo)headerLote).UFEmpresa = Empresa.UF;
             }
 
             return PreencheHeaderLote(headerLote);
-        }
-
-        private TrailerLoteBase PreencheTrailerLoteBase(Lote lote)
-        {
-            var trailerLote = (TrailerLote)NovoTrailerLote(lote);
-
-            return PreencheTrailerLote(trailerLote);
         }
 
         private RegistroDetalheBase PreencheSegmentoABase(Movimento movimento, int numeroLote)
@@ -396,9 +415,9 @@ namespace BancoBr.CNAB.Base
 
             segmento.LoteServico = numeroLote;
 
-            segmento.TipoInscricaoSacado = _empresa.TipoPessoa;
-            segmento.InscricaoSacado = long.Parse(_empresa.CPF_CNPJ.JustNumbers());
-            segmento.NomeSacado = _empresa.Nome;
+            segmento.TipoInscricaoSacado = Empresa.TipoPessoa;
+            segmento.InscricaoSacado = long.Parse(Empresa.CPF_CNPJ.JustNumbers());
+            segmento.NomeSacado = Empresa.Nome;
 
             segmento.TipoInscricaoCedente = movimento.Favorecido.TipoPessoa;
             segmento.InscricaoCedente = long.Parse(movimento.Favorecido.CPF_CNPJ.JustNumbers());
@@ -407,14 +426,33 @@ namespace BancoBr.CNAB.Base
             return PreencheSegmentoJ52(segmento, movimento);
         }
 
+        private TrailerLoteBase PreencheTrailerLoteBase(Lote lote)
+        {
+            var trailerLote = (TrailerLote)NovoTrailerLote(lote);
+
+            return PreencheTrailerLote(trailerLote);
+        }
+
         #endregion
 
-        #region ::. Métodos Herdáveis .::
+        #region ::. Métodos para Criação de Instancias .::
 
-        public virtual RegistroBase NovoHeaderArquivo(Correntista correntista, int numeroRemessa, List<Movimento> movimentos) => new HeaderArquivo(this, correntista, numeroRemessa);
-        public virtual RegistroBase NovoTrailerArquivo(ArquivoCNAB arquivoCnab, List<Lote> lotes) => new TrailerArquivo(arquivoCnab, lotes);
+        /*************************************************************************************************************************************
+         *
+         * Utilize estes métodos, quando for necessário alterações nas classes principais dos registros,
+         * como por exemplo quando um determinado banco possuir campos no SegmentoA diferentes do padrão Febraban,
+         * você poderá escrever uma nova classe SegmentoA com tais alterações, e retornada utilizando override nos métodos abaixo.
+         *
+         *************************************************************************************************************************************/
 
-        public virtual HeaderLoteBase NovoHeaderLote(TipoLancamentoEnum tipoLancamento)
+        internal virtual HeaderArquivo NovoHeaderArquivo(int numeroRemessa, List<Movimento> movimentos)
+        {
+            var headerArquivo = new HeaderArquivo(this);
+
+            return PreencheHeaderArquivoBase(headerArquivo, numeroRemessa, movimentos);
+        }
+
+        internal virtual HeaderLoteBase NovoHeaderLote(TipoLancamentoEnum tipoLancamento)
         {
             switch (tipoLancamento)
             {
@@ -433,7 +471,7 @@ namespace BancoBr.CNAB.Base
             }
         }
 
-        public virtual RegistroDetalheBase NovoSegmentoA(TipoLancamentoEnum tipoLancamento)
+        internal virtual RegistroDetalheBase NovoSegmentoA(TipoLancamentoEnum tipoLancamento)
         {
             switch (tipoLancamento)
             {
@@ -450,7 +488,7 @@ namespace BancoBr.CNAB.Base
             }
         }
 
-        public virtual RegistroDetalheBase NovoSegmentoB(TipoLancamentoEnum tipoLancamento)
+        internal virtual RegistroDetalheBase NovoSegmentoB(TipoLancamentoEnum tipoLancamento)
         {
             switch (tipoLancamento)
             {
@@ -467,19 +505,36 @@ namespace BancoBr.CNAB.Base
             }
         }
 
-        public virtual RegistroDetalheBase NovoSegmentoC(TipoLancamentoEnum tipoLancamento) => new SegmentoC(this);
-        public virtual RegistroDetalheBase NovoSegmentoJ(TipoLancamentoEnum tipoLancamento) => new SegmentoJ(this);
-        public virtual RegistroDetalheBase NovoSegmentoJ52(TipoLancamentoEnum tipoLancamento) => new SegmentoJ52_Boleto(this);
+        internal virtual RegistroDetalheBase NovoSegmentoC(TipoLancamentoEnum tipoLancamento) => new SegmentoC(this);
 
-        public virtual TrailerLoteBase NovoTrailerLote(Lote lote) => new TrailerLote(lote);
+        internal virtual RegistroDetalheBase NovoSegmentoJ(TipoLancamentoEnum tipoLancamento) => new SegmentoJ(this);
 
-        public virtual HeaderLoteBase PreencheHeaderLote(HeaderLoteBase headerLote) => headerLote;
-        public virtual TrailerLoteBase PreencheTrailerLote(TrailerLoteBase trailerLote) => trailerLote;
-        public virtual RegistroDetalheBase PreencheSegmentoA(RegistroDetalheBase segmento, Movimento movimento) => segmento;
-        public virtual RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Movimento movimento) => segmento;
-        public virtual RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Movimento movimento) => segmento;
-        public virtual RegistroDetalheBase PreencheSegmentoJ(RegistroDetalheBase segmento, Movimento movimento) => segmento;
-        public virtual RegistroDetalheBase PreencheSegmentoJ52(RegistroDetalheBase segmento, Movimento movimento) => segmento;
+        internal virtual RegistroDetalheBase NovoSegmentoJ52(TipoLancamentoEnum tipoLancamento) => new SegmentoJ52_Boleto(this);
+
+        internal virtual TrailerLoteBase NovoTrailerLote(Lote lote) => new TrailerLote(lote);
+
+        internal virtual TrailerArquivo NovoTrailerArquivo(ArquivoCNAB arquivoCnab, List<Lote> lotes) => new TrailerArquivo(arquivoCnab, lotes);
+
+        #endregion
+
+        #region ::. Métodos para complementar dados nos registros .::
+
+        /*************************************************************************************************************************************
+         *
+         * Utilize estes métodos, quando for necessário complementar somente dados nas classes principais dos registros,
+         * como por exemplo quando um determinado banco possuir dados específicos no SegmentoA diferentes do padrão Febraban,
+         * você poderá em sua classe Banco herdar o método que necessitar e  complementar ou alterar tais dados.
+         *
+         *************************************************************************************************************************************/
+
+        internal virtual HeaderArquivo PreencheHeaderArquivo(HeaderArquivo headerArquivo, List<Movimento> movimentos) => headerArquivo;
+        internal virtual HeaderLoteBase PreencheHeaderLote(HeaderLoteBase headerLote) => headerLote;
+        internal virtual TrailerLoteBase PreencheTrailerLote(TrailerLoteBase trailerLote) => trailerLote;
+        internal virtual RegistroDetalheBase PreencheSegmentoA(RegistroDetalheBase segmento, Movimento movimento) => segmento;
+        internal virtual RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Movimento movimento) => segmento;
+        internal virtual RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Movimento movimento) => segmento;
+        internal virtual RegistroDetalheBase PreencheSegmentoJ(RegistroDetalheBase segmento, Movimento movimento) => segmento;
+        internal virtual RegistroDetalheBase PreencheSegmentoJ52(RegistroDetalheBase segmento, Movimento movimento) => segmento;
 
         #endregion
     }

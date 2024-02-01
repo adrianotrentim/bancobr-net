@@ -2,11 +2,11 @@
 
 namespace BancoBr.CNAB.Base
 {
-    public class TrailerLoteBase : RegistroBase
+    public abstract class TrailerLoteBase : RegistroBase
     {
         public Lote Lote { get; }
 
-        public TrailerLoteBase(Lote lote)
+        protected TrailerLoteBase(Lote lote)
             : base(lote.Header.Banco)
         {
             TipoRegistro = 5;

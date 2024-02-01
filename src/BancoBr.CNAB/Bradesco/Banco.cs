@@ -11,47 +11,34 @@ namespace BancoBr.CNAB.Bradesco
 {
     public sealed class Banco : Base.Banco
     {
-        public Banco()
-            : base(237, "BRADESCO", 89)
+        public Banco(Correntista empresa)
+            : base(empresa, 237, "BRADESCO", 89)
         {
         }
 
-        public override HeaderLoteBase NovoHeaderLote(TipoLancamentoEnum tipoLancamento)
+        internal override HeaderArquivo PreencheHeaderArquivo(HeaderArquivo headerArquivo, List<Movimento> movimentos)
         {
-            switch (tipoLancamento)
+            if (movimentos != null)
             {
-                case TipoLancamentoEnum.CreditoContaMesmoBanco:
-                case TipoLancamentoEnum.CreditoContaPoupancaMesmoBanco:
-                case TipoLancamentoEnum.OrdemPagamento:
-                case TipoLancamentoEnum.TEDMesmaTitularidade:
-                case TipoLancamentoEnum.TEDOutraTitularidade:
-                case TipoLancamentoEnum.PIXTransferencia:
-                    return new HeaderLote_Transferencia(this);
-                case TipoLancamentoEnum.LiquidacaoProprioBanco:
-                case TipoLancamentoEnum.PagamentoTituloOutroBanco:
-                    return new HeaderLote_PagamentoTitulo(this);
-                default:
-                    throw new Exception("Tipo de lançamento não implementado");
+                if (movimentos.Any(t => t.MovimentoItem is MovimentoItemTransferenciaPIX) && !movimentos.All(t => t.MovimentoItem is MovimentoItemTransferenciaPIX))
+                    throw new Exception("Para o Bradesco, não é possível um único arquivo com registros PIX e outros tipos de registros. O arquivo PIX dese ser somente para PIX.");
+
+                if (movimentos.Any(t => t.MovimentoItem is MovimentoItemTransferenciaPIX))
+                    headerArquivo.ReservadoBanco = "PIX";
             }
+
+            return headerArquivo;
         }
 
-        public override RegistroBase NovoHeaderArquivo(Correntista correntista, int numeroRemessa, List<Movimento> movimentos)
+        internal override HeaderLoteBase PreencheHeaderLote(HeaderLoteBase headerLote)
         {
-            var header = new HeaderArquivo(this, correntista, numeroRemessa);
+            if (headerLote is HeaderLote_Transferencia headerTransferencia)
+                headerTransferencia.VersaoLote = 45;
 
-            if (movimentos == null) 
-                return header;
-
-            if (movimentos.Any(t => t.MovimentoItem is MovimentoItemTransferenciaPIX) && !movimentos.All(t => t.MovimentoItem is MovimentoItemTransferenciaPIX))
-                throw new Exception("Para o Bradesco, não é possível um único arquivo com registros PIX e outros tipos de registros. O arquivo PIX dese ser somente para PIX.");
-
-            if (movimentos.Any(t => t.MovimentoItem is MovimentoItemTransferenciaPIX))
-                header.ReservadoBanco = "PIX";
-
-            return header;
+            return headerLote;
         }
 
-        public override RegistroDetalheBase PreencheSegmentoA(RegistroDetalheBase segmento, Common.Instances.Movimento movimento)
+        internal override RegistroDetalheBase PreencheSegmentoA(RegistroDetalheBase segmento, Movimento movimento)
         {
             if (segmento is SegmentoA_Transferencia transferencia)
             {
@@ -61,6 +48,6 @@ namespace BancoBr.CNAB.Bradesco
             return segmento;
         }
 
-        public override RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Common.Instances.Movimento movimento) => null;
+        internal override RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Movimento movimento) => null;
     }
 }

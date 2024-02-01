@@ -1,9 +1,6 @@
 ﻿using BancoBr.CNAB.Base;
 using BancoBr.Common.Attributes;
 using BancoBr.Common.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Banco = BancoBr.Common.Instances.Banco;
 
 namespace BancoBr.CNAB.Febraban

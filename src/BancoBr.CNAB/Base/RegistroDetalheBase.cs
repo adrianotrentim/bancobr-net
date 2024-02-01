@@ -2,7 +2,7 @@
 
 namespace BancoBr.CNAB.Base
 {
-    public class RegistroDetalheBase : RegistroBase
+    public abstract class RegistroDetalheBase : RegistroBase
     {
         protected RegistroDetalheBase(Common.Instances.Banco banco)
             : base(banco)

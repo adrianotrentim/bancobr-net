@@ -16,7 +16,7 @@ namespace BancoBr.CNAB.Base
         public List<RegistroDetalheBase> Detalhe { get; set; }
         public TrailerLoteBase Trailer { get; set; }
 
-        public void AdicionarMovimento(Movimento titulo)
+        internal void AdicionarMovimento(Movimento titulo)
         {
             Detalhe.AddRange(((Banco)Header.Banco).NovoMovimento(titulo, Header.LoteServico, _numeroRegistro));
 
