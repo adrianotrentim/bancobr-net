@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using BancoBr.CNAB.Base;
-using BancoBr.CNAB.Febraban;
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
 using Banco = BancoBr.CNAB.Base.Banco;

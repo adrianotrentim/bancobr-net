@@ -203,14 +203,35 @@ namespace BancoBr.CNAB.Base
 
         private RegistroDetalheBase PreencheSegmentoABase(Movimento movimento, int numeroLote)
         {
+            #region ::. Validações .::
+
             if (
                 (
                     _tipoLancamento == TipoLancamentoEnum.TEDMesmaTitularidade ||
                     _tipoLancamento == TipoLancamentoEnum.TEDOutraTitularidade
                 ) &&
                 ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).CodigoFinalidadeTED == FinalidadeTEDEnum.NaoAplicavel
-                )
-                throw new InvalidOperationException("Para a forma de movimento TED, você deve informar uma Finalidade");
+            )
+                throw new InvalidOperationException("Para a forma de movimento TED, você deve informar uma finalidade!");
+
+            if (_tipoLancamento == TipoLancamentoEnum.PIXTransferencia)
+            {
+                var movimentoItem = movimento.MovimentoItem as MovimentoItemTransferenciaPIX;
+
+                if (string.IsNullOrWhiteSpace(movimentoItem.ChavePIX))
+                    throw new Exception($"A chave PIX não foi informada no movimento {movimento.NumeroDocumento}!");
+
+                if (movimentoItem.TipoChavePIX == FormaIniciacaoEnum.PIX_Email && !movimentoItem.ChavePIX.IsValidEmail())
+                    throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como PIX para e-mail, mas o e-mail está inválido!");
+
+                if (movimentoItem.TipoChavePIX == FormaIniciacaoEnum.PIX_Telefone && (movimentoItem.ChavePIX.JustNumbers().Length < 10 || movimentoItem.ChavePIX.JustNumbers().Length > 11))
+                    throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como PIX para celular, mas o número parece estar inválido!");
+
+                if (movimentoItem.TipoChavePIX == FormaIniciacaoEnum.PIX_CPF_CNPJ && !movimentoItem.ChavePIX.IsValidCPFCNPJ())
+                    throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como PIX para CPF ou CNPJ, mas o número está inválido!");
+            }
+
+            #endregion
 
             var segmento = (SegmentoA)NovoSegmentoA(_tipoLancamento);
 
@@ -225,7 +246,7 @@ namespace BancoBr.CNAB.Base
                         segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheBloqueado &&
                         segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado
                         )
-                        throw new Exception($"Para movimento de inclusão, favor utilizar os códigos de instrução:\r\n" +
+                        throw new Exception($"O movimento {movimento.NumeroDocumento} está com código de instrução inválido!\r\nPara movimento de inclusão, favor utilizar os códigos de instrução:\r\n" +
                                             $"{CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado.GetDescription()}\r\n" +
                                             $"{CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheBloqueado.GetDescription()}");
                     break;
@@ -238,7 +259,7 @@ namespace BancoBr.CNAB.Base
                         segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.AlteracaoDataPagamento &&
                         segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.PagamentoDiretoFornecedor_Baixar
                     )
-                        throw new Exception($"Para movimento de alteração, favor utilizar os códigos de instrução:\r\n" +
+                        throw new Exception($"O movimento {movimento.NumeroDocumento} está com código de instrução inválido!\r\nPara movimento de alteração, favor utilizar os códigos de instrução:\r\n" +
                                             $"{CodigoInstrucaoMovimentoEnum.AlteracaoPagamentoLiberadoParaBloqueio.GetDescription()}\r\n" +
                                             $"{CodigoInstrucaoMovimentoEnum.AlteracaoPagamentoBloqueadoParaLiberacao.GetDescription()}\r\n" +
                                             $"{CodigoInstrucaoMovimentoEnum.AlteracaoValorTitulo.GetDescription()}\r\n" +
@@ -262,7 +283,7 @@ namespace BancoBr.CNAB.Base
                         ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).NumeroAgencia == 0 ||
                         ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).NumeroConta == 0
                     )
-                        throw new Exception($"Os dados para transferência estão ausentes (Banco, Agencia, Conta Corrente)  - Docto: {movimento.NumeroDocumento}");
+                        throw new Exception($"O movimento {movimento.NumeroDocumento} está com os dados para transferência ausentes (Banco, Agencia, Conta Corrente)!");
                     
                     segmento.CamaraCentralizadora = 18;
 
@@ -370,41 +391,54 @@ namespace BancoBr.CNAB.Base
 
         private RegistroDetalheBase PreencheSegmentoJBase(Movimento movimento, int numeroLote)
         {
+            var movimentoItem = movimento.MovimentoItem as MovimentoItemPagamentoTituloCodigoBarra;
+
+            #region ::. Validações .::
+
             if (
-                ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).BancoCodigoBarra == 0 ||
-                ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).MoedaCodigoBarra == 0 ||
-                ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).DVCodigoBarra == 0 ||
-                ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).FatorVencimentoCodigoBarra == 0 ||
-                ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).ValorCodigoBarra == 0 ||
-                string.IsNullOrEmpty(((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).CampoLivreCodigoBarra)
+                movimentoItem.BancoCodigoBarra == 0 ||
+                movimentoItem.MoedaCodigoBarra == 0 ||
+                movimentoItem.FatorVencimentoCodigoBarra == 0 ||
+                string.IsNullOrWhiteSpace(movimentoItem.CampoLivreCodigoBarra)
                 
-                )
-                throw new Exception($"Os dados para o pagamento do título estão ausentes - Docto: {movimento.NumeroDocumento}");
+            )
+                throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como pagamento de boleto, mas os dados do título estão ausentes!");
+
+            if (movimento.Favorecido.TipoPessoa == TipoInscricaoCPFCNPJEnum.CNPJ && !movimento.Favorecido.CPF_CNPJ.IsValidCNPJ())
+                throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como pagamento de boleto, mas o CNPJ do favorecido está inválido!");
+
+            if (movimento.Favorecido.TipoPessoa == TipoInscricaoCPFCNPJEnum.CPF && !movimento.Favorecido.CPF_CNPJ.IsValidCPF())
+                throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como pagamento de boleto, mas o CPF do favorecido está inválido!");
+
+            if (string.IsNullOrWhiteSpace(movimento.Favorecido.Nome))
+                throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como pagamento de boleto, mas o Nome do favorecido não foi informado!");
+
+            #endregion
 
             var segmento = (SegmentoJ)NovoSegmentoJ(_tipoLancamento);
 
             segmento.LoteServico = numeroLote;
 
-            segmento.BancoCodigoBarra = ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).BancoCodigoBarra;
-            segmento.MoedaCodigoBarra = ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).MoedaCodigoBarra;
-            segmento.DVCodigoBarra = ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).DVCodigoBarra;
-            segmento.FatorVencimentoCodigoBarra = ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).FatorVencimentoCodigoBarra;
-            segmento.ValorCodigoBarra = ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).ValorCodigoBarra;
-            segmento.CampoLivreCodigoBarra = ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).CampoLivreCodigoBarra;
+            segmento.BancoCodigoBarra = movimentoItem.BancoCodigoBarra;
+            segmento.MoedaCodigoBarra = movimentoItem.MoedaCodigoBarra;
+            segmento.DVCodigoBarra = movimentoItem.DVCodigoBarra;
+            segmento.FatorVencimentoCodigoBarra = movimentoItem.FatorVencimentoCodigoBarra;
+            segmento.ValorCodigoBarra = movimentoItem.ValorCodigoBarra;
+            segmento.CampoLivreCodigoBarra = movimentoItem.CampoLivreCodigoBarra;
             segmento.NomeBeneficiario = movimento.Favorecido.Nome;
 
             var fator = segmento.FatorVencimentoCodigoBarra;
             var dataBase = DateTime.Parse("07/10/1997");
             segmento.DataVencimento = dataBase.AddDays(fator);
 
-            segmento.ValorTitulo = ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).ValorCodigoBarra;
-            segmento.ValorDesconto = ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).Desconto;
-            segmento.ValorAcrescimo = ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).Acrescimo;
+            segmento.ValorTitulo = movimentoItem.ValorCodigoBarra;
+            segmento.ValorDesconto = movimentoItem.Desconto;
+            segmento.ValorAcrescimo = movimentoItem.Acrescimo;
             segmento.DataPagamento = movimento.DataPagamento;
             segmento.ValorPagamento = movimento.ValorPagamento;
             segmento.QuantidadeMoeda = movimento.QuantidadeMoeda;
             segmento.CodigoDocumentoNaEmpresa = movimento.NumeroDocumento;
-            segmento.CodigoMoeda = ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).MoedaCodigoBarra;
+            segmento.CodigoMoeda = movimentoItem.MoedaCodigoBarra;
 
             return PreencheSegmentoJ(segmento, movimento);
         }
@@ -529,12 +563,12 @@ namespace BancoBr.CNAB.Base
 
         internal virtual HeaderArquivo PreencheHeaderArquivo(HeaderArquivo headerArquivo, List<Movimento> movimentos) => headerArquivo;
         internal virtual HeaderLoteBase PreencheHeaderLote(HeaderLoteBase headerLote) => headerLote;
-        internal virtual TrailerLoteBase PreencheTrailerLote(TrailerLoteBase trailerLote) => trailerLote;
         internal virtual RegistroDetalheBase PreencheSegmentoA(RegistroDetalheBase segmento, Movimento movimento) => segmento;
         internal virtual RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Movimento movimento) => segmento;
         internal virtual RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Movimento movimento) => segmento;
         internal virtual RegistroDetalheBase PreencheSegmentoJ(RegistroDetalheBase segmento, Movimento movimento) => segmento;
         internal virtual RegistroDetalheBase PreencheSegmentoJ52(RegistroDetalheBase segmento, Movimento movimento) => segmento;
+        internal virtual TrailerLoteBase PreencheTrailerLote(TrailerLoteBase trailerLote) => trailerLote;
 
         #endregion
     }
