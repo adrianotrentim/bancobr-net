@@ -6,13 +6,19 @@ Biblioteca para geração de remessa e leitura de retorno dos arquivos CNAB240 e
 
 ![Alt](https://repobeats.axiom.co/api/embed/0a24518c7999f1499a1c8ffa0ae20835db99ba22.svg "Situação do Projeto")
 
+# Segmentos Implementadas
+
+## Transferência através de TED e PIX
+
+- Segmento A
+- Segmento B
+
+## Pagamento de Títulos de Cobrança - Boletos
+
+- Segmento J
+- Segmento J-52
+
 # Instituições Implementadas
-
-## Transferência através de Crédito em Conta Corrente, Cheque, OP, TED, Pagamento com Autenticação ou Pix (Segmentos A e B)
-
-- 237 - Bradesco
-
-## Pagamento de Títulos de Cobrança - Boletos (Segmentos J e J-52)
 
 - 237 - Bradesco
 
