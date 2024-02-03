@@ -3,9 +3,9 @@ using BancoBr.Common.Enums;
 
 namespace BancoBr.CNAB.Febraban
 {
-    public class SegmentoA_PIX_TITULO : SegmentoA
+    public class SegmentoA_PIX : SegmentoA
     {
-        public SegmentoA_PIX_TITULO(Common.Instances.Banco banco)
+        public SegmentoA_PIX(Common.Instances.Banco banco)
             : base(banco)
         {
         }

@@ -516,7 +516,7 @@ namespace BancoBr.CNAB.Base
                 case TipoLancamentoEnum.TEDOutraTitularidade:
                     return new SegmentoA_Transferencia(this);
                 case TipoLancamentoEnum.PIXTransferencia:
-                    return new SegmentoA_PIX_TITULO(this);
+                    return new SegmentoA_PIX(this);
                 default:
                     throw new Exception("Tipo de lançamento não implementado");
             }
