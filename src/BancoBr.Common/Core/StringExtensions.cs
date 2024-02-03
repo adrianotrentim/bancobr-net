@@ -197,7 +197,7 @@ namespace BancoBr.Common.Core
                 for (nrDig = 0; nrDig < 14; nrDig++)
                 {
                     digits[nrDig] = int.Parse(
-                        cnpj.Substring(nrDig, 1));
+                        value.Substring(nrDig, 1));
                     if (nrDig <= 11)
                         sum[0] += (digits[nrDig] *
                                    int.Parse(ftmt.Substring(
