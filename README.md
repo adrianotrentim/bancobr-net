@@ -6,6 +6,13 @@ Biblioteca para integração bancária para pagamentos de contas, transferência
 
 ![Alt](https://repobeats.axiom.co/api/embed/0a24518c7999f1499a1c8ffa0ae20835db99ba22.svg "Situação do Projeto")
 
+## TODO
+
+- [x] Geração de remessa padrão CNAB 240
+- [x] Leitura de retorno padrão CNAB 240
+- [ ] Transformação da leitura do arquivo de retorno em uma lista de Movimento
+- [ ] Integração via API
+
 ## Segmentos
 
 ###### Transferência através de TED e PIX
@@ -39,13 +46,6 @@ Biblioteca para integração bancária para pagamentos de contas, transferência
 - [ ] 748 - Sicreedi
 - [ ] 001 - Banco do Brasil
 - [ ] 104 - Caixa Econômica
-
-## TODO
-
-- [x] Geração de remessa padrão CNAB 240
-- [x] Leitura de retorno padrão CNAB 240
-- [ ] Transformação da leitura do arquivo de retorno em uma instancia de Movimento
-- [ ] Integração via API
 
 ## Dúvidas?
 
