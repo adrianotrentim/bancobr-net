@@ -1,40 +1,51 @@
 # BancoBr.NET [![GitHub contributors](https://img.shields.io/github/contributors/adrianotrentim/bancobr-net)](https://github.com/adrianotrentim/bancobr-net/graphs/contributors) [![GitHub issues](https://img.shields.io/github/issues/adrianotrentim/bancobr-net)](https://github.com/adrianotrentim/bancobr-net/issues) [![GitHub issues-pr](https://img.shields.io/github/issues-pr/adrianotrentim/bancobr-net)](https://github.com/adrianotrentim/bancobr-net/pulls) [![GitHub](https://img.shields.io/github/license/adrianotrentim/bancobr-net)](https://github.com/adrianotrentim/bancobr-net/blob/main/LICENSE)
 
-Biblioteca para geração de remessa e leitura de retorno dos arquivos CNAB240 e demais layouts instituídos pelo FEBRABAN, para pagamentos de contas e transferências.
+Biblioteca para integração bancária para pagamentos de contas, transferências e PIX.
 
 ## Situação do Projeto
 
 ![Alt](https://repobeats.axiom.co/api/embed/0a24518c7999f1499a1c8ffa0ae20835db99ba22.svg "Situação do Projeto")
 
-## Segmentos Implementados
+## TODO
 
-#### Transferência através de TED e PIX
+- [x] Geração de remessa padrão CNAB 240
+- [x] Leitura de retorno padrão CNAB 240
+- [ ] Transformação da leitura do arquivo de retorno em uma lista de Movimento
+- [ ] Integração via API
 
-- Segmento A
-- Segmento B
+## Segmentos
 
-#### Pagamento de Títulos de Cobrança - Boletos
+###### Transferência através de TED e PIX
 
-- Segmento J
-- Segmento J-52
+- [x] Segmento A
+- [x] Segmento B
 
-## Instituições Implementadas
+###### Pagamento de Títulos de Cobrança - Boletos
 
-- 237 - Bradesco
+- [x] Segmento J
+- [x] Segmento J-52 - Código de Barras
+- [ ] Segmento J-52 - PIX QRCode
 
-## Próximas Implementações
+###### Pagamento de Convênios (Luz, Água, Telefone...) e Tributos com Código de Barras
 
-### Próximos Segmentos
+- [ ] Segmento O
+- [ ] Segmento W
 
-- Pagamento de Contas e Tributos com Código de Barras (Segmentos O e W)
-- Pagamento de Tributos sem Código de Barras (Segmentos N, B e W)
+###### Pagamento de Tributos sem Código de Barras
 
-### Próximas Instituições
+- [ ] Segmento N
+- [ ] Segmento B
+- [ ] Segmento W
 
-- 741 - Itaú
-- 033 - Santander
-- 756 - Sicoob
-- 001 - Banco do Brasil
+## Instituições
+
+- [x] 237 - Bradesco
+- [ ] 341 - Itaú
+- [ ] 033 - Santander
+- [ ] 756 - Sicoob
+- [ ] 748 - Sicreedi
+- [ ] 001 - Banco do Brasil
+- [ ] 104 - Caixa Econômica
 
 ## Dúvidas?
 
@@ -42,7 +53,7 @@ Abra um issue na página do projeto no GitHub ou [clique aqui](https://github.co
 
 ## Exemplos
 
-##### Criando uma remessa
+###### Criando uma remessa
 
 ```
 var numeroArquivo = 1;
@@ -134,7 +145,7 @@ File.WriteAllText(Path.Combine("C:\\Teste", $"cnab240_237.txt"), stringArquivo);
 
 ```
 
-##### Lendo um retorno
+###### Lendo um retorno
 
 ```
 var correntista = new Correntista()
@@ -173,11 +184,6 @@ foreach (var lote in (HeaderLote)cnab.Lotes) {
 
         if (detalhe is SegmentoB_Transferencia as segmentoB_Transferencia){
             var valorDocumento = segmentoB_Transferencia.ValorDocumento;
-            ......
-        }
-
-        if (detalhe is SegmentoA_PIX as segmentoA_PIX){
-            var bancoFavorecido = segmentoA_PIX.BancoFavorecido
             ......
         }
 
