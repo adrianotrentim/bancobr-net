@@ -176,11 +176,6 @@ foreach (var lote in (HeaderLote)cnab.Lotes) {
             ......
         }
 
-        if (detalhe is SegmentoA_PIX as segmentoA_PIX){
-            var bancoFavorecido = segmentoA_PIX.BancoFavorecido
-            ......
-        }
-
         if (detalhe is SegmentoB_PIX as segmentoB_PIX){
             var chavePIX = segmentoB_PIX.ChavePIX;
             ......
