@@ -1,4 +1,4 @@
-# BancoBr.NET
+# BancoBr.NET [![GitHub issues](https://img.shields.io/github/issues/adrianotrentim/bancobr-net)] (https://github.com/adrianotrentim/bancobr-net/issues) [![GitHub](https://img.shields.io/github/license/adrianotrentim/bancobr-net)](https://github.com/adrianotrentim/bancobr-net/blob/main/LICENSE)
 
 Biblioteca para geração de remessa e leitura de retorno dos arquivos CNAB240 e demais layouts instituídos pelo FEBRABAN, para pagamentos de contas e transferências.
 
@@ -6,7 +6,7 @@ Biblioteca para geração de remessa e leitura de retorno dos arquivos CNAB240 e
 
 ![Alt](https://repobeats.axiom.co/api/embed/0a24518c7999f1499a1c8ffa0ae20835db99ba22.svg "Situação do Projeto")
 
-# Segmentos Implementadas
+# Segmentos Implementados
 
 ## Transferência através de TED e PIX
 
