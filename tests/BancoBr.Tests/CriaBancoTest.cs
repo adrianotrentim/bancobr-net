@@ -89,7 +89,20 @@ namespace BancoBr.Tests
                         NumeroConta = 54321,
                         DVConta = "8"
                     }
-                },
+                }
+            };
+        }
+
+        /// <summary>
+        /// Todas as informações podem ser adicionadas com formatações e acentos, pois a biblioteca cuidará de retira-los
+        /// Todas as informações podem ser adicionadas em minúsculo, pois a biblioteca formatará em maiúsculo
+        ///
+        /// No caso de CEP, é um inteiro. A biblioteca cuidará para adicionar zeros a esquerda se necessário
+        /// </summary>
+        public static List<Movimento> CriarMovimentoTransferenciaPIX()
+        {
+            return new List<Movimento>
+            {
                 new Movimento
                 {
                     Favorecido = new Favorecido()
@@ -131,49 +144,66 @@ namespace BancoBr.Tests
             var stringArquivo = cnab.Exportar();
 
             var path = AppDomain.CurrentDomain.BaseDirectory + "..\\..\\..\\ArquivosGerados";
-            File.WriteAllText(Path.Combine(path, $"cnab240_{banco}.txt"), stringArquivo);
+            File.WriteAllText(Path.Combine(path, $"cnab240_{banco}_TED.txt"), stringArquivo);
 
             #region ::. Testes Básicos .::
 
             //Todas as linhas devem conter exatamente 240 caracteres
             foreach (var linha in stringArquivo.Split("\r\n"))
+            {
+                if (string.IsNullOrWhiteSpace(linha))
+                    continue; // Fim do Arquivo deve ter uma linha em branco
+
                 Assert.Equal(240, linha.Length);
+            }
 
             #endregion
 
-            //var fileName = Path.GetTempFileName();
-            //File.WriteAllText(fileName, stringArquivo);
+            movimentos = new List<Movimento>();
+            movimentos.AddRange(CriarMovimentoTransferenciaPIX());
+
+            cnab = new ArquivoCNAB(banco, correntista, numeroArquivo, localDebito, tipoServico, movimentos);
+            stringArquivo = cnab.Exportar();
+
+            path = AppDomain.CurrentDomain.BaseDirectory + "..\\..\\..\\ArquivosGerados";
+            File.WriteAllText(Path.Combine(path, $"cnab240_{banco}_PIX.txt"), stringArquivo);
+
+            #region ::. Testes Básicos .::
+
+            //Todas as linhas devem conter exatamente 240 caracteres
+            foreach (var linha in stringArquivo.Split("\r\n"))
+            {
+                if (string.IsNullOrWhiteSpace(linha))
+                    continue; // Fim do Arquivo deve ter uma linha em branco
+
+                Assert.Equal(240, linha.Length);
+            }
+
+            #endregion
         }
 
         [Theory, MemberData("CNAB240")]
         public static void ImportacaoRetorno(BancoEnum banco, Correntista correntista, int numeroArquivo, LocalDebitoEnum localDebito, TipoServicoEnum tipoServico)
         {
-            #region ::. Exportando e Importando o Arquivo
-
             var path = AppDomain.CurrentDomain.BaseDirectory + "..\\..\\..\\ArquivosGerados";
-            var fileName = Path.Combine(path, $"cnab240_{banco}.txt");
+            var fileName = Path.Combine(path, $"cnab240_{banco}_TED.txt");
 
             var linhas = File.ReadLines(fileName);
 
             var cnabLeitura = new ArquivoCNAB(banco, correntista);
             cnabLeitura.Importar(linhas);
 
-            //Assert.Equal(((HeaderArquivo)cnab.Header).NumeroConta, ((HeaderArquivo)cnabLeitura.Header).NumeroConta);
-            //Assert.Equal(((HeaderArquivo)cnab.Header).NomeEmpresa.RemoveAccents().ToUpper().Trim(), ((HeaderArquivo)cnabLeitura.Header).NomeEmpresa.Trim());
+            File.Delete(fileName);
 
-            //Assert.Equal(((HeaderLote)cnab.Lotes[0].Header).NumeroConta, ((HeaderLote)cnabLeitura.Lotes[0].Header).NumeroConta);
-            //Assert.Equal(((HeaderLote)cnab.Lotes[0].Header).NomeEmpresa.RemoveAccents().ToUpper(), ((HeaderLote)cnabLeitura.Lotes[0].Header).NomeEmpresa.Trim());
+            path = AppDomain.CurrentDomain.BaseDirectory + "..\\..\\..\\ArquivosGerados";
+            fileName = Path.Combine(path, $"cnab240_{banco}_PIX.txt");
 
-            //Assert.Equal(((SegmentoA)cnab.Lotes[0].Detalhe[0]).ContaFavorecido, ((SegmentoA)cnabLeitura.Lotes[0].Detalhe[0]).ContaFavorecido);
-            //Assert.Equal(((SegmentoA)cnab.Lotes[0].Detalhe[0]).NomeFavorecido.RemoveAccents().ToUpper(), ((SegmentoA)cnabLeitura.Lotes[0].Detalhe[0]).NomeFavorecido.Trim());
-            //Assert.Equal(((SegmentoA)cnab.Lotes[0].Detalhe[0]).ValorPagamento, ((SegmentoA)cnabLeitura.Lotes[0].Detalhe[0]).ValorPagamento);
+            linhas = File.ReadLines(fileName);
 
-            //Assert.Equal(((TrailerLote)cnab.Lotes[0].Trailer).QuantidadeRegistros, ((TrailerLote)cnabLeitura.Lotes[0].Trailer).QuantidadeRegistros);
-            //Assert.Equal(((TrailerArquivo)cnab.Trailer).QuantidadeRegistros, ((TrailerArquivo)cnabLeitura.Trailer).QuantidadeRegistros);
+            cnabLeitura = new ArquivoCNAB(banco, correntista);
+            cnabLeitura.Importar(linhas);
 
-            //File.Delete(fileName);
-
-            #endregion
+            File.Delete(fileName);
         }
     }
 }

@@ -123,13 +123,42 @@ namespace BancoBr.CNAB.Core
                 }
                 else if (tipoRegistro == "3") //Detalhe Detalhe
                 {
-                    var bancoType = cnab.Banco.GetType();
+                    var tipoLancamento = ((HeaderLote)lote.Header).TipoLancamento;
                     var tipoSegmento = linha.Substring(13, 1);
-                    var registro = (RegistroDetalheBase)bancoType.InvokeMember("NovoSegmento" + tipoSegmento, BindingFlags.InvokeMethod, null, cnab.Banco, new object[] { ((HeaderLote_Transferencia)lote.Header).TipoLancamento });
 
-                    lote.Detalhe.Add(registro);
+                    switch (tipoSegmento)
+                    {
+                        case "A":
+                            instanciaRegistro = cnab.Banco.NovoSegmentoA(tipoLancamento);
+                            break;
+                        case "B":
+                            instanciaRegistro = cnab.Banco.NovoSegmentoB(tipoLancamento);
+                            break;
+                        case "C":
+                            instanciaRegistro = cnab.Banco.NovoSegmentoC(tipoLancamento);
+                            break;
+                        case "J":
+                        {
+                            var complementoRegistro = linha.Substring(17, 2);
+                            
+                            switch (complementoRegistro)
+                            {
+                                case "00":
+                                    instanciaRegistro = cnab.Banco.NovoSegmentoJ(tipoLancamento);
+                                    break;
+                                case "52":
+                                    instanciaRegistro = cnab.Banco.NovoSegmentoJ52(tipoLancamento);
+                                    break;
+                            }
 
-                    instanciaRegistro = registro;
+                            break;
+                        }
+                    }
+
+                    if (instanciaRegistro == null)
+                        continue;
+
+                    lote.Detalhe.Add(instanciaRegistro as RegistroDetalheBase);
                 }
                 else if (tipoRegistro == "4") //Detalhe Finais de Lote
                 {
