@@ -1,6 +1,6 @@
 # BancoBr.NET [![GitHub contributors](https://img.shields.io/github/contributors/adrianotrentim/bancobr-net)](https://github.com/adrianotrentim/bancobr-net/graphs/contributors) [![GitHub issues](https://img.shields.io/github/issues/adrianotrentim/bancobr-net)](https://github.com/adrianotrentim/bancobr-net/issues) [![GitHub issues-pr](https://img.shields.io/github/issues-pr/adrianotrentim/bancobr-net)](https://github.com/adrianotrentim/bancobr-net/pulls) [![GitHub](https://img.shields.io/github/license/adrianotrentim/bancobr-net)](https://github.com/adrianotrentim/bancobr-net/blob/main/LICENSE)
 
-Biblioteca para geração de remessa e leitura de retorno dos arquivos CNAB240 e demais layouts instituídos pelo FEBRABAN, para pagamentos de contas e transferências.
+Biblioteca para integração bancária para pagamentos de contas, transferências e PIX.
 
 ## Situação do Projeto
 
@@ -39,6 +39,13 @@ Biblioteca para geração de remessa e leitura de retorno dos arquivos CNAB240 e
 - [ ] 748 - Sicreedi
 - [ ] 001 - Banco do Brasil
 - [ ] 104 - Caixa Econômica
+
+## TODO
+
+- [x] Geração de remessa padrão CNAB 240
+- [x] Leitura de retorno padrão CNAB 240
+- [ ] Transformação da leitura do arquivo de retorno em uma instancia de Movimento
+- [ ] Integração via API
 
 ## Dúvidas?
 
