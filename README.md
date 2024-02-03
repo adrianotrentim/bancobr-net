@@ -6,35 +6,39 @@ Biblioteca para geração de remessa e leitura de retorno dos arquivos CNAB240 e
 
 ![Alt](https://repobeats.axiom.co/api/embed/0a24518c7999f1499a1c8ffa0ae20835db99ba22.svg "Situação do Projeto")
 
-## Segmentos Implementados
+## Segmentos
 
 #### Transferência através de TED e PIX
 
-- Segmento A
-- Segmento B
+- [x] Segmento A
+- [x] Segmento B
 
 #### Pagamento de Títulos de Cobrança - Boletos
 
-- Segmento J
-- Segmento J-52
+- [x] Segmento J
+- [x] Segmento J-52 - Código de Barras
+- [ ] Segmento J-52 - PIX QRCode
 
-## Instituições Implementadas
+### Pagamento de Contas e Tributos com Código de Barras
 
-- 237 - Bradesco
+- [ ] Segmento O
+- [ ] Segmento W
 
-## Próximas Implementações
+### Pagamento de Tributos sem Código de Barras
 
-### Próximos Segmentos
+- [ ] Segmento N
+- [ ] Segmento B
+- [ ] Segmento W
 
-- Pagamento de Contas e Tributos com Código de Barras (Segmentos O e W)
-- Pagamento de Tributos sem Código de Barras (Segmentos N, B e W)
+## Instituições
 
-### Próximas Instituições
-
-- 741 - Itaú
-- 033 - Santander
-- 756 - Sicoob
-- 001 - Banco do Brasil
+- [x] 237 - Bradesco
+- [ ] 341 - Itaú
+- [ ] 033 - Santander
+- [ ] 756 - Sicoob
+- [ ] 748 - Sicreedi
+- [ ] 001 - Banco do Brasil
+- [ ] 104 - Caixa Econômica
 
 ## Dúvidas?
 
@@ -42,7 +46,7 @@ Abra um issue na página do projeto no GitHub ou [clique aqui](https://github.co
 
 ## Exemplos
 
-##### Criando uma remessa
+###### Criando uma remessa
 
 ```
 var numeroArquivo = 1;
@@ -134,7 +138,7 @@ File.WriteAllText(Path.Combine("C:\\Teste", $"cnab240_237.txt"), stringArquivo);
 
 ```
 
-##### Lendo um retorno
+###### Lendo um retorno
 
 ```
 var correntista = new Correntista()
