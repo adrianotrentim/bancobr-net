@@ -341,6 +341,15 @@ namespace BancoBr.CNAB.Base
                 _tipoLancamento == TipoLancamentoEnum.TEDOutraTitularidade
             )
             {
+                if (movimento.Favorecido.TipoPessoa == TipoInscricaoCPFCNPJEnum.CNPJ && !movimento.Favorecido.CPF_CNPJ.IsValidCNPJ())
+                    throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como transferência, mas o CNPJ do favorecido está inválido!");
+
+                if (movimento.Favorecido.TipoPessoa == TipoInscricaoCPFCNPJEnum.CPF && !movimento.Favorecido.CPF_CNPJ.IsValidCPF())
+                    throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como transferência, mas o CPF do favorecido está inválido!");
+
+                if (string.IsNullOrWhiteSpace(movimento.Favorecido.Nome))
+                    throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como transferência, mas o Nome do favorecido não foi informado!");
+
                 var segmento = (SegmentoB_Transferencia)NovoSegmentoB(_tipoLancamento);
 
                 segmento.LoteServico = numeroLote;
