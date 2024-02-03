@@ -19,12 +19,12 @@ Biblioteca para geração de remessa e leitura de retorno dos arquivos CNAB240 e
 - [x] Segmento J-52 - Código de Barras
 - [ ] Segmento J-52 - PIX QRCode
 
-### Pagamento de Contas e Tributos com Código de Barras
+#### Pagamento de Contas e Tributos com Código de Barras
 
 - [ ] Segmento O
 - [ ] Segmento W
 
-### Pagamento de Tributos sem Código de Barras
+#### Pagamento de Tributos sem Código de Barras
 
 - [ ] Segmento N
 - [ ] Segmento B
