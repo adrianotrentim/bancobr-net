@@ -1,6 +1,6 @@
 # BancoBr.NET
 
-Biblioteca para geração de remessa e leitura de retorno dos arquivos CNAB240 e demais layouts instituídos pelo FEBRABAN.
+Biblioteca para geração de remessa e leitura de retorno dos arquivos CNAB240 e demais layouts instituídos pelo FEBRABAN, para pagamentos de contas e transferências.
 
 # Situação do Projeto
 
