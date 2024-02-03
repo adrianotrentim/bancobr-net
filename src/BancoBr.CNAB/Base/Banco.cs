@@ -214,23 +214,6 @@ namespace BancoBr.CNAB.Base
             )
                 throw new InvalidOperationException("Para a forma de movimento TED, você deve informar uma finalidade!");
 
-            if (_tipoLancamento == TipoLancamentoEnum.PIXTransferencia)
-            {
-                var movimentoItem = movimento.MovimentoItem as MovimentoItemTransferenciaPIX;
-
-                if (string.IsNullOrWhiteSpace(movimentoItem.ChavePIX))
-                    throw new Exception($"A chave PIX não foi informada no movimento {movimento.NumeroDocumento}!");
-
-                if (movimentoItem.TipoChavePIX == FormaIniciacaoEnum.PIX_Email && !movimentoItem.ChavePIX.IsValidEmail())
-                    throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como PIX para e-mail, mas o e-mail está inválido!");
-
-                if (movimentoItem.TipoChavePIX == FormaIniciacaoEnum.PIX_Telefone && (movimentoItem.ChavePIX.JustNumbers().Length < 10 || movimentoItem.ChavePIX.JustNumbers().Length > 11))
-                    throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como PIX para celular, mas o número parece estar inválido!");
-
-                if (movimentoItem.TipoChavePIX == FormaIniciacaoEnum.PIX_CPF_CNPJ && !movimentoItem.ChavePIX.IsValidCPFCNPJ())
-                    throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como PIX para CPF ou CNPJ, mas o número está inválido!");
-            }
-
             #endregion
 
             var segmento = (SegmentoA)NovoSegmentoA(_tipoLancamento);
@@ -371,8 +354,19 @@ namespace BancoBr.CNAB.Base
                 _tipoLancamento == TipoLancamentoEnum.PIXTransferencia
             )
             {
-                if (string.IsNullOrEmpty(((MovimentoItemTransferenciaPIX)movimento.MovimentoItem).ChavePIX))
-                    throw new Exception($"Os dados para o PIX estão ausentes - Docto: {movimento.NumeroDocumento}");
+                var movimentoItem = movimento.MovimentoItem as MovimentoItemTransferenciaPIX;
+
+                if (string.IsNullOrWhiteSpace(movimentoItem.ChavePIX))
+                    throw new Exception($"A chave PIX não foi informada no movimento {movimento.NumeroDocumento}!");
+
+                if (movimentoItem.TipoChavePIX == FormaIniciacaoEnum.PIX_Email && !movimentoItem.ChavePIX.IsValidEmail())
+                    throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como PIX para e-mail, mas o e-mail está inválido!");
+
+                if (movimentoItem.TipoChavePIX == FormaIniciacaoEnum.PIX_Telefone && (movimentoItem.ChavePIX.JustNumbers().Length < 10 || movimentoItem.ChavePIX.JustNumbers().Length > 11))
+                    throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como PIX para celular, mas o número parece estar inválido!");
+
+                if (movimentoItem.TipoChavePIX == FormaIniciacaoEnum.PIX_CPF_CNPJ && !movimentoItem.ChavePIX.IsValidCPFCNPJ())
+                    throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como PIX para CPF ou CNPJ, mas o número está inválido!");
 
                 var segmento = (SegmentoB_PIX)NovoSegmentoB(_tipoLancamento);
 
