@@ -26,7 +26,7 @@ Biblioteca para integração bancária para pagamentos de contas, transferência
 - [x] Segmento J-52 - Código de Barras
 - [ ] Segmento J-52 - PIX QRCode
 
-###### Pagamento de Contas e Tributos com Código de Barras
+###### Pagamento de Convênios (Luz, Água, Telefone...) e Tributos com Código de Barras
 
 - [ ] Segmento O
 - [ ] Segmento W
