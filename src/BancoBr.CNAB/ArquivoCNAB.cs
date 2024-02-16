@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using BancoBr.CNAB.Base;
+using BancoBr.CNAB.Febraban;
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
 using Banco = BancoBr.CNAB.Base.Banco;
@@ -74,9 +75,9 @@ namespace BancoBr.CNAB
         public Correntista Correntista { get; }
         public List<Movimento> Movimentos { get; }
 
-        public RegistroBase Header { get; set; }
+        public HeaderArquivo Header { get; set; }
         public List<Lote> Lotes { get; set; }
-        public RegistroBase Trailer => Banco.NovoTrailerArquivo(this, Lotes);
+        public TrailerArquivo Trailer => Banco.NovoTrailerArquivo(this, Lotes);
 
         #region ::. Blocos de Movimento .::
 
