@@ -188,7 +188,7 @@ namespace BancoBr.Tests
 
             var linhas = File.ReadLines(fileName);
 
-            var cnabLeitura = new ArquivoCNAB(banco, correntista);
+            var cnabLeitura = new ArquivoCNAB(banco);
             cnabLeitura.Importar(linhas);
 
             File.Delete(fileName);
@@ -198,7 +198,7 @@ namespace BancoBr.Tests
 
             linhas = File.ReadLines(fileName);
 
-            cnabLeitura = new ArquivoCNAB(banco, correntista);
+            cnabLeitura = new ArquivoCNAB(banco);
             cnabLeitura.Importar(linhas);
 
             File.Delete(fileName);

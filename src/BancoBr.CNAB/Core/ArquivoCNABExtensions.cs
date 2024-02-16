@@ -106,6 +106,8 @@ namespace BancoBr.CNAB.Core
         {
             #region :: Lendo o Arquivo de Retorno .::
 
+            cnab.Arquivo = string.Join("\r\n", linhas);
+
             Lote lote = null;
 
             foreach (var linha in linhas)
@@ -257,13 +259,18 @@ namespace BancoBr.CNAB.Core
                     if (headerArquivo.CodigoBanco != cnab.Banco.Codigo)
                         throw new Exception("O banco informado é diferente do banco no arquivo de retorno!");
 
-                    if (
-                        headerArquivo.InscricaoEmpresa != Convert.ToInt64(cnab.Correntista.CPF_CNPJ.JustNumbers()) ||
-                        headerArquivo.Convenio != cnab.Correntista.Convenio ||
-                        headerArquivo.NumeroAgencia != cnab.Correntista.NumeroAgencia ||
-                        headerArquivo.NumeroConta != cnab.Correntista.NumeroConta
-                    )
-                        throw new Exception("O correntista informado é diferente do correntista no arquivo de retorno!");
+                    cnab.Banco.Empresa = new Correntista
+                    {
+                        TipoPessoa = headerArquivo.TipoInscricaoCpfcnpj,
+                        CPF_CNPJ = headerArquivo.InscricaoEmpresa.ToString(),
+                        Nome = headerArquivo.NomeEmpresa,
+                        Banco = headerArquivo.CodigoBanco,
+                        Convenio = headerArquivo.Convenio,
+                        NumeroAgencia = headerArquivo.NumeroAgencia,
+                        DVAgencia = headerArquivo.DVAgencia,
+                        NumeroConta = headerArquivo.NumeroConta,
+                        DVConta = headerArquivo.DVConta + (string.IsNullOrWhiteSpace(headerArquivo.DVAgenciaConta) ? "" : headerArquivo.DVAgenciaConta)
+                    };
                 }
 
                 #endregion

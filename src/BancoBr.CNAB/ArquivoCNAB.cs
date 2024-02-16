@@ -19,17 +19,15 @@ namespace BancoBr.CNAB
         /// <param name="Banco"></param>
         /// <param name="Correntista"></param>
         /// <exception cref="Exception"></exception>
-        public ArquivoCNAB(BancoEnum banco, Correntista correntista)
+        public ArquivoCNAB(BancoEnum banco)
         {
-            Correntista = correntista;
-
             switch (banco)
             {
                 case BancoEnum.BradescoSA:
-                    Banco = new Bradesco.Banco(correntista);
+                    Banco = new Bradesco.Banco(null);
                     break;
                 case BancoEnum.Itau:
-                    Banco = new Itau.Banco(correntista);
+                    Banco = new Itau.Banco(null);
                     break;
                 default:
                     throw new Exception("Banco não implementado!");
@@ -72,8 +70,8 @@ namespace BancoBr.CNAB
         }
 
         public Banco Banco { get; }
-        public Correntista Correntista { get; }
         public List<Movimento> Movimentos { get; }
+        public string Arquivo { get; set; }
 
         public HeaderArquivo Header { get; set; }
         public List<Lote> Lotes { get; set; }
