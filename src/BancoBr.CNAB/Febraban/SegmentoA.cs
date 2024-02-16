@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using BancoBr.CNAB.Base;
 using BancoBr.CNAB.Core;
 using BancoBr.Common.Attributes;
@@ -77,7 +78,7 @@ namespace BancoBr.CNAB.Febraban
         /// </summary>
         [CampoCNAB(218, 2)]
         public virtual string CodigoFinalidadeDOC { get; set; }
-        
+
         /*
          *
          * 220 a 225 - Implementar nas classes Herdadas
@@ -111,7 +112,7 @@ namespace BancoBr.CNAB.Febraban
 
                     var ocorrencia = ocorrencias.Substring(0, 2);
 
-                    listaOcorrencias.Add(new Ocorrencia(ocorrencia, CodigoOcorrenciasRetorno.Ocorrencias[ocorrencia]));
+                    listaOcorrencias.Add(CodigoOcorrenciasRetorno.Ocorrencias.FirstOrDefault(t => t.Codigo == ocorrencia));
 
                     ocorrencias = ocorrencias.Substring(2, ocorrencias.Length - 2);
                 }

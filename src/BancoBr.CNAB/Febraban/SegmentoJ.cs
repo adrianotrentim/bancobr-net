@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using BancoBr.CNAB.Base;
 using BancoBr.Common.Attributes;
 using BancoBr.Common.Core;
@@ -95,7 +96,7 @@ namespace BancoBr.CNAB.Febraban
 
                     var ocorrencia = ocorrencias.Substring(0, 2);
 
-                    listaOcorrencias.Add(new Ocorrencia(ocorrencia, CodigoOcorrenciasRetorno.Ocorrencias[ocorrencia]));
+                    listaOcorrencias.Add(CodigoOcorrenciasRetorno.Ocorrencias.First(t => t.Codigo == ocorrencia));
 
                     ocorrencias = ocorrencias.Substring(2, ocorrencias.Length - 2);
                 }
