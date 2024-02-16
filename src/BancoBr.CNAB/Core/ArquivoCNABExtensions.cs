@@ -311,6 +311,7 @@ namespace BancoBr.CNAB.Core
                         movimento.QuantidadeMoeda = segmentoATransferencia.QuantidadeMoeda;
                         movimento.DataPagamento = segmentoATransferencia.DataPagamento;
                         movimento.NumeroDocumento = segmentoATransferencia.NumeroDocumentoEmpresa;
+                        movimento.NumeroDocumentoNoBanco = segmentoATransferencia.NumeroDocumentoBanco;
                         movimento.ValorPagamento = segmentoATransferencia.ValorPagamento;
                         movimento.Ocorrencias = segmentoATransferencia.ListaOcorrenciasRetorno;
 
@@ -348,6 +349,7 @@ namespace BancoBr.CNAB.Core
                         movimento.QuantidadeMoeda = segmentoAPIX.QuantidadeMoeda;
                         movimento.DataPagamento = segmentoAPIX.DataPagamento;
                         movimento.NumeroDocumento = segmentoAPIX.NumeroDocumentoEmpresa;
+                        movimento.NumeroDocumentoNoBanco = segmentoAPIX.NumeroDocumentoBanco;
                         movimento.ValorPagamento = segmentoAPIX.ValorPagamento;
                         movimento.Ocorrencias = segmentoAPIX.ListaOcorrenciasRetorno;
                     }
@@ -382,7 +384,8 @@ namespace BancoBr.CNAB.Core
                         movimento.Moeda = segmentoJ.CodigoMoeda == 9 ? "BRL" : "";
                         movimento.QuantidadeMoeda = segmentoJ.QuantidadeMoeda;
                         movimento.DataPagamento = segmentoJ.DataPagamento;
-                        movimento.NumeroDocumento = segmentoJ.CodigoDocumentoNaEmpresa;
+                        movimento.NumeroDocumento = segmentoJ.NumeroDocumentoEmpresa;
+                        movimento.NumeroDocumentoNoBanco = segmentoJ.NumeroDocumentoBanco;
                         movimento.ValorPagamento = segmentoJ.ValorPagamento;
                         movimento.Ocorrencias = segmentoJ.ListaOcorrenciasRetorno;
 

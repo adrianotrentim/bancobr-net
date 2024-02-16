@@ -66,10 +66,10 @@ namespace BancoBr.CNAB.Febraban
         public virtual decimal QuantidadeMoeda { get; set; }
 
         [CampoCNAB(183, 20)]
-        public virtual string CodigoDocumentoNaEmpresa { get; set; }
+        public virtual string NumeroDocumentoEmpresa { get; set; }
 
         [CampoCNAB(203, 20)]
-        public virtual string CodigoDocumentoNoBanco { get; set; }
+        public virtual string NumeroDocumentoBanco { get; set; }
 
         [CampoCNAB(223, 2)]
         public virtual int CodigoMoeda { get; set; }

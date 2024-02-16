@@ -440,7 +440,7 @@ namespace BancoBr.CNAB.Base
             segmento.DataPagamento = movimento.DataPagamento;
             segmento.ValorPagamento = movimento.ValorPagamento;
             segmento.QuantidadeMoeda = movimento.QuantidadeMoeda;
-            segmento.CodigoDocumentoNaEmpresa = movimento.NumeroDocumento;
+            segmento.NumeroDocumentoEmpresa = movimento.NumeroDocumento;
             segmento.CodigoMoeda = movimentoItem.MoedaCodigoBarra;
 
             return PreencheSegmentoJ(segmento, movimento);

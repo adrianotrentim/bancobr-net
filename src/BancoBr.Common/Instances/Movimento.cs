@@ -27,7 +27,9 @@ namespace BancoBr.Common.Instances
         public DateTime DataPagamento { get; set; }
         public string NumeroDocumento { get; set; }
         public decimal ValorPagamento { get; set; }
-        
+
+        public string NumeroDocumentoNoBanco { get; set; }
+
         public MovimentoItem MovimentoItem { get; set; }
         public AvisoFavorecidoEnum AvisoAoFavorecido { get; set; }
         public List<Ocorrencia> Ocorrencias { get; set; }
