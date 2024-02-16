@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -89,6 +90,17 @@ namespace BancoBr.CNAB.Core
         #endregion
 
         #region ::. Métodos de Importação .::
+
+        public static void Importar(this ArquivoCNAB cnab, Stream linhasStream)
+        {
+            var linhas = new List<string>();
+
+            using(var sr = new StreamReader(linhasStream))
+                while(!sr.EndOfStream)
+                    linhas.Add(sr.ReadLine());
+
+            Importar(cnab, linhas.AsEnumerable());
+        }
 
         public static void Importar(this ArquivoCNAB cnab, IEnumerable<string> linhas)
         {
