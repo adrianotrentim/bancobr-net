@@ -32,6 +32,7 @@ namespace BancoBr.Common.Instances
 
         public MovimentoItem MovimentoItem { get; set; }
         public AvisoFavorecidoEnum AvisoAoFavorecido { get; set; }
+        
         public List<Ocorrencia> Ocorrencias { get; set; }
         public string Registro { get; set; }
     }
