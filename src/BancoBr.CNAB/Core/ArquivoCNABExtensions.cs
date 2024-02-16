@@ -308,7 +308,7 @@ namespace BancoBr.CNAB.Core
             {
                 var loteTipado = loteRet.Header as HeaderLote;
 
-                var movimento = new Movimento();
+                var movimento = new Movimento ();
 
                 foreach (var segmento in loteRet.Detalhe)
                 {
@@ -316,6 +316,7 @@ namespace BancoBr.CNAB.Core
                     {
                         movimento = criaMovimento(loteTipado);
 
+                        movimento.Registro = segmento.Registro;
                         movimento.Favorecido.Nome = segmentoATransferencia.NomeFavorecido;
                         movimento.TipoMovimento = segmentoATransferencia.TipoMovimento;
                         movimento.CodigoInstrucao = segmentoATransferencia.CodigoInstrucaoMovimento;
@@ -354,6 +355,7 @@ namespace BancoBr.CNAB.Core
                     {
                         movimento = criaMovimento(loteTipado);
 
+                        movimento.Registro = segmento.Registro;
                         movimento.Favorecido.Nome = segmentoAPIX.NomeFavorecido;
                         movimento.TipoMovimento = segmentoAPIX.TipoMovimento;
                         movimento.CodigoInstrucao = segmentoAPIX.CodigoInstrucaoMovimento;
@@ -390,6 +392,7 @@ namespace BancoBr.CNAB.Core
                     {
                         movimento = criaMovimento(loteTipado);
 
+                        movimento.Registro = segmento.Registro;
                         movimento.Favorecido.Nome = segmentoJ.NomeBeneficiario;
                         movimento.TipoMovimento = segmentoJ.TipoMovimento;
                         movimento.CodigoInstrucao = segmentoJ.CodigoInstrucaoMovimento;
