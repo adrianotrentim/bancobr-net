@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using BancoBr.CNAB.Base;
 using BancoBr.CNAB.Core;
 using BancoBr.Common.Attributes;
+using BancoBr.Common.Core;
 using BancoBr.Common.Enums;
+using BancoBr.Common.Instances;
 
 namespace BancoBr.CNAB.Febraban
 {
@@ -95,12 +97,12 @@ namespace BancoBr.CNAB.Febraban
         public virtual string Ocorrencias { get; set; }
 
         [CampoCNAB(true)]
-        public Dictionary<string, string> ListaOcorrenciasRetorno
+        public List<Ocorrencia> ListaOcorrenciasRetorno
         {
             get
             {
                 var ocorrencias = Ocorrencias;
-                var listaOcorrencias = new Dictionary<string, string>();
+                var listaOcorrencias = new List<Ocorrencia>();
 
                 while (true)
                 {
@@ -109,7 +111,7 @@ namespace BancoBr.CNAB.Febraban
 
                     var ocorrencia = ocorrencias.Substring(0, 2);
 
-                    listaOcorrencias.Add(ocorrencia, CodigoOcorrenciasRetorno.Ocorrencias[ocorrencia]);
+                    listaOcorrencias.Add(new Ocorrencia(ocorrencia, CodigoOcorrenciasRetorno.Ocorrencias[ocorrencia]));
 
                     ocorrencias = ocorrencias.Substring(2, ocorrencias.Length - 2);
                 }

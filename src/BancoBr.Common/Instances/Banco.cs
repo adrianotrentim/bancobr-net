@@ -20,7 +20,7 @@ namespace BancoBr.Common.Instances
 
         public override string ToString()
         {
-            return $"[({Codigo}) {Nome}";
+            return $"{Codigo} - {Nome}";
         }
     }
 }

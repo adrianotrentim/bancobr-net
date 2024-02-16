@@ -1,7 +1,5 @@
 ﻿using BancoBr.CNAB;
 using BancoBr.CNAB.Core;
-using BancoBr.CNAB.Febraban;
-using BancoBr.Common.Core;
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
 using Xunit;

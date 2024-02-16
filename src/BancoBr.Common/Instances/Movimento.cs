@@ -23,13 +23,14 @@ namespace BancoBr.Common.Instances
         public CodigoInstrucaoMovimentoEnum CodigoInstrucao { get; set; }
 
         public string Moeda { get; set; }
-        public int QuantidadeMoeda { get; set; }
+        public decimal QuantidadeMoeda { get; set; }
         public DateTime DataPagamento { get; set; }
         public string NumeroDocumento { get; set; }
         public decimal ValorPagamento { get; set; }
         
         public MovimentoItem MovimentoItem { get; set; }
         public AvisoFavorecidoEnum AvisoAoFavorecido { get; set; }
+        public List<Ocorrencia> Ocorrencias { get; set; }
     }
 
     public class MovimentoItem

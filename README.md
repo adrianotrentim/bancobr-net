@@ -10,7 +10,7 @@ Biblioteca para integração bancária para pagamentos de contas, transferência
 
 - [x] Geração de remessa padrão CNAB 240
 - [x] Leitura de retorno padrão CNAB 240
-- [ ] Transformação da leitura do arquivo de retorno em uma lista de Movimento
+- [x] Transformação da leitura do arquivo de retorno em uma lista de Movimento
 - [ ] Integração via API
 
 ## Segmentos
@@ -173,25 +173,8 @@ var linhas = File.ReadLines(fileName);
 var cnabLeitura = new ArquivoCNAB(BancoEnum.BradescoS, correntista);
 cnabLeitura.Importar(linhas);
 
-var dadosHeaderArquivo = (HeaderArquivo)cnab.Header;
-
-foreach (var lote in (HeaderLote)cnab.Lotes) {
-    foreach (var detalhe in lote.Detalhe) {
-        if (detalhe is SegmentoA_Transferencia as segmentoA_Transferencia){
-            var bancoFavorecido = segmentoA_Transferencia.BancoFavorecido;
-            ......
-        }
-
-        if (detalhe is SegmentoB_Transferencia as segmentoB_Transferencia){
-            var valorDocumento = segmentoB_Transferencia.ValorDocumento;
-            ......
-        }
-
-        if (detalhe is SegmentoB_PIX as segmentoB_PIX){
-            var chavePIX = segmentoB_PIX.ChavePIX;
-            ......
-        }
-    }
+foreach (var movimento in cnab.Movimentos) {
+    ......
 }
 
 ```

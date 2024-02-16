@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using BancoBr.CNAB.Base;
 using BancoBr.Common.Attributes;
+using BancoBr.Common.Core;
 using BancoBr.Common.Enums;
+using BancoBr.Common.Instances;
 
 namespace BancoBr.CNAB.Febraban
 {
@@ -60,7 +63,7 @@ namespace BancoBr.CNAB.Febraban
         public virtual decimal ValorPagamento { get; set; }
 
         [CampoCNAB(168, 15)]
-        public virtual int QuantidadeMoeda { get; set; }
+        public virtual decimal QuantidadeMoeda { get; set; }
 
         [CampoCNAB(183, 20)]
         public virtual string CodigoDocumentoNaEmpresa { get; set; }
@@ -75,6 +78,30 @@ namespace BancoBr.CNAB.Febraban
         public virtual string CNAB1 { get; set; }
 
         [CampoCNAB(231, 10)]
-        public virtual string CodigoOcorrencia { get; set; }
+        public virtual string Ocorrencias { get; set; }
+
+        [CampoCNAB(true)]
+        public List<Ocorrencia> ListaOcorrenciasRetorno
+        {
+            get
+            {
+                var ocorrencias = Ocorrencias;
+                var listaOcorrencias = new List<Ocorrencia>();
+
+                while (true)
+                {
+                    if (string.IsNullOrEmpty(ocorrencias))
+                        break;
+
+                    var ocorrencia = ocorrencias.Substring(0, 2);
+
+                    listaOcorrencias.Add(new Ocorrencia(ocorrencia, CodigoOcorrenciasRetorno.Ocorrencias[ocorrencia]));
+
+                    ocorrencias = ocorrencias.Substring(2, ocorrencias.Length - 2);
+                }
+
+                return listaOcorrencias;
+            }
+        }
     }
 }

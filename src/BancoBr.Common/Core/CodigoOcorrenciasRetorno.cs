@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace BancoBr.CNAB.Core
+namespace BancoBr.Common.Core
 {
     public static class CodigoOcorrenciasRetorno
     {

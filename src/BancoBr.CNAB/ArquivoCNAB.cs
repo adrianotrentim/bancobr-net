@@ -20,6 +20,8 @@ namespace BancoBr.CNAB
         /// <exception cref="Exception"></exception>
         public ArquivoCNAB(BancoEnum banco, Correntista correntista)
         {
+            Correntista = correntista;
+
             switch (banco)
             {
                 case BancoEnum.BradescoSA:
@@ -35,6 +37,7 @@ namespace BancoBr.CNAB
             Header  = Banco.NovoHeaderArquivo(0, null);
 
             Lotes = new List<Lote>();
+            Movimentos = new List<Movimento>();
         }
 
         /// <summary>
@@ -47,6 +50,8 @@ namespace BancoBr.CNAB
         {
             if (movimentos.Any(t => t.TipoLancamento == 0))
                 throw new Exception($"O(s) movimento(s) de número(s) {string.Join(", ", movimentos.Where(t => t.TipoLancamento == 0).Select(t => t.NumeroDocumento))} não possui(em) tipo de lançamento!");
+
+            Movimentos = movimentos;
 
             switch (banco)
             {
@@ -66,6 +71,9 @@ namespace BancoBr.CNAB
         }
 
         public Banco Banco { get; }
+        public Correntista Correntista { get; }
+        public List<Movimento> Movimentos { get; }
+
         public RegistroBase Header { get; set; }
         public List<Lote> Lotes { get; set; }
         public RegistroBase Trailer => Banco.NovoTrailerArquivo(this, Lotes);

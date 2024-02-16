@@ -1,5 +1,4 @@
 ﻿using BancoBr.Common.Attributes;
-using System.Collections.Generic;
 using BancoBr.Common.Enums;
 
 namespace BancoBr.CNAB.Base
