@@ -95,8 +95,8 @@ namespace BancoBr.CNAB.Core
         {
             var linhas = new List<string>();
 
-            using(var sr = new StreamReader(linhasStream))
-                while(!sr.EndOfStream)
+            using (var sr = new StreamReader(linhasStream))
+                while (!sr.EndOfStream)
                     linhas.Add(sr.ReadLine());
 
             Importar(cnab, linhas.AsEnumerable());
@@ -126,11 +126,14 @@ namespace BancoBr.CNAB.Core
                 }
                 else if (tipoRegistro == "1") //Header de Lote
                 {
-                    var formaPagmanento = Convert.ToInt32(linha.Substring(11, 2));
+                    if (Convert.ToInt32(linha.Substring(9, 2)) != 20) // 20 = Somente Pagamento de Fornecedores, DDA (Código 3) será desenvolvido posteriormente
+                        continue;
+
+                    var tipoLancamento = Convert.ToInt32(linha.Substring(11, 2));
 
                     lote = new Lote
                     {
-                        Header = cnab.Banco.NovoHeaderLote((TipoLancamentoEnum)formaPagmanento)
+                        Header = cnab.Banco.NovoHeaderLote((TipoLancamentoEnum)tipoLancamento)
                     };
 
                     cnab.Lotes.Add(lote);
@@ -143,6 +146,9 @@ namespace BancoBr.CNAB.Core
                 }
                 else if (tipoRegistro == "3") //Detalhe Detalhe
                 {
+                    if (lote?.Header == null) //Se não criou o lote ou o header, é porque os registros do segmento ainda não foram desenvolvidos.
+                        continue;
+
                     var tipoLancamento = ((HeaderLote)lote.Header).TipoLancamento;
                     var tipoSegmento = linha.Substring(13, 1);
 
@@ -158,11 +164,11 @@ namespace BancoBr.CNAB.Core
                             instanciaRegistro = cnab.Banco.NovoSegmentoC(tipoLancamento);
                             break;
                         case "J":
-                                if (linha.Substring(14, 3) == "   " && linha.Substring(17, 2) == "52")
-                                    instanciaRegistro = cnab.Banco.NovoSegmentoJ52(tipoLancamento);
-                                else
-                                    instanciaRegistro = cnab.Banco.NovoSegmentoJ(tipoLancamento);
-                                break;
+                            if (linha.Substring(14, 3) == "   " && linha.Substring(17, 2) == "52")
+                                instanciaRegistro = cnab.Banco.NovoSegmentoJ52(tipoLancamento);
+                            else
+                                instanciaRegistro = cnab.Banco.NovoSegmentoJ(tipoLancamento);
+                            break;
                     }
 
                     if (instanciaRegistro == null)
@@ -172,10 +178,14 @@ namespace BancoBr.CNAB.Core
                 }
                 else if (tipoRegistro == "4") //Detalhe Finais de Lote
                 {
-
+                    if (lote?.Header == null) //Se não criou o lote ou o header, é porque os registros do segmento ainda não foram desenvolvidos.
+                        continue;
                 }
                 else if (tipoRegistro == "5") //Trailer de Lote
                 {
+                    if (lote?.Header == null) //Se não criou o lote ou o header, é porque os registros do segmento ainda não foram desenvolvidos.
+                        continue;
+
                     lote.Trailer = cnab.Banco.NovoTrailerLote(lote);
                     instanciaRegistro = lote.Trailer;
                 }
@@ -315,7 +325,7 @@ namespace BancoBr.CNAB.Core
             {
                 var loteTipado = loteRet.Header as HeaderLote;
 
-                var movimento = new Movimento ();
+                var movimento = new Movimento();
 
                 foreach (var segmento in loteRet.Detalhe)
                 {
