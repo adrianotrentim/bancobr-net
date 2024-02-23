@@ -421,6 +421,40 @@ namespace BancoBr.CNAB.Base
             var segmento = (SegmentoJ)NovoSegmentoJ(_tipoLancamento);
 
             segmento.LoteServico = numeroLote;
+            segmento.TipoMovimento = movimento.TipoMovimento;
+            segmento.CodigoInstrucaoMovimento = movimento.CodigoInstrucao;
+
+            switch (segmento.TipoMovimento)
+            {
+                case TipoMovimentoEnum.Inclusao:
+                    if (
+                        segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheBloqueado &&
+                        segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado
+                        )
+                        throw new Exception($"O movimento {movimento.NumeroDocumento} está com código de instrução inválido!\r\nPara movimento de inclusão, favor utilizar os códigos de instrução:\r\n" +
+                                            $"{CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado.GetDescription()}\r\n" +
+                                            $"{CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheBloqueado.GetDescription()}");
+                    break;
+
+                case TipoMovimentoEnum.Alteracao:
+                    if (
+                        segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.AlteracaoPagamentoLiberadoParaBloqueio &&
+                        segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.AlteracaoPagamentoBloqueadoParaLiberacao &&
+                        segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.AlteracaoValorTitulo &&
+                        segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.AlteracaoDataPagamento &&
+                        segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.PagamentoDiretoFornecedor_Baixar
+                    )
+                        throw new Exception($"O movimento {movimento.NumeroDocumento} está com código de instrução inválido!\r\nPara movimento de alteração, favor utilizar os códigos de instrução:\r\n" +
+                                            $"{CodigoInstrucaoMovimentoEnum.AlteracaoPagamentoLiberadoParaBloqueio.GetDescription()}\r\n" +
+                                            $"{CodigoInstrucaoMovimentoEnum.AlteracaoPagamentoBloqueadoParaLiberacao.GetDescription()}\r\n" +
+                                            $"{CodigoInstrucaoMovimentoEnum.AlteracaoValorTitulo.GetDescription()}\r\n" +
+                                            $"{CodigoInstrucaoMovimentoEnum.AlteracaoDataPagamento.GetDescription()}\r\n" +
+                                            $"{CodigoInstrucaoMovimentoEnum.PagamentoDiretoFornecedor_Baixar.GetDescription()}");
+                    break;
+                case TipoMovimentoEnum.Exclusao:
+                    segmento.CodigoInstrucaoMovimento = CodigoInstrucaoMovimentoEnum.ExclusaoRegistroDetalheIncluidoAnteriormente;
+                    break;
+            }
 
             segmento.BancoCodigoBarra = movimentoItem.BancoCodigoBarra;
             segmento.MoedaCodigoBarra = movimentoItem.MoedaCodigoBarra;

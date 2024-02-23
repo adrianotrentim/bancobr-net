@@ -10,12 +10,6 @@ namespace BancoBr.CNAB.Febraban
         {
         }
 
-        [CampoCNAB(15, 1)]
-        public virtual TipoMovimentoEnum TipoMovimento { get; set; }
-
-        [CampoCNAB(16, 2)]
-        public virtual CodigoInstrucaoMovimentoEnum CodigoInstrucaoMovimento { get; set; }
-
         [CampoCNAB(21, 8)]
         public int ZERO1 { get; }
 
