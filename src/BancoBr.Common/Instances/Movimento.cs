@@ -98,4 +98,18 @@ namespace BancoBr.Common.Instances
         public decimal Desconto { get; set; }
         public decimal Acrescimo { get; set; }
     }
+
+    public class MovimentoItemPagamentoConvenioCodigoBarra : MovimentoItem
+    {
+        public MovimentoItemPagamentoConvenioCodigoBarra()
+        {
+        }
+
+        /// <summary>
+        /// Código de barras de 44 caracteres
+        /// </summary>
+        public string CodigoBarra { get; set; }
+
+        public DateTime DataVencimento { get; set; }
+    }
 }

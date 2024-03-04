@@ -48,6 +48,7 @@ namespace BancoBr.CNAB.Base
             RegistroDetalheBase segmentoC = null;
             RegistroDetalheBase segmentoJ = null;
             RegistroDetalheBase segmentoJ52 = null;
+            RegistroDetalheBase segmentoO = null;
 
             switch (_tipoLancamento)
             {
@@ -65,6 +66,9 @@ namespace BancoBr.CNAB.Base
                 case TipoLancamentoEnum.PagamentoTituloOutroBanco:
                     segmentoJ = PreencheSegmentoJBase(movimento, numeroLote);
                     segmentoJ52 = PreencheSegmentoJ52Base(movimento, numeroLote);
+                    break;
+                case TipoLancamentoEnum.PagamentoTributosCodigoBarra:
+                    segmentoO = PreencheSegmentoOBase(movimento, numeroLote);
                     break;
             }
 
@@ -101,6 +105,13 @@ namespace BancoBr.CNAB.Base
                 numeroRegistro++;
                 segmentoJ52.NumeroRegistro = numeroRegistro;
                 registros.Add(segmentoJ52);
+            }
+
+            if (segmentoO != null)
+            {
+                numeroRegistro++;
+                segmentoO.NumeroRegistro = numeroRegistro;
+                registros.Add(segmentoO);
             }
 
             return registros;
@@ -497,6 +508,72 @@ namespace BancoBr.CNAB.Base
             return PreencheSegmentoJ52(segmento, movimento);
         }
 
+        private RegistroDetalheBase PreencheSegmentoOBase(Movimento movimento, int numeroLote)
+        {
+            var movimentoItem = movimento.MovimentoItem as MovimentoItemPagamentoConvenioCodigoBarra;
+
+            #region ::. Validações .::
+
+            if (
+                string.IsNullOrWhiteSpace(movimentoItem.CodigoBarra) ||
+                movimentoItem.CodigoBarra?.Length != 44
+
+            )
+                throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como pagamento de convênios, mas o código de barras está inválido!");
+
+            if (string.IsNullOrWhiteSpace(movimento.Favorecido.Nome))
+                throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como pagamento de convênios, mas o Nome do favorecido não foi informado!");
+
+            #endregion
+
+            var segmento = (SegmentoO)NovoSegmentoO(_tipoLancamento);
+
+            segmento.LoteServico = numeroLote;
+            segmento.TipoMovimento = movimento.TipoMovimento;
+            segmento.CodigoInstrucaoMovimento = movimento.CodigoInstrucao;
+
+            switch (segmento.TipoMovimento)
+            {
+                case TipoMovimentoEnum.Inclusao:
+                    if (
+                        segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheBloqueado &&
+                        segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado
+                        )
+                        throw new Exception($"O movimento {movimento.NumeroDocumento} está com código de instrução inválido!\r\nPara movimento de inclusão, favor utilizar os códigos de instrução:\r\n" +
+                                            $"{CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado.GetDescription()}\r\n" +
+                                            $"{CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheBloqueado.GetDescription()}");
+                    break;
+
+                case TipoMovimentoEnum.Alteracao:
+                    if (
+                        segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.AlteracaoPagamentoLiberadoParaBloqueio &&
+                        segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.AlteracaoPagamentoBloqueadoParaLiberacao &&
+                        segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.AlteracaoValorTitulo &&
+                        segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.AlteracaoDataPagamento &&
+                        segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.PagamentoDiretoFornecedor_Baixar
+                    )
+                        throw new Exception($"O movimento {movimento.NumeroDocumento} está com código de instrução inválido!\r\nPara movimento de alteração, favor utilizar os códigos de instrução:\r\n" +
+                                            $"{CodigoInstrucaoMovimentoEnum.AlteracaoPagamentoLiberadoParaBloqueio.GetDescription()}\r\n" +
+                                            $"{CodigoInstrucaoMovimentoEnum.AlteracaoPagamentoBloqueadoParaLiberacao.GetDescription()}\r\n" +
+                                            $"{CodigoInstrucaoMovimentoEnum.AlteracaoValorTitulo.GetDescription()}\r\n" +
+                                            $"{CodigoInstrucaoMovimentoEnum.AlteracaoDataPagamento.GetDescription()}\r\n" +
+                                            $"{CodigoInstrucaoMovimentoEnum.PagamentoDiretoFornecedor_Baixar.GetDescription()}");
+                    break;
+                case TipoMovimentoEnum.Exclusao:
+                    segmento.CodigoInstrucaoMovimento = CodigoInstrucaoMovimentoEnum.ExclusaoRegistroDetalheIncluidoAnteriormente;
+                    break;
+            }
+
+            segmento.CodigoBarra = movimentoItem.CodigoBarra;
+            segmento.NomeBeneficiario = movimento.Favorecido.Nome;
+            segmento.DataVencimento = movimentoItem.DataVencimento;
+            segmento.DataPagamento = movimento.DataPagamento;
+            segmento.ValorPagamento = movimento.ValorPagamento;
+            segmento.NumeroDocumentoEmpresa = movimento.NumeroDocumento;
+            
+            return PreencheSegmentoO(segmento, movimento);
+        }
+
         private TrailerLoteBase PreencheTrailerLoteBase(Lote lote)
         {
             var trailerLote = (TrailerLote)NovoTrailerLote(lote);
@@ -537,6 +614,8 @@ namespace BancoBr.CNAB.Base
                 case TipoLancamentoEnum.LiquidacaoProprioBanco:
                 case TipoLancamentoEnum.PagamentoTituloOutroBanco:
                     return new HeaderLote_PagamentoTitulo(this);
+                case TipoLancamentoEnum.PagamentoTributosCodigoBarra:
+                    return new HeaderLote_PagamentoConvenio(this);
                 default:
                     throw new Exception("Tipo de lançamento não implementado");
             }
@@ -582,6 +661,8 @@ namespace BancoBr.CNAB.Base
 
         internal virtual RegistroDetalheBase NovoSegmentoJ52(TipoLancamentoEnum tipoLancamento) => new SegmentoJ52_Boleto(this);
 
+        internal virtual RegistroDetalheBase NovoSegmentoO(TipoLancamentoEnum tipoLancamento) => new SegmentoO(this);
+
         internal virtual TrailerLoteBase NovoTrailerLote(Lote lote) => new TrailerLote(lote);
 
         internal virtual TrailerArquivo NovoTrailerArquivo(ArquivoCNAB arquivoCnab, List<Lote> lotes) => new TrailerArquivo(arquivoCnab, lotes);
@@ -605,6 +686,7 @@ namespace BancoBr.CNAB.Base
         internal virtual RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Movimento movimento) => segmento;
         internal virtual RegistroDetalheBase PreencheSegmentoJ(RegistroDetalheBase segmento, Movimento movimento) => segmento;
         internal virtual RegistroDetalheBase PreencheSegmentoJ52(RegistroDetalheBase segmento, Movimento movimento) => segmento;
+        internal virtual RegistroDetalheBase PreencheSegmentoO(RegistroDetalheBase segmento, Movimento movimento) => segmento;
         internal virtual TrailerLoteBase PreencheTrailerLote(TrailerLoteBase trailerLote) => trailerLote;
 
         #endregion

@@ -169,6 +169,9 @@ namespace BancoBr.CNAB.Core
                             else
                                 instanciaRegistro = cnab.Banco.NovoSegmentoJ(tipoLancamento);
                             break;
+                        case "O":
+                            instanciaRegistro = cnab.Banco.NovoSegmentoO(tipoLancamento);
+                            break;
                     }
 
                     if (instanciaRegistro == null)
@@ -314,6 +317,9 @@ namespace BancoBr.CNAB.Core
                     case TipoLancamentoEnum.PagamentoTituloOutroBanco:
                         movimento.MovimentoItem = new MovimentoItemPagamentoTituloCodigoBarra();
                         break;
+                    case TipoLancamentoEnum.PagamentoTributosCodigoBarra:
+                        movimento.MovimentoItem = new MovimentoItemPagamentoConvenioCodigoBarra();
+                        break;
                 }
 
                 cnab.Movimentos.Add(movimento);
@@ -435,6 +441,25 @@ namespace BancoBr.CNAB.Core
                     {
                         movimento.Favorecido.TipoPessoa = segmentoJ52Boleto.TipoInscricaoCedente;
                         movimento.Favorecido.CPF_CNPJ = segmentoJ52Boleto.InscricaoCedente.ToString();
+                    }
+                    else if (segmento is SegmentoO segmentoO)
+                    {
+                        movimento = criaMovimento(loteTipado);
+
+                        movimento.Registro = segmento.Registro;
+                        movimento.Favorecido.Nome = segmentoO.NomeBeneficiario;
+                        movimento.TipoMovimento = segmentoO.TipoMovimento;
+                        movimento.CodigoInstrucao = segmentoO.CodigoInstrucaoMovimento;
+                        movimento.DataPagamento = segmentoO.DataPagamento;
+                        movimento.NumeroDocumento = segmentoO.NumeroDocumentoEmpresa;
+                        movimento.NumeroDocumentoNoBanco = segmentoO.NumeroDocumentoBanco;
+                        movimento.ValorPagamento = segmentoO.ValorPagamento;
+                        movimento.Ocorrencias = segmentoO.ListaOcorrenciasRetorno;
+
+                        var movItem = movimento.MovimentoItem as MovimentoItemPagamentoConvenioCodigoBarra;
+                        movItem.CodigoBarra = segmentoO.CodigoBarra;
+                        movItem.DataVencimento = segmentoO.DataVencimento;
+                        
                     }
                 }
             }
