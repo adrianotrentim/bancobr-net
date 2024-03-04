@@ -28,7 +28,7 @@ Biblioteca para integração bancária para pagamentos de contas, transferência
 
 ###### Pagamento de Convênios (Luz, Água, Telefone...) e Tributos com Código de Barras
 
-- [ ] Segmento O
+- [x] Segmento O
 - [ ] Segmento W
 
 ###### Pagamento de Tributos sem Código de Barras

@@ -9,11 +9,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{AA302326-C69
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{AC436793-BF34-421A-8F1B-8EE02F383B55}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BancoBr.Common", "src\BancoBr.Common\BancoBr.Common.csproj", "{423E84E8-0AB8-4A3D-97B8-09D6D0A106EA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BancoBr.Common", "src\BancoBr.Common\BancoBr.Common.csproj", "{423E84E8-0AB8-4A3D-97B8-09D6D0A106EA}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BancoBr.API", "src\BancoBr.API\BancoBr.API.csproj", "{42C35732-AA59-4F60-A386-D831E97B062B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BancoBr.CNAB", "src\BancoBr.CNAB\BancoBr.CNAB.csproj", "{CA0FD2BB-DF05-4844-B6AE-8D6E27CEF9B0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C5D684AF-6E6C-415E-A56F-B6762A57F431}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
