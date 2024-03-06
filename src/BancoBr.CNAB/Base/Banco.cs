@@ -183,7 +183,7 @@ namespace BancoBr.CNAB.Base
                 ((HeaderLote_TransferenciaConvenio)headerLote).LocalDebito = _localDebito;
             }
 
-            return PreencheHeaderLote(headerLote);
+            return PreencheHeaderLote(headerLote, _tipoLancamento);
         }
 
         private RegistroDetalheBase PreencheSegmentoABase(Movimento movimento, int numeroLote)
@@ -597,7 +597,7 @@ namespace BancoBr.CNAB.Base
                         VersaoLote = 12,
                         Operacao = "C"
                     };
-                    return headerLote;
+                    break;
                 default:
                     throw new Exception("Tipo de lançamento não implementado");
             }
@@ -662,7 +662,7 @@ namespace BancoBr.CNAB.Base
          *************************************************************************************************************************************/
 
         internal virtual HeaderArquivo PreencheHeaderArquivo(HeaderArquivo headerArquivo, List<Movimento> movimentos) => headerArquivo;
-        internal virtual HeaderLoteBase PreencheHeaderLote(HeaderLoteBase headerLote) => headerLote;
+        internal virtual HeaderLoteBase PreencheHeaderLote(HeaderLoteBase headerLote, TipoLancamentoEnum tipoLancamento) => headerLote;
         internal virtual RegistroDetalheBase PreencheSegmentoA(RegistroDetalheBase segmento, Movimento movimento) => segmento;
         internal virtual RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Movimento movimento) => segmento;
         internal virtual RegistroDetalheBase PreencheSegmentoJ(RegistroDetalheBase segmento, Movimento movimento) => segmento;

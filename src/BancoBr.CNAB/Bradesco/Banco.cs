@@ -29,10 +29,19 @@ namespace BancoBr.CNAB.Bradesco
             return headerArquivo;
         }
 
-        internal override HeaderLoteBase PreencheHeaderLote(HeaderLoteBase headerLote)
+        internal override HeaderLoteBase PreencheHeaderLote(HeaderLoteBase headerLote, TipoLancamentoEnum tipoLancamento)
         {
-            if (headerLote is HeaderLote_TransferenciaConvenio headerTransferencia)
-                headerTransferencia.VersaoLote = 45;
+            switch (tipoLancamento)
+            {
+                case TipoLancamentoEnum.CreditoContaMesmoBanco:
+                case TipoLancamentoEnum.CreditoContaPoupancaMesmoBanco:
+                case TipoLancamentoEnum.OrdemPagamento:
+                case TipoLancamentoEnum.TEDMesmaTitularidade:
+                case TipoLancamentoEnum.TEDOutraTitularidade:
+                case TipoLancamentoEnum.PIXTransferencia:
+                    ((HeaderLote)headerLote).VersaoLote = 45;
+                    break;
+            }
 
             return headerLote;
         }
