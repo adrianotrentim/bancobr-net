@@ -7,7 +7,7 @@ namespace BancoBr.CNAB.Febraban
 {
     public class HeaderLote : HeaderLoteBase
     {
-        protected HeaderLote(Banco banco) 
+        public HeaderLote(Banco banco) 
             : base(banco)
         {
         }

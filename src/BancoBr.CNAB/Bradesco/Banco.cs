@@ -31,7 +31,7 @@ namespace BancoBr.CNAB.Bradesco
 
         internal override HeaderLoteBase PreencheHeaderLote(HeaderLoteBase headerLote)
         {
-            if (headerLote is HeaderLote_Transferencia headerTransferencia)
+            if (headerLote is HeaderLote_TransferenciaConvenio headerTransferencia)
                 headerTransferencia.VersaoLote = 45;
 
             return headerLote;
@@ -46,7 +46,5 @@ namespace BancoBr.CNAB.Bradesco
 
             return segmento;
         }
-
-        internal override RegistroDetalheBase PreencheSegmentoC(RegistroDetalheBase segmento, Movimento movimento) => null;
     }
 }

@@ -19,9 +19,6 @@ namespace BancoBr.CNAB.Itau
         private new string DVAgencia { get; set; }
 
         [CampoCNAB(true)]
-        private new string DVAgenciaConta { get; set; }
-
-        [CampoCNAB(true)]
         private new int NumeroSequencialArquivo { get; set; }
 
         [CampoCNAB(true)]
@@ -40,21 +37,12 @@ namespace BancoBr.CNAB.Itau
 
         [CampoCNAB(33, 20)]
         public override string CNAB2 { get; set; }
-        
-        [CampoCNAB(53, 5)]
-        public override int NumeroAgencia { get; set; }
 
         [CampoCNAB(58, 1)]
         public override string CNAB3 { get; set; }
 
-        [CampoCNAB(59, 12)]
-        public override int NumeroConta { get; set; }
-
         [CampoCNAB(71, 1)]
         public string CNAB4 { get; set; }
-
-        [CampoCNAB(72, 1)]
-        public override string DVConta { get; set; }
 
         [CampoCNAB(133, 10)]
         public string CNAB5 { get; set; }

@@ -3,9 +3,9 @@ using BancoBr.Common.Enums;
 
 namespace BancoBr.CNAB.Itau
 {
-    public class HeaderLote_TED : Febraban.HeaderLote_Transferencia
+    public sealed class HeaderLote : Febraban.HeaderLote_TransferenciaConvenio
     {
-        public HeaderLote_TED(Common.Instances.Banco banco)
+        public HeaderLote(Common.Instances.Banco banco)
             : base(banco)
         {
             VersaoLote = 40;
@@ -21,10 +21,7 @@ namespace BancoBr.CNAB.Itau
         private new string DVAgencia { get; set; }
 
         [CampoCNAB(true)]
-        private new string DVAgenciaConta { get; set; }
-
-        [CampoCNAB(true)]
-        private new string Informacao1 { get; set; }
+        private new string DVConta { get; set; }
 
         [CampoCNAB(true)]
         private new LocalDebitoEnum LocalDebito { get; set; }
@@ -42,15 +39,6 @@ namespace BancoBr.CNAB.Itau
 
         [CampoCNAB(71, 1)]
         public string CNAB4 { get; set; }
-
-        [CampoCNAB(72, 1)]
-        public override string DVConta { get; set; }
-
-        [CampoCNAB(103, 30)]
-        public string FinalidadeLote { get; set; }
-
-        [CampoCNAB(133, 10)]
-        public string HistoricoContaCorrente { get; set; }
 
         [CampoCNAB(223, 8)]
         public string CNAB5 { get; set; }

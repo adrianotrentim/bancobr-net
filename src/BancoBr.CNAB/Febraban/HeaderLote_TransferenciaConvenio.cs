@@ -8,13 +8,11 @@ using BancoBr.Common.Enums;
 
 namespace BancoBr.CNAB.Febraban
 {
-    public class HeaderLote_Transferencia : HeaderLote
+    public class HeaderLote_TransferenciaConvenio : HeaderLote
     {
-        public HeaderLote_Transferencia(Common.Instances.Banco banco)
+        public HeaderLote_TransferenciaConvenio(Common.Instances.Banco banco)
             : base(banco)
         {
-            VersaoLote = 46;
-            Operacao = "C";
         }
 
         [CampoCNAB(223, 2)]

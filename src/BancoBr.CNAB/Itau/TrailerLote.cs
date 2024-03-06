@@ -25,8 +25,5 @@ namespace BancoBr.CNAB.Itau
 
         [CampoCNAB(66, 171)]
         public override string CNAB2 { get; set; }
-
-        [CampoCNAB(231, 10)]
-        public virtual string Ocorrencias { get; set; }
     }
 }

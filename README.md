@@ -10,7 +10,6 @@ Biblioteca para integração bancária para pagamentos de contas, transferência
 
 - [x] Geração de remessa padrão CNAB 240
 - [x] Leitura de retorno padrão CNAB 240
-- [x] Transformação da leitura do arquivo de retorno em uma lista de Movimento
 - [ ] Integração via API
 
 ## Segmentos
