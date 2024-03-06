@@ -154,6 +154,27 @@ namespace BancoBr.CNAB.Base
         {
             var headerLote = NovoHeaderLote(_tipoLancamento);
 
+            headerLote.Operacao = "C";
+
+            switch (_tipoLancamento)
+            {
+                case TipoLancamentoEnum.CreditoContaMesmoBanco:
+                case TipoLancamentoEnum.CreditoContaPoupancaMesmoBanco:
+                case TipoLancamentoEnum.OrdemPagamento:
+                case TipoLancamentoEnum.TEDMesmaTitularidade:
+                case TipoLancamentoEnum.TEDOutraTitularidade:
+                case TipoLancamentoEnum.PIXTransferencia:
+                    ((HeaderLote)headerLote).VersaoLote = 46;
+                    break;
+                case TipoLancamentoEnum.LiquidacaoProprioBanco:
+                case TipoLancamentoEnum.PagamentoTituloOutroBanco:
+                    ((HeaderLote)headerLote).VersaoLote = 40;
+                    break;
+                case TipoLancamentoEnum.PagamentoTributosCodigoBarra:
+                    ((HeaderLote)headerLote).VersaoLote = 12;
+                    break;
+            }
+
             ((HeaderLote)headerLote).Servico = _tipoServico;
             ((HeaderLote)headerLote).TipoLancamento = _tipoLancamento;
             ((HeaderLote)headerLote).TipoInscricaoEmpresa = Empresa.TipoPessoa;
@@ -567,8 +588,6 @@ namespace BancoBr.CNAB.Base
 
         internal virtual HeaderLoteBase NovoHeaderLote(TipoLancamentoEnum tipoLancamento)
         {
-            HeaderLote headerLote;
-
             switch (tipoLancamento)
             {
                 case TipoLancamentoEnum.CreditoContaMesmoBanco:
@@ -577,32 +596,15 @@ namespace BancoBr.CNAB.Base
                 case TipoLancamentoEnum.TEDMesmaTitularidade:
                 case TipoLancamentoEnum.TEDOutraTitularidade:
                 case TipoLancamentoEnum.PIXTransferencia:
-                    headerLote = new HeaderLote_TransferenciaConvenio(this)
-                    {
-                        VersaoLote = 46,
-                        Operacao = "C"
-                    };
-                    break;
+                    return new HeaderLote_TransferenciaConvenio(this);
                 case TipoLancamentoEnum.LiquidacaoProprioBanco:
                 case TipoLancamentoEnum.PagamentoTituloOutroBanco:
-                    headerLote = new HeaderLote(this)
-                    {
-                        VersaoLote = 40,
-                        Operacao = "C"
-                    };
-                    break;
+                    return new HeaderLote(this);
                 case TipoLancamentoEnum.PagamentoTributosCodigoBarra:
-                    headerLote = new HeaderLote_TransferenciaConvenio(this)
-                    {
-                        VersaoLote = 12,
-                        Operacao = "C"
-                    };
-                    break;
+                    return new HeaderLote_TransferenciaConvenio(this);
                 default:
                     throw new Exception("Tipo de lançamento não implementado");
             }
-
-            return headerLote;
         }
 
         internal virtual RegistroDetalheBase NovoSegmentoA(TipoLancamentoEnum tipoLancamento)
