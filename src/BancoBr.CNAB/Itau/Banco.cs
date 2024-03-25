@@ -12,9 +12,10 @@ namespace BancoBr.CNAB.Itau
         public Banco(Correntista empresa)
             : base(empresa, 341, "Banco Itaú", 80)
         {
-        }
+        } 
 
         internal override Febraban.HeaderArquivo NovoHeaderArquivo(int numeroRemessa, List<Movimento> movimentos) => new HeaderArquivo(this);
+
         internal override Febraban.TrailerArquivo NovoTrailerArquivo(ArquivoCNAB arquivoCnab, List<Lote> lotes) => new TrailerArquivo(arquivoCnab, lotes);
 
         internal override HeaderLoteBase NovoHeaderLote(TipoLancamentoEnum tipoLancamento) => new HeaderLote(this);

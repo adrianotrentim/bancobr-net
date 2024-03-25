@@ -19,6 +19,9 @@ namespace BancoBr.CNAB.Itau
         private new string DVAgencia { get; set; }
 
         [CampoCNAB(true)]
+        private new string DVConta { get; set; }
+
+        [CampoCNAB(true)]
         private new int NumeroSequencialArquivo { get; set; }
 
         [CampoCNAB(true)]

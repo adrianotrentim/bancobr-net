@@ -26,7 +26,7 @@ namespace BancoBr.CNAB.Febraban
 
         [CampoCNAB(33, 20)]
         public virtual string Convenio { get; set; }
-
+         
         [CampoCNAB(53, 5)]
         public virtual int NumeroAgencia { get; set; }
 

@@ -20,6 +20,13 @@ namespace BancoBr.CNAB.Base
         
         #region ::. Métodos Públicos .::
 
+        internal HeaderArquivo CriarHeaderArquivo(int numeroRemessa, List<Movimento> movimentos)
+        {
+            var headerArquivo = NovoHeaderArquivo(numeroRemessa, movimentos);
+
+            return PreencheHeaderArquivoBase(headerArquivo, numeroRemessa, movimentos);
+        }
+
         internal Lote NovoLote(TipoServicoEnum tipoServico, TipoLancamentoEnum tipoLancamento, LocalDebitoEnum localDebito)
         {
             _tipoServico = tipoServico;
@@ -579,12 +586,7 @@ namespace BancoBr.CNAB.Base
          *
          *************************************************************************************************************************************/
 
-        internal virtual HeaderArquivo NovoHeaderArquivo(int numeroRemessa, List<Movimento> movimentos)
-        {
-            var headerArquivo = new HeaderArquivo(this);
-
-            return PreencheHeaderArquivoBase(headerArquivo, numeroRemessa, movimentos);
-        }
+        internal virtual HeaderArquivo NovoHeaderArquivo(int numeroRemessa, List<Movimento> movimentos) => new HeaderArquivo(this);
 
         internal virtual HeaderLoteBase NovoHeaderLote(TipoLancamentoEnum tipoLancamento)
         {

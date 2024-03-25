@@ -64,7 +64,7 @@ namespace BancoBr.CNAB
                     throw new Exception("Banco não implementado!");
             }
 
-            Header = Banco.NovoHeaderArquivo(numeroRemessa, movimentos);
+            Header = Banco.CriarHeaderArquivo(numeroRemessa, movimentos);
 
             GerarLotes(tipoServico, localDebito, movimentos);
         }
