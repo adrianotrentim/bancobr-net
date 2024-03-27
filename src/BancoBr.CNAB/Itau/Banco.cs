@@ -12,7 +12,9 @@ namespace BancoBr.CNAB.Itau
         public Banco(Correntista empresa)
             : base(empresa, 341, "Banco Itaú", 80)
         {
-        } 
+        }
+
+        #region ::. Instancias .::
 
         internal override Febraban.HeaderArquivo NovoHeaderArquivo(int numeroRemessa, List<Movimento> movimentos) => new HeaderArquivo(this);
 
@@ -47,6 +49,17 @@ namespace BancoBr.CNAB.Itau
 
         internal override TrailerLoteBase NovoTrailerLote(Lote lote) => new TrailerLote(lote);
 
+        #endregion
+
+        #region ::. Preenchimento .::
+
+        internal override Febraban.HeaderArquivo PreencheHeaderArquivo(Febraban.HeaderArquivo headerArquivo, List<Movimento> movimentos)
+        {
+            headerArquivo.DVAgenciaConta = Empresa.DVConta.Substring(0, 1);
+
+            return headerArquivo;
+        }
+
         internal override HeaderLoteBase PreencheHeaderLote(HeaderLoteBase headerLote, TipoLancamentoEnum tipoLancamento)
         {
             switch (tipoLancamento)
@@ -77,15 +90,55 @@ namespace BancoBr.CNAB.Itau
             {
                 transferencia.DVAgenciaFavorecido = "";
                 transferencia.DVContaFavorecido = "";
-
-                if (movimento.MovimentoItem is MovimentoItemTransferenciaPIX)
+                
+                if (movimento.MovimentoItem is MovimentoItemTransferenciaPIX pix)
                 {
                     transferencia.IdentificacaoTransferencia = "04";
-                } 
+                }
                 else if (movimento.MovimentoItem is MovimentoItemTransferenciaTED movimentoTED)
                 {
                     transferencia.IdentificacaoTransferencia = movimentoTED.TipoConta == TipoContaEnum.ContaCorrente ? "01" : "03";
+                    transferencia.CamaraCentralizadora = 0; // NOTA 35;
+                    transferencia.DVContaFavorecido = "";
+                    transferencia.DVAgenciaContaFavorecido = "";
+
+                    if (movimentoTED.DVConta?.Length == 2)
+                    {
+                        transferencia.DVContaFavorecido = movimentoTED.DVConta.Substring(0, 1);
+                        transferencia.DVAgenciaContaFavorecido = movimentoTED.DVConta.Substring(1, 1);
+                    } 
+                    else if (movimentoTED.DVConta?.Length == 1)
+                    {
+                        transferencia.DVContaFavorecido = "";
+                        transferencia.DVAgenciaContaFavorecido = movimentoTED.DVConta.Substring(0, 1);
+                    }
                 }
+
+                if (transferencia.CodigoInstrucaoMovimento == CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheBloqueado)
+                    transferencia.CodigoInstrucaoMovimento = CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado;
+            }
+
+            return segmento;
+        }
+
+        internal override RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Movimento movimento)
+        {
+            if (segmento is SegmentoB_PIX pix)
+            {
+                if (pix.FormaIniciacao == FormaIniciacaoEnum.PIX_Telefone)
+                    if (!pix.ChavePIX.Contains("+55"))
+                        pix.ChavePIX = "+55" + pix.ChavePIX;
+            }
+
+            return segmento;
+        }
+
+        internal override RegistroDetalheBase PreencheSegmentoJ(RegistroDetalheBase segmento, Movimento movimento)
+        {
+            if (segmento is SegmentoJ boleto)
+            {
+                if (boleto.CodigoInstrucaoMovimento == CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheBloqueado)
+                    boleto.CodigoInstrucaoMovimento = CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado;
             }
 
             return segmento;
@@ -101,5 +154,8 @@ namespace BancoBr.CNAB.Itau
 
             return segmento;
         }
+
+        #endregion
     }
 }
+ 
