@@ -19,7 +19,7 @@ namespace BancoBr.CNAB.Febraban
         }
 
         [CampoCNAB(9, 9)]
-        public virtual int CNAB1 { get; set; }
+        public virtual string CNAB1 { get; set; }
 
         [CampoCNAB(18, 6)]
         public virtual int QuantidadeLotes => _lotes.Count;
