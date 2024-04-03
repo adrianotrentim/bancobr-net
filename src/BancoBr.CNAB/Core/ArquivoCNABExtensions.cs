@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using BancoBr.CNAB.Base;
 using BancoBr.CNAB.Febraban;
@@ -10,8 +9,6 @@ using BancoBr.Common.Attributes;
 using BancoBr.Common.Core;
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
-using BancoBr.Common.Interfaces.CNAB;
-using Banco = BancoBr.CNAB.Base.Banco;
 
 namespace BancoBr.CNAB.Core
 {
@@ -332,81 +329,91 @@ namespace BancoBr.CNAB.Core
 
                 foreach (var segmento in loteRet.Detalhe)
                 {
-                    if (segmento is SegmentoA_Transferencia segmentoATransferencia)
+                    if (segmento is SegmentoA segmentoA)
                     {
                         movimento = criaMovimento(loteTipado);
 
                         movimento.Registro = segmento.Registro;
-                        movimento.Favorecido.Nome = segmentoATransferencia.NomeFavorecido;
-                        movimento.TipoMovimento = segmentoATransferencia.TipoMovimento;
-                        movimento.CodigoInstrucao = segmentoATransferencia.CodigoInstrucaoMovimento;
-                        movimento.Moeda = segmentoATransferencia.TipoMoeda;
-                        movimento.QuantidadeMoeda = segmentoATransferencia.QuantidadeMoeda;
-                        movimento.DataPagamento = segmentoATransferencia.DataPagamento;
-                        movimento.NumeroDocumento = segmentoATransferencia.NumeroDocumentoEmpresa;
-                        movimento.NumeroDocumentoNoBanco = segmentoATransferencia.NumeroDocumentoBanco;
-                        movimento.ValorPagamento = segmentoATransferencia.ValorPagamento;
-                        movimento.Ocorrencias = segmentoATransferencia.ListaOcorrenciasRetorno;
+                        movimento.Favorecido.Nome = segmentoA.NomeFavorecido;
+                        movimento.TipoMovimento = segmentoA.TipoMovimento;
+                        movimento.CodigoInstrucao = segmentoA.CodigoInstrucaoMovimento;
+                        movimento.Moeda = segmentoA.TipoMoeda;
+                        movimento.QuantidadeMoeda = segmentoA.QuantidadeMoeda;
+                        movimento.DataPagamento = segmentoA.DataPagamento;
+                        movimento.NumeroDocumento = segmentoA.NumeroDocumentoEmpresa;
+                        movimento.NumeroDocumentoNoBanco = segmentoA.NumeroDocumentoBanco;
+                        movimento.ValorPagamento = segmentoA.ValorPagamento;
+                        movimento.Ocorrencias = segmentoA.ListaOcorrenciasRetorno;
 
-                        var movItem = movimento.MovimentoItem as MovimentoItemTransferenciaTED;
-
-                        switch (cnab.Banco.Codigo)
+                        switch (loteTipado.TipoLancamento)
                         {
-                            default:
-                                movItem.TipoConta = TipoContaEnum.ContaCorrente;
+                            case TipoLancamentoEnum.TEDMesmaTitularidade:
+                            case TipoLancamentoEnum.TEDOutraTitularidade:
+                            case TipoLancamentoEnum.CreditoContaMesmoBanco:
+                            case TipoLancamentoEnum.CreditoContaPoupancaMesmoBanco:
+
+                                var movItem = movimento.MovimentoItem as MovimentoItemTransferenciaTED;
+
+                                switch (cnab.Banco.Codigo)
+                                {
+                                    default:
+                                        movItem.TipoConta = TipoContaEnum.ContaCorrente;
+                                        break;
+                                    case 237:
+                                        movItem.TipoConta = segmentoA.CodigoFinalidadeComplementar == "CC" ? TipoContaEnum.ContaCorrente : TipoContaEnum.ContaPoupanca;
+                                        break;
+                                }
+
+                                movItem.Banco = ((SegmentoA_Transferencia)segmentoA).BancoFavorecido;
+                                movItem.NumeroAgencia = ((SegmentoA_Transferencia)segmentoA).AgenciaFavorecido;
+                                movItem.DVAgencia = ((SegmentoA_Transferencia)segmentoA).DVAgenciaFavorecido;
+                                movItem.NumeroConta = ((SegmentoA_Transferencia)segmentoA).ContaFavorecido;
+                                movItem.DVConta = ((SegmentoA_Transferencia)segmentoA).DVContaFavorecido;
+
+                                if (!string.IsNullOrWhiteSpace(((SegmentoA_Transferencia)segmentoA).DVAgenciaContaFavorecido))
+                                    movItem.DVConta += ((SegmentoA_Transferencia)segmentoA).DVAgenciaContaFavorecido;
+
+                                movItem.CodigoFinalidadeTED = ((SegmentoA_Transferencia)segmentoA).CodigoFinalidadeTED;
+
                                 break;
-                            case 237:
-                                movItem.TipoConta = segmentoATransferencia.CodigoFinalidadeComplementar == "CC" ? TipoContaEnum.ContaCorrente : TipoContaEnum.ContaPoupanca;
+
+                            case TipoLancamentoEnum.PIXTransferencia:
+                            case TipoLancamentoEnum.PIXQrCode:
+
                                 break;
                         }
-
-                        movItem.Banco = segmentoATransferencia.BancoFavorecido;
-                        movItem.NumeroAgencia = segmentoATransferencia.AgenciaFavorecido;
-                        movItem.DVAgencia = segmentoATransferencia.DVAgenciaFavorecido;
-                        movItem.NumeroConta = segmentoATransferencia.ContaFavorecido;
-                        movItem.DVConta = segmentoATransferencia.DVContaFavorecido;
-
-                        if (!string.IsNullOrWhiteSpace(segmentoATransferencia.DVAgenciaContaFavorecido))
-                            movItem.DVConta += segmentoATransferencia.DVAgenciaContaFavorecido;
-
-                        movItem.CodigoFinalidadeTED = segmentoATransferencia.CodigoFinalidadeTED;
                     }
-                    else if (segmento is SegmentoA_PIX segmentoAPIX)
+                    else if (segmento is SegmentoB segmentoB)
                     {
-                        movimento = criaMovimento(loteTipado);
+                        movimento.Favorecido.TipoPessoa = segmentoB.TipoInscricaoFavorecido;
+                        movimento.Favorecido.CPF_CNPJ = segmentoB.InscricaoFavorecido.ToString();
 
-                        movimento.Registro = segmento.Registro;
-                        movimento.Favorecido.Nome = segmentoAPIX.NomeFavorecido;
-                        movimento.TipoMovimento = segmentoAPIX.TipoMovimento;
-                        movimento.CodigoInstrucao = segmentoAPIX.CodigoInstrucaoMovimento;
-                        movimento.Moeda = segmentoAPIX.TipoMoeda;
-                        movimento.QuantidadeMoeda = segmentoAPIX.QuantidadeMoeda;
-                        movimento.DataPagamento = segmentoAPIX.DataPagamento;
-                        movimento.NumeroDocumento = segmentoAPIX.NumeroDocumentoEmpresa;
-                        movimento.NumeroDocumentoNoBanco = segmentoAPIX.NumeroDocumentoBanco;
-                        movimento.ValorPagamento = segmentoAPIX.ValorPagamento;
-                        movimento.Ocorrencias = segmentoAPIX.ListaOcorrenciasRetorno;
-                    }
-                    else if (segmento is SegmentoB_Transferencia segmentoBTransferencia)
-                    {
-                        movimento.Favorecido.TipoPessoa = segmentoBTransferencia.TipoInscricaoFavorecido;
-                        movimento.Favorecido.CPF_CNPJ = segmentoBTransferencia.InscricaoFavorecido.ToString();
-                        movimento.Favorecido.Endereco = segmentoBTransferencia.EnderecoFavorecido;
-                        movimento.Favorecido.NumeroEndereco = segmentoBTransferencia.NumeroEnderecoFavorecido;
-                        movimento.Favorecido.ComplementoEndereco = segmentoBTransferencia.ComplementoEnderecoFavorecido;
-                        movimento.Favorecido.CEP = segmentoBTransferencia.CEPFavorecido;
-                        movimento.Favorecido.Bairro = segmentoBTransferencia.BairroFavorecido;
-                        movimento.Favorecido.Cidade = segmentoBTransferencia.CidadeFavorecido;
-                        movimento.Favorecido.UF = segmentoBTransferencia.UFFavorecido;
-                    }
-                    else if (segmento is SegmentoB_PIX segmentoBPIX)
-                    {
-                        movimento.Favorecido.TipoPessoa = segmentoBPIX.TipoInscricaoFavorecido;
-                        movimento.Favorecido.CPF_CNPJ = segmentoBPIX.InscricaoFavorecido.ToString();
+                        switch (loteTipado.TipoLancamento)
+                        {
+                            case TipoLancamentoEnum.TEDMesmaTitularidade:
+                            case TipoLancamentoEnum.TEDOutraTitularidade:
+                            case TipoLancamentoEnum.CreditoContaMesmoBanco:
+                            case TipoLancamentoEnum.CreditoContaPoupancaMesmoBanco:
 
-                        var movItem = movimento.MovimentoItem as MovimentoItemTransferenciaPIX;
-                        movItem.TipoChavePIX = segmentoBPIX.FormaIniciacao;
-                        movItem.ChavePIX = segmentoBPIX.ChavePIX;
+                                movimento.Favorecido.Endereco = ((SegmentoB_Transferencia)segmentoB).EnderecoFavorecido;
+                                movimento.Favorecido.NumeroEndereco = ((SegmentoB_Transferencia)segmentoB).NumeroEnderecoFavorecido;
+                                movimento.Favorecido.ComplementoEndereco = ((SegmentoB_Transferencia)segmentoB).ComplementoEnderecoFavorecido;
+                                movimento.Favorecido.CEP = ((SegmentoB_Transferencia)segmentoB).CEPFavorecido;
+                                movimento.Favorecido.Bairro = ((SegmentoB_Transferencia)segmentoB).BairroFavorecido;
+                                movimento.Favorecido.Cidade = ((SegmentoB_Transferencia)segmentoB).CidadeFavorecido;
+                                movimento.Favorecido.UF = ((SegmentoB_Transferencia)segmentoB).UFFavorecido;
+
+                                break;
+
+                            case TipoLancamentoEnum.PIXTransferencia:
+                            case TipoLancamentoEnum.PIXQrCode:
+
+                                var movItem = movimento.MovimentoItem as MovimentoItemTransferenciaPIX;
+                                movItem.TipoChavePIX = ((SegmentoB_PIX)segmentoB).FormaIniciacao;
+                                movItem.ChavePIX = ((SegmentoB_PIX)segmentoB).ChavePIX;
+
+                                break;
+                        }
                     }
                     else if (segmento is SegmentoJ segmentoJ)
                     {

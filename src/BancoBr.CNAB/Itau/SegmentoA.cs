@@ -34,7 +34,10 @@ namespace BancoBr.CNAB.Itau
         [CampoCNAB(178, 20)]
         public new string Informacao2 { get; set; }
 
-        [CampoCNAB(198, 20)]
-        public int Informacao3 { get; set; }
+        [CampoCNAB(198, 6)]
+        public int NumeroDocumentoRetorno { get; set; }
+
+        [CampoCNAB(204, 14)]
+        public long InscricaoFavorecido { get; set; }
     }
 }

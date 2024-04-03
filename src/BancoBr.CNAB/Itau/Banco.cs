@@ -4,6 +4,7 @@ using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
 using System.Collections.Generic;
 using BancoBr.CNAB.Febraban;
+using BancoBr.Common.Core;
 
 namespace BancoBr.CNAB.Itau
 {
@@ -81,6 +82,8 @@ namespace BancoBr.CNAB.Itau
                     break;
             }
 
+            ((HeaderLote)headerLote).DVAgenciaConta = Empresa.DVConta.Substring(0, 1);
+
             return headerLote;
         }
 
@@ -90,6 +93,7 @@ namespace BancoBr.CNAB.Itau
             {
                 transferencia.DVAgenciaFavorecido = "";
                 transferencia.DVContaFavorecido = "";
+                transferencia.InscricaoFavorecido = long.Parse(movimento.Favorecido.CPF_CNPJ.JustNumbers());
                 
                 if (movimento.MovimentoItem is MovimentoItemTransferenciaPIX pix)
                 {
