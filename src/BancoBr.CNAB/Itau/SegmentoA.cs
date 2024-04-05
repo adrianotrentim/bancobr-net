@@ -26,13 +26,13 @@ namespace BancoBr.CNAB.Itau
         public int CNAB2 { get; set; }
 
         [CampoCNAB(135, 15)]
-        public new string NumeroDocumentoBanco { get; set; }
+        public override string NumeroDocumentoBanco { get; set; }
 
         [CampoCNAB(150, 5)]
         public string CNAB3 { get; set; }
 
         [CampoCNAB(178, 20)]
-        public new string Informacao2 { get; set; }
+        public override string Informacao2 { get; set; }
 
         [CampoCNAB(198, 6)]
         public int NumeroDocumentoRetorno { get; set; }
