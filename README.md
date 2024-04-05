@@ -39,7 +39,7 @@ Biblioteca para integração bancária para pagamentos de contas, transferência
 ## Instituições
 
 - [x] 237 - Bradesco
-- [ ] 341 - Itaú
+- [x] 341 - Itaú
 - [ ] 033 - Santander
 - [ ] 756 - Sicoob
 - [ ] 748 - Sicreedi
