@@ -285,14 +285,14 @@ namespace BancoBr.CNAB.Base
 
                     ((SegmentoA_Transferencia)segmento).BancoFavorecido = ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).Banco;
                     ((SegmentoA_Transferencia)segmento).AgenciaFavorecido = ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).NumeroAgencia;
-                    ((SegmentoA_Transferencia)segmento).DVAgenciaFavorecido = ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).DVAgencia.Substring(0, 1);
+                    ((SegmentoA_Transferencia)segmento).DVAgenciaFavorecido = ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).DVAgencia?.Substring(0, 1);
                     ((SegmentoA_Transferencia)segmento).ContaFavorecido = ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).NumeroConta;
                     ((SegmentoA_Transferencia)segmento).DVContaFavorecido = ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).DVConta;
 
                     if (((MovimentoItemTransferenciaTED)movimento.MovimentoItem).DVConta.Length >= 2)
                     {
                         ((SegmentoA_Transferencia)segmento).DVContaFavorecido = ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).DVConta.Substring(0, 1);
-                        ((SegmentoA_Transferencia)segmento).DVAgenciaContaFavorecido = ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).DVConta.Substring(1, 1);
+                        ((SegmentoA_Transferencia)segmento).DVAgenciaContaFavorecido = ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).DVConta?.Substring(1, 1);
                     }
 
                     break;
@@ -375,8 +375,8 @@ namespace BancoBr.CNAB.Base
                 if (movimentoItem.TipoChavePIX == FormaIniciacaoEnum.PIX_Email && !movimentoItem.ChavePIX.IsValidEmail())
                     throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como PIX para e-mail, mas o e-mail está inválido!");
 
-                if (movimentoItem.TipoChavePIX == FormaIniciacaoEnum.PIX_Telefone && (movimentoItem.ChavePIX.JustNumbers().Length < 10 || movimentoItem.ChavePIX.JustNumbers().Length > 11))
-                    throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como PIX para celular, mas o número parece estar inválido!");
+                if (movimentoItem.TipoChavePIX == FormaIniciacaoEnum.PIX_Telefone && (movimentoItem.ChavePIX.JustNumbers().Length != 14))
+                    throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como PIX para celular, mas o número parece estar inválido! O número deve ser Cód. do País +55, DDD com 2 dígitos e Número com 9 dígitos");
 
                 if (movimentoItem.TipoChavePIX == FormaIniciacaoEnum.PIX_CPF_CNPJ && !movimentoItem.ChavePIX.IsValidCPFCNPJ())
                     throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como PIX para CPF ou CNPJ, mas o número está inválido!");
