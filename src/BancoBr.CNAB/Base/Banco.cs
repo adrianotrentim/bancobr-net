@@ -17,7 +17,7 @@ namespace BancoBr.CNAB.Base
             : base(empresa, codigo, nome, versaoArquivo)
         {
         }
-        
+
         #region ::. Métodos Públicos .::
 
         internal HeaderArquivo CriarHeaderArquivo(int numeroRemessa, List<Movimento> movimentos)
@@ -241,7 +241,7 @@ namespace BancoBr.CNAB.Base
                     if (
                         segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheBloqueado &&
                         segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado
-                        )
+                    )
                         throw new Exception($"O movimento {movimento.NumeroDocumento} está com código de instrução inválido!\r\nPara movimento de inclusão, favor utilizar os códigos de instrução:\r\n" +
                                             $"{CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado.GetDescription()}\r\n" +
                                             $"{CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheBloqueado.GetDescription()}");
@@ -280,8 +280,14 @@ namespace BancoBr.CNAB.Base
                         ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).NumeroConta == 0
                     )
                         throw new Exception($"O movimento {movimento.NumeroDocumento} está com os dados para transferência ausentes (Banco, Agencia, Conta Corrente)!");
-                    
-                    segmento.CamaraCentralizadora = 18;
+
+                    if (
+                        _tipoLancamento == TipoLancamentoEnum.CreditoContaMesmoBanco ||
+                        _tipoLancamento == TipoLancamentoEnum.CreditoContaPoupancaMesmoBanco
+                        )
+                        segmento.CamaraCentralizadora = 0;
+                    else
+                        segmento.CamaraCentralizadora = 18;
 
                     ((SegmentoA_Transferencia)segmento).BancoFavorecido = ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).Banco;
                     ((SegmentoA_Transferencia)segmento).AgenciaFavorecido = ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).NumeroAgencia;
@@ -407,7 +413,7 @@ namespace BancoBr.CNAB.Base
                 movimentoItem.MoedaCodigoBarra == 0 ||
                 movimentoItem.FatorVencimentoCodigoBarra == 0 ||
                 string.IsNullOrWhiteSpace(movimentoItem.CampoLivreCodigoBarra)
-                
+
             )
                 throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como pagamento de boleto, mas os dados do título estão ausentes!");
 
@@ -563,7 +569,7 @@ namespace BancoBr.CNAB.Base
             segmento.DataPagamento = movimento.DataPagamento;
             segmento.ValorPagamento = movimento.ValorPagamento;
             segmento.NumeroDocumentoEmpresa = movimento.NumeroDocumento;
-            
+
             return PreencheSegmentoO(segmento, movimento);
         }
 
