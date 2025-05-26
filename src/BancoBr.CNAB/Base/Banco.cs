@@ -381,7 +381,7 @@ namespace BancoBr.CNAB.Base
                 if (movimentoItem.TipoChavePIX == FormaIniciacaoEnum.PIX_Email && !movimentoItem.ChavePIX.IsValidEmail())
                     throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como PIX para e-mail, mas o e-mail está inválido!");
 
-                if (movimentoItem.TipoChavePIX == FormaIniciacaoEnum.PIX_Telefone && (movimentoItem.ChavePIX.JustNumbers().Length != 14))
+                if (movimentoItem.TipoChavePIX == FormaIniciacaoEnum.PIX_Telefone && (movimentoItem.ChavePIX.Length != 14))
                     throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como PIX para celular, mas o número parece estar inválido! O número deve ser Cód. do País +55, DDD com 2 dígitos e Número com 9 dígitos");
 
                 if (movimentoItem.TipoChavePIX == FormaIniciacaoEnum.PIX_CPF_CNPJ && !movimentoItem.ChavePIX.IsValidCPFCNPJ())
