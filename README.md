@@ -44,7 +44,7 @@ Biblioteca para integração bancária para pagamentos de contas, transferência
 - [ ] 756 - Sicoob
 - [ ] 748 - Sicreedi
 - [ ] 001 - Banco do Brasil
-- [ ] 104 - Caixa Econômica
+- [x] 104 - Caixa Econômica
 
 ## Dúvidas?
 

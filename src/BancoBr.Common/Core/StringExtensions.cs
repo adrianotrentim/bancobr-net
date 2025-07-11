@@ -28,9 +28,7 @@ namespace BancoBr.Common.Core
             }
 
             return retorno
-                .Replace("  ", " ")
-                .Replace("§", "ART.")
-                .Trim();
+                .Replace("§", "ART.");
         }
 
         public static string JustNumbers(this string value)
