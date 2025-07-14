@@ -15,7 +15,8 @@ namespace BancoBr.CNAB.Febraban
         [CampoCNAB(24, 18)]
         public virtual decimal Valor =>
             Lote.Detalhe.Where(t => t is SegmentoA).Sum(t => ((SegmentoA)t).ValorPagamento) +
-            Lote.Detalhe.Where(t => t is SegmentoJ).Sum(t => ((SegmentoJ)t).ValorPagamento);
+            Lote.Detalhe.Where(t => t is SegmentoJ).Sum(t => ((SegmentoJ)t).ValorPagamento) +
+            Lote.Detalhe.Where(t => t is SegmentoO).Sum(t => ((SegmentoO)t).ValorPagamento);
 
         [CampoCNAB(42, 18)]
         public virtual decimal QuantidadeMoeda =>
