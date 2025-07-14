@@ -15,6 +15,27 @@ namespace BancoBr.CNAB.Bradesco
         {
         }
 
+        #region ::. Instancias .::
+
+        internal override RegistroDetalheBase NovoSegmentoB(TipoLancamentoEnum tipoLancamento)
+        {
+            switch (tipoLancamento)
+            {
+                case TipoLancamentoEnum.CreditoContaMesmoBanco:
+                case TipoLancamentoEnum.CreditoContaPoupancaMesmoBanco:
+                case TipoLancamentoEnum.OrdemPagamento:
+                case TipoLancamentoEnum.TEDMesmaTitularidade:
+                case TipoLancamentoEnum.TEDOutraTitularidade:
+                    return new SegmentoB_Transferencia(this);
+                case TipoLancamentoEnum.PIXTransferencia:
+                    return new SegmentoB_PIX(this);
+                default:
+                    throw new Exception("Tipo de lançamento não implementado");
+            }
+        }
+
+        #endregion
+
         internal override HeaderArquivo PreencheHeaderArquivo(HeaderArquivo headerArquivo, List<Movimento> movimentos)
         {
             if (movimentos != null)
