@@ -78,9 +78,9 @@ namespace BancoBr.CNAB.CEF
             }
 
             ((Febraban.SegmentoA)segmento).NumeroDocumentoBanco =
-                "".PadRight(9, ' ') + // Numero do Documento do Banco
+                "".PadLeft(9, ' ') + // Numero do Documento do Banco
                 "".PadRight(3, ' ') + // Filler
-                "1" + // Quantidade de Parcelas
+                "01" + // Quantidade de Parcelas
                 "N" + // Indica bloqueio de demais parcelas
                 "0" + // Indicador da forma de parcelamento
                 "  " + // Periodo de Vencimento do Parcelamento
@@ -95,7 +95,7 @@ namespace BancoBr.CNAB.CEF
                 "".PadRight(14, ' ');
 
             ((Febraban.SegmentoJ)segmento).NumeroDocumentoBanco =
-                "".PadRight(9, ' ') + // Numero do Documento do Banco
+                "".PadLeft(9, ' ') + // Numero do Documento do Banco
                 "".PadRight(11, ' ');  // Filler
 
             return segmento;
