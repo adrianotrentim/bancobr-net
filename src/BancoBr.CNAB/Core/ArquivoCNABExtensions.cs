@@ -158,7 +158,7 @@ namespace BancoBr.CNAB.Core
                             instanciaRegistro = cnab.Banco.NovoSegmentoB(tipoLancamento);
                             break;
                         case "J":
-                            if (linha.Substring(14, 3) == "   " && linha.Substring(17, 2) == "52")
+                            if ((linha.Substring(14, 1) == " " || linha.Substring(14, 1) == "0") && linha.Substring(17, 2) == "52")
                                 instanciaRegistro = cnab.Banco.NovoSegmentoJ52(tipoLancamento);
                             else
                                 instanciaRegistro = cnab.Banco.NovoSegmentoJ(tipoLancamento);
