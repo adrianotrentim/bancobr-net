@@ -28,9 +28,7 @@ namespace BancoBr.Common.Core
             }
 
             return retorno
-                .Replace("  ", " ")
-                .Replace("§", "ART.")
-                .Trim();
+                .Replace("§", "ART.");
         }
 
         public static string JustNumbers(this string value)
@@ -52,7 +50,7 @@ namespace BancoBr.Common.Core
 
         public static string Truncate(this string value, int length)
         {
-            return value.Length > length ? value.Substring(0, length).Trim() : value.Trim();
+            return value.Length > length ? value.Substring(0, length) : value;
         }
 
         public static bool IsValidEmail(this string value)

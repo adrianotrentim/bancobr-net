@@ -29,6 +29,9 @@ namespace BancoBr.CNAB
                 case BancoEnum.Itau:
                     Banco = new Itau.Banco(null);
                     break;
+                case BancoEnum.CEF: 
+                    Banco = new CEF.Banco(null);
+                    break;
                 default:
                     throw new Exception("Banco não implementado!");
             }
@@ -59,6 +62,9 @@ namespace BancoBr.CNAB
                     break;
                 case BancoEnum.Itau:
                     Banco = new Itau.Banco(correntista);
+                    break;
+                case BancoEnum.CEF:
+                    Banco = new CEF.Banco(correntista);
                     break;
                 default:
                     throw new Exception("Banco não implementado!");
