@@ -29,14 +29,13 @@ namespace BancoBr.CNAB.Sicredi
         {
             ((HeaderLote)headerLote).Convenio = Empresa.Convenio.PadLeft(4, '0') +
                 "".PadRight(16, ' '); //Filler
-            ((HeaderLote)headerLote).VersaoLote = 45; //Livre desde que tenha 3 digitos numérico
 
             return headerLote;
         }
 
         internal override RegistroDetalheBase PreencheSegmentoA(RegistroDetalheBase segmento, Movimento movimento)
         {
-            if(movimento.CodigoInstrucao == CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheBloqueado) 
+            if(movimento.CodigoInstrucao == CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheBloqueado) // Se o movimento for bloqueado, deve ser liberado porque a Sicredi não tem a opção 09
                 ((Febraban.SegmentoA)segmento).CodigoInstrucaoMovimento = CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado; //Cód. Instr. Movimento
 
             return segmento;
@@ -44,7 +43,7 @@ namespace BancoBr.CNAB.Sicredi
 
         internal override RegistroDetalheBase PreencheSegmentoJ(RegistroDetalheBase segmento, Movimento movimento)
         {
-            if (movimento.CodigoInstrucao == CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheBloqueado)
+            if (movimento.CodigoInstrucao == CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheBloqueado) // Se o movimento for bloqueado, deve ser liberado porque a Sicredi não tem a opção 09
                 ((Febraban.SegmentoJ)segmento).CodigoInstrucaoMovimento = CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado; //Cód. Instr. Movimento
 
             return segmento;
