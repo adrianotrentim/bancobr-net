@@ -1,10 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using BancoBr.CNAB.Base;
+﻿using BancoBr.CNAB.Base;
 using BancoBr.CNAB.Febraban;
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography;
 using Banco = BancoBr.CNAB.Base.Banco;
 
 namespace BancoBr.CNAB
@@ -31,6 +32,9 @@ namespace BancoBr.CNAB
                     break;
                 case BancoEnum.CEF: 
                     Banco = new CEF.Banco(null);
+                    break;
+                case BancoEnum.Sicredi:
+                    Banco = new Sicredi.Banco(null);
                     break;
                 default:
                     throw new Exception("Banco não implementado!");
@@ -65,6 +69,9 @@ namespace BancoBr.CNAB
                     break;
                 case BancoEnum.CEF:
                     Banco = new CEF.Banco(correntista);
+                    break;
+                case BancoEnum.Sicredi:
+                    Banco = new Sicredi.Banco(correntista);
                     break;
                 default:
                     throw new Exception("Banco não implementado!");
