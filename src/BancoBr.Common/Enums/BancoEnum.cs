@@ -5,6 +5,7 @@
         BradescoSA = 237,
         Itau = 341,
         CEF = 104,
-        Sicredi = 748
+        Sicredi = 748,
+        Inter = 77
     }
 }
