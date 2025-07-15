@@ -42,7 +42,7 @@ Biblioteca para integração bancária para pagamentos de contas, transferência
 - [x] 341 - Itaú
 - [ ] 033 - Santander
 - [ ] 756 - Sicoob
-- [ ] 748 - Sicreedi
+- [x] 748 - Sicredi
 - [ ] 001 - Banco do Brasil
 - [x] 104 - Caixa Econômica
 

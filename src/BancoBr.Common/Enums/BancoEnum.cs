@@ -4,6 +4,7 @@
     {
         BradescoSA = 237,
         Itau = 341,
-        CEF = 104
+        CEF = 104,
+        Sicredi = 748
     }
 }
