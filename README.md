@@ -45,6 +45,7 @@ Biblioteca para integração bancária para pagamentos de contas, transferência
 - [x] 748 - Sicredi
 - [ ] 001 - Banco do Brasil
 - [x] 104 - Caixa Econômica
+- [x] 077 - Inter
 
 ## Dúvidas?
 
