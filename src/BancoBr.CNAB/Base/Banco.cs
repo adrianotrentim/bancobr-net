@@ -70,6 +70,7 @@ namespace BancoBr.CNAB.Base
                     break;
                 case TipoLancamentoEnum.LiquidacaoProprioBanco:
                 case TipoLancamentoEnum.PagamentoTituloOutroBanco:
+                case TipoLancamentoEnum.PIXQrCode:
                     segmentoJ = PreencheSegmentoJBase(movimento, numeroLote);
                     segmentoJ52 = PreencheSegmentoJ52Base(movimento, numeroLote);
                     break;
@@ -404,19 +405,6 @@ namespace BancoBr.CNAB.Base
 
         private RegistroDetalheBase PreencheSegmentoJBase(Movimento movimento, int numeroLote)
         {
-            var movimentoItem = movimento.MovimentoItem as MovimentoItemPagamentoTituloCodigoBarra;
-
-            #region ::. Validações .::
-
-            if (
-                movimentoItem.BancoCodigoBarra == 0 ||
-                movimentoItem.MoedaCodigoBarra == 0 ||
-                movimentoItem.FatorVencimentoCodigoBarra == 0 ||
-                string.IsNullOrWhiteSpace(movimentoItem.CampoLivreCodigoBarra)
-
-            )
-                throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como pagamento de boleto, mas os dados do título estão ausentes!");
-
             if (movimento.Favorecido.TipoPessoa == TipoInscricaoCPFCNPJEnum.CNPJ && !movimento.Favorecido.CPF_CNPJ.IsValidCNPJ())
                 throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como pagamento de boleto, mas o CNPJ do favorecido está inválido!");
 
@@ -425,8 +413,6 @@ namespace BancoBr.CNAB.Base
 
             if (string.IsNullOrWhiteSpace(movimento.Favorecido.Nome))
                 throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como pagamento de boleto, mas o Nome do favorecido não foi informado!");
-
-            #endregion
 
             var segmento = (SegmentoJ)NovoSegmentoJ(_tipoLancamento);
 
@@ -440,7 +426,7 @@ namespace BancoBr.CNAB.Base
                     if (
                         segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheBloqueado &&
                         segmento.CodigoInstrucaoMovimento != CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado
-                        )
+                    )
                         throw new Exception($"O movimento {movimento.NumeroDocumento} está com código de instrução inválido!\r\nPara movimento de inclusão, favor utilizar os códigos de instrução:\r\n" +
                                             $"{CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheLiberado.GetDescription()}\r\n" +
                                             $"{CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheBloqueado.GetDescription()}");
@@ -466,45 +452,107 @@ namespace BancoBr.CNAB.Base
                     break;
             }
 
-            segmento.BancoCodigoBarra = movimentoItem.BancoCodigoBarra;
-            segmento.MoedaCodigoBarra = movimentoItem.MoedaCodigoBarra;
-            segmento.DVCodigoBarra = movimentoItem.DVCodigoBarra;
-            segmento.FatorVencimentoCodigoBarra = movimentoItem.FatorVencimentoCodigoBarra;
-            segmento.ValorCodigoBarra = movimentoItem.ValorCodigoBarra;
-            segmento.CampoLivreCodigoBarra = movimentoItem.CampoLivreCodigoBarra;
-            segmento.NomeBeneficiario = movimento.Favorecido.Nome;
+            if (_tipoLancamento != TipoLancamentoEnum.PIXQrCode)
+            {
+                var movimentoItem = movimento.MovimentoItem as MovimentoItemPagamentoTituloCodigoBarra;
 
-            var fator = segmento.FatorVencimentoCodigoBarra;
-            var dataBase = DateTime.Parse("07/10/1997");
-            segmento.DataVencimento = dataBase.AddDays(fator);
+                if (
+                    movimentoItem.BancoCodigoBarra == 0 ||
+                    movimentoItem.MoedaCodigoBarra == 0 ||
+                    movimentoItem.FatorVencimentoCodigoBarra == 0 ||
+                    string.IsNullOrWhiteSpace(movimentoItem.CampoLivreCodigoBarra)
 
-            segmento.ValorTitulo = movimentoItem.ValorCodigoBarra;
-            segmento.ValorDesconto = movimentoItem.Desconto;
-            segmento.ValorAcrescimo = movimentoItem.Acrescimo;
-            segmento.DataPagamento = movimento.DataPagamento;
-            segmento.ValorPagamento = movimento.ValorPagamento;
-            segmento.QuantidadeMoeda = movimento.QuantidadeMoeda;
-            segmento.NumeroDocumentoEmpresa = movimento.NumeroDocumento;
-            segmento.CodigoMoeda = movimentoItem.MoedaCodigoBarra;
+                )
+                    throw new Exception($"O movimento {movimento.NumeroDocumento} está sinalizado como pagamento de boleto, mas os dados do título estão ausentes!");
+
+                segmento.BancoCodigoBarra = movimentoItem.BancoCodigoBarra;
+                segmento.MoedaCodigoBarra = movimentoItem.MoedaCodigoBarra;
+                segmento.DVCodigoBarra = movimentoItem.DVCodigoBarra;
+                segmento.FatorVencimentoCodigoBarra = movimentoItem.FatorVencimentoCodigoBarra;
+                segmento.ValorCodigoBarra = movimentoItem.ValorCodigoBarra;
+                segmento.CampoLivreCodigoBarra = movimentoItem.CampoLivreCodigoBarra;
+
+                var fator = segmento.FatorVencimentoCodigoBarra;
+                var dataBase = DateTime.Parse("07/10/1997");
+                segmento.DataVencimento = dataBase.AddDays(fator);
+
+                segmento.ValorTitulo = movimentoItem.ValorCodigoBarra;
+                segmento.ValorDesconto = movimentoItem.Desconto;
+                segmento.ValorAcrescimo = movimentoItem.Acrescimo;
+                segmento.CodigoMoeda = movimentoItem.MoedaCodigoBarra;
+
+                segmento.DataPagamento = movimento.DataPagamento;
+                segmento.ValorPagamento = movimento.ValorPagamento;
+                segmento.QuantidadeMoeda = movimento.QuantidadeMoeda;
+                segmento.NumeroDocumentoEmpresa = movimento.NumeroDocumento;
+                segmento.NomeBeneficiario = movimento.Favorecido.Nome;
+                
+            }
+            else
+            {
+                var movimentoItem = movimento.MovimentoItem as MovimentoItemPagamentoTituloPIXQRCode;
+                
+                //PIX QR Code, código de barras é zerado
+                segmento.BancoCodigoBarra = 0;
+                segmento.MoedaCodigoBarra = 0;
+                segmento.DVCodigoBarra = 0;
+                segmento.FatorVencimentoCodigoBarra = 0;
+                segmento.ValorCodigoBarra = 0;
+                segmento.CampoLivreCodigoBarra = "0";
+
+                segmento.NomeBeneficiario = movimento.Favorecido.Nome;
+                segmento.DataVencimento = movimentoItem.DataVencimento;
+                segmento.ValorTitulo = movimento.ValorPagamento;
+                segmento.ValorDesconto = 0;
+                segmento.ValorAcrescimo = 0;
+                segmento.DataPagamento = movimento.DataPagamento;
+                segmento.ValorPagamento = movimento.ValorPagamento;
+
+                segmento.QuantidadeMoeda = movimento.QuantidadeMoeda;
+                segmento.NumeroDocumentoEmpresa = movimento.NumeroDocumento;
+            }
 
             return PreencheSegmentoJ(segmento, movimento);
         }
 
         private RegistroDetalheBase PreencheSegmentoJ52Base(Movimento movimento, int numeroLote)
         {
-            var segmento = (SegmentoJ52_Boleto)NovoSegmentoJ52(_tipoLancamento);
+            if (_tipoLancamento != TipoLancamentoEnum.PIXQrCode)
+            {
+                var segmento = (SegmentoJ52_Boleto)NovoSegmentoJ52(_tipoLancamento);
 
-            segmento.LoteServico = numeroLote;
+                segmento.LoteServico = numeroLote;
 
-            segmento.TipoInscricaoSacado = Empresa.TipoPessoa;
-            segmento.InscricaoSacado = long.Parse(Empresa.CPF_CNPJ.JustNumbers());
-            segmento.NomeSacado = Empresa.Nome;
+                segmento.TipoInscricaoSacado = Empresa.TipoPessoa;
+                segmento.InscricaoSacado = long.Parse(Empresa.CPF_CNPJ.JustNumbers());
+                segmento.NomeSacado = Empresa.Nome;
 
-            segmento.TipoInscricaoCedente = movimento.Favorecido.TipoPessoa;
-            segmento.InscricaoCedente = long.Parse(movimento.Favorecido.CPF_CNPJ.JustNumbers());
-            segmento.NomeCedente = movimento.Favorecido.Nome;
+                segmento.TipoInscricaoCedente = movimento.Favorecido.TipoPessoa;
+                segmento.InscricaoCedente = long.Parse(movimento.Favorecido.CPF_CNPJ.JustNumbers());
+                segmento.NomeCedente = movimento.Favorecido.Nome;
 
-            return PreencheSegmentoJ52(segmento, movimento);
+                return PreencheSegmentoJ52(segmento, movimento);
+            }
+            else
+            {
+                var segmento = (SegmentoJ52_PIX_QRCODE)NovoSegmentoJ52(_tipoLancamento);
+                var movimentoItem = movimento.MovimentoItem as MovimentoItemPagamentoTituloPIXQRCode;
+
+                segmento.LoteServico = numeroLote;
+
+                segmento.TipoInscricaoSacado = Empresa.TipoPessoa;
+                segmento.InscricaoSacado = long.Parse(Empresa.CPF_CNPJ.JustNumbers());
+                segmento.NomeSacado = Empresa.Nome;
+
+                segmento.TipoInscricaoCedente = movimento.Favorecido.TipoPessoa;
+                segmento.InscricaoCedente = long.Parse(movimento.Favorecido.CPF_CNPJ.JustNumbers());
+                segmento.NomeCedente = movimento.Favorecido.Nome;
+
+                segmento.URL_ChavePIX = movimentoItem.URL_ChavePix;
+                segmento.TXID = movimentoItem.TXID;
+
+                return PreencheSegmentoJ52(segmento, movimento);
+            }
         }
 
         private RegistroDetalheBase PreencheSegmentoOBase(Movimento movimento, int numeroLote)

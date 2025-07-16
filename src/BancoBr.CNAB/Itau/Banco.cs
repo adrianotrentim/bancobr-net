@@ -3,7 +3,6 @@ using BancoBr.CNAB.Base;
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
 using System.Collections.Generic;
-using BancoBr.CNAB.Febraban;
 using BancoBr.Common.Core;
 
 namespace BancoBr.CNAB.Itau
@@ -44,7 +43,13 @@ namespace BancoBr.CNAB.Itau
 
         internal override RegistroDetalheBase NovoSegmentoJ(TipoLancamentoEnum tipoLancamento) => new SegmentoJ(this);
 
-        internal override RegistroDetalheBase NovoSegmentoJ52(TipoLancamentoEnum tipoLancamento) => new SegmentoJ52_Boleto(this);
+        internal override RegistroDetalheBase NovoSegmentoJ52(TipoLancamentoEnum tipoLancamento)
+        {
+            if (tipoLancamento == TipoLancamentoEnum.PIXQrCode)
+                return new SegmentoJ52_PIX_QRCODE(this);
+
+            return new SegmentoJ52_Boleto(this);
+        }
 
         internal override RegistroDetalheBase NovoSegmentoO(TipoLancamentoEnum tipoLancamento) => new SegmentoO(this);
 
