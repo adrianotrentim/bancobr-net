@@ -44,7 +44,7 @@ namespace BancoBr.CNAB.Febraban
         [CampoCNAB(132, 79)]
         public virtual string URL_ChavePIX { get; set; }
 
-        [CampoCNAB(209, 30)]
+        [CampoCNAB(211, 30)]
         public virtual string TXID { get; set; }
     }
 }
