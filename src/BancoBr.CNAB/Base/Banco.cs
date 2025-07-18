@@ -36,6 +36,9 @@ namespace BancoBr.CNAB.Base
             if (tipoLancamento == TipoLancamentoEnum.CartaoSalario && tipoServico != TipoServicoEnum.PagamentoSalarios)
                 throw new InvalidOperationException("A forma de movimento Cartão Salário (4), só é permitida para o Tipo de Serviço Movimento de Salários (30)");
 
+            if (tipoLancamento == TipoLancamentoEnum.PagamentoTributosCodigoBarra && tipoServico != TipoServicoEnum.Tributos)
+                throw new InvalidOperationException("A forma de movimento Trib. Código de Barras (11), só é permitida para o Tipo de Serviço Pagamento de Tributos (22)");
+
             var lote = new Lote
             {
                 Header = PreencheHeaderLoteBase()
