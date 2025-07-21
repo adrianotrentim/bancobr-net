@@ -78,11 +78,6 @@ namespace BancoBr.CNAB.Santander
 
         internal override RegistroDetalheBase PreencheSegmentoA(RegistroDetalheBase segmento, Movimento movimento)
         {
-            //if (segmento is SegmentoA_Transferencia ted)
-            //{
-            //    ted.CodigoFinalidadeComplementar = ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).TipoConta == TipoContaEnum.ContaCorrente ? "CC" : "PP";
-            //}
-
             switch (movimento.TipoLancamento)
             {
                 case TipoLancamentoEnum.TEDMesmaTitularidade:
@@ -91,10 +86,10 @@ namespace BancoBr.CNAB.Santander
                 case TipoLancamentoEnum.CreditoContaPoupancaMesmoBanco:                
                     ((Febraban.SegmentoA)segmento).CodigoFinalidadeComplementar = ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).TipoConta == TipoContaEnum.ContaCorrente ? "CC" : "PP";
                     break;
-                //case TipoLancamentoEnum.PIXTransferencia:
-                //case TipoLancamentoEnum.PIXQrCode:
-                //    ((Febraban.SegmentoA)segmento).CodigoFinalidadeComplementar = "CC"; 
-                //    break;
+                case TipoLancamentoEnum.PIXTransferencia:
+                case TipoLancamentoEnum.PIXQrCode:
+                    ((Febraban.SegmentoA)segmento).CodigoFinalidadeComplementar = ((MovimentoItemTransferenciaPIX)movimento.MovimentoItem).TipoConta == TipoContaEnum.ContaCorrente ? "CC" : "PP";
+                    break;
             }
 
             return segmento;
@@ -104,7 +99,7 @@ namespace BancoBr.CNAB.Santander
         {
             if (segmento is SegmentoB_Transferencia ted)
             {
-                ((SegmentoB_Transferencia)segmento).CodigoHistoricoParaCredito = 183;
+                ted.CodigoHistoricoParaCredito = 183;
             }
 
             if (segmento is SegmentoB_PIX pix)

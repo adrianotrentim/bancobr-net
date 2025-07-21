@@ -45,6 +45,7 @@ namespace BancoBr.Common.Instances
     {
         public FormaIniciacaoEnum TipoChavePIX { get; set; }
         public string ChavePIX { get; set; }
+        public TipoContaEnum TipoConta { get; set; }
     }
 
     public class MovimentoItemTransferenciaTED : MovimentoItem
