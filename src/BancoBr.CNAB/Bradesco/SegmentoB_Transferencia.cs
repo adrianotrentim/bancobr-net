@@ -17,15 +17,15 @@ namespace BancoBr.CNAB.Bradesco
         #region ::. Propriedades Desativadas .::
 
         [CampoCNAB(true)]
-        private new int CodigoUGCentralizadora { get; set; }
-
-        [CampoCNAB(true)]
         private new int IdentificacaoBancoSPB { get; set; }
 
         #endregion
 
+        [CampoCNAB(227, 4)] 
+        public new int CodigoUGCentralizadora { get; set; }
+
         [CampoCNAB(231, 10)]
-        public virtual string Ocorrencias { get; set; }
+        public string Ocorrencias { get; set; }
 
         [CampoCNAB(true)]
         public List<Ocorrencia> ListaOcorrenciasRetorno

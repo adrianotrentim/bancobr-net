@@ -11,7 +11,7 @@ namespace BancoBr.Common.Enums
         BloquetoEletronico = 3,
         [Description("20 - Pagamento de Fornecedores")]
         PagamentoFornecedor = 20,
-        [Description("22 - Pagamento de Tributos")]
+        [Description("22 - Pagamento de Convênios e Tributos")]
         Tributos = 22,
         [Description("30 - Pagamento de Salários")]
         PagamentoSalarios = 30,

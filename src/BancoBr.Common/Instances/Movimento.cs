@@ -32,7 +32,7 @@ namespace BancoBr.Common.Instances
 
         public MovimentoItem MovimentoItem { get; set; }
         public AvisoFavorecidoEnum AvisoAoFavorecido { get; set; }
-        
+
         public List<Ocorrencia> Ocorrencias { get; set; }
         public string Registro { get; set; }
     }
@@ -107,10 +107,17 @@ namespace BancoBr.Common.Instances
         }
 
         /// <summary>
-        /// Código de barras de 44 caracteres
+        /// Código de barras de 44 ou 48 caracteres
         /// </summary>
         public string CodigoBarra { get; set; }
 
         public DateTime DataVencimento { get; set; }
+    }
+
+    public class MovimentoItemPagamentoTituloPIXQRCode : MovimentoItem
+    {
+        public DateTime DataVencimento { get; set; }
+        public string URL_ChavePix { get; set; }
+        public string TXID { get; set; }
     }
 }
