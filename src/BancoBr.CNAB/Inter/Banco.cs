@@ -16,6 +16,12 @@ namespace BancoBr.CNAB.Inter
         {     
         }
 
+        #region ::. Instancias .::
+
+        internal override HeaderLoteBase NovoHeaderLote(TipoLancamentoEnum tipoLancamento) => new HeaderLote(this);
+
+        #endregion
+
         internal override Febraban.HeaderArquivo PreencheHeaderArquivo(Febraban.HeaderArquivo headerArquivo, List<Movimento> movimentos)
         {
             headerArquivo.Convenio = "".PadRight(20, ' ');
