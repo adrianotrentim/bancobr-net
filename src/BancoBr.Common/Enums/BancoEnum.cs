@@ -6,6 +6,7 @@
         Itau = 341,
         CEF = 104,
         Sicredi = 748,
-        Inter = 77
+        Inter = 77,
+        Santander = 33
     }
 }

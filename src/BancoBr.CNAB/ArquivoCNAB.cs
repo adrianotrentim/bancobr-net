@@ -39,6 +39,9 @@ namespace BancoBr.CNAB
                 case BancoEnum.Inter:
                     Banco = new Inter.Banco(null);
                     break;
+                case BancoEnum.Santander:
+                    Banco = new Santander.Banco(null);
+                    break;
                 default:
                     throw new Exception("Banco não implementado!");
             }
@@ -78,6 +81,9 @@ namespace BancoBr.CNAB
                     break;
                 case BancoEnum.Inter:
                     Banco = new Inter.Banco(correntista);
+                    break;
+                case BancoEnum.Santander:
+                    Banco = new Santander.Banco(correntista);
                     break;
                 default:
                     throw new Exception("Banco não implementado!");

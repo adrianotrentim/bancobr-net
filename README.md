@@ -40,7 +40,7 @@ Biblioteca para integração bancária para pagamentos de contas, transferência
 
 - [x] 237 - Bradesco
 - [x] 341 - Itaú
-- [ ] 033 - Santander
+- [x] 033 - Santander
 - [ ] 756 - Sicoob
 - [x] 748 - Sicredi
 - [ ] 001 - Banco do Brasil
