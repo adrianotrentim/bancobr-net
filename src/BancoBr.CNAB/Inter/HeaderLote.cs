@@ -1,5 +1,4 @@
 ﻿using BancoBr.Common.Attributes;
-using BancoBr.Common.Enums;
 
 namespace BancoBr.CNAB.Inter
 {
@@ -10,14 +9,7 @@ namespace BancoBr.CNAB.Inter
         {
         }
 
-        #region ::. Propriedades Desativadas .::
-
-        [CampoCNAB(true)]
-        private new LocalDebitoEnum LocalDebito { get; set; }
-
-        #endregion
-
         [CampoCNAB(223, 2)]
-        public string IndicativoLocalDebito { get; set; }
+        public new string LocalDebito { get; set; }
     }
 }

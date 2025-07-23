@@ -39,20 +39,26 @@ namespace BancoBr.CNAB.Santander
 
         internal override Febraban.HeaderArquivo PreencheHeaderArquivo(Febraban.HeaderArquivo headerArquivo, List<Movimento> movimentos)
         {
-            headerArquivo.Convenio =
-                headerArquivo.CodigoBanco.ToString().PadLeft(4, '0') + //Nro Banco
-                Empresa.NumeroAgencia.ToString().PadLeft(4, '0') + //Cod Agência s/ dígito verificador
-                Empresa.Convenio.PadLeft(12, '0'); //N° Convênio
+            if (Empresa.Convenio.Substring(0, 4) != "0033")
+            {
+                headerArquivo.Convenio =
+                    headerArquivo.CodigoBanco.ToString().PadLeft(4, '0') + //Nro Banco
+                    Empresa.NumeroAgencia.ToString().PadLeft(4, '0') + //Cod Agência s/ dígito verificador
+                    Empresa.Convenio.PadLeft(12, '0'); //N° Convênio
+            }
 
             return headerArquivo;
         }
 
         internal override HeaderLoteBase PreencheHeaderLote(HeaderLoteBase headerLote, TipoLancamentoEnum tipoLancamento)
         {
-            ((HeaderLote)headerLote).Convenio =
+            if (Empresa.Convenio.Substring(0, 4) != "0033")
+            {
+                ((HeaderLote)headerLote).Convenio =
                 ((HeaderLote)headerLote).CodigoBanco.ToString().PadLeft(4, '0') + //Nro Banco
                 Empresa.NumeroAgencia.ToString().PadLeft(4, '0') + //Cod Agência s/ dígito verificador
                 Empresa.Convenio.PadLeft(12, '0'); //N° Convênio
+            }
 
             switch (tipoLancamento)
             {
@@ -62,14 +68,14 @@ namespace BancoBr.CNAB.Santander
                 case TipoLancamentoEnum.TEDMesmaTitularidade:
                 case TipoLancamentoEnum.TEDOutraTitularidade:
                 case TipoLancamentoEnum.PIXTransferencia:
-                    ((HeaderLote)headerLote).VersaoLote = 31; //Somente Segmento A  
+                    ((HeaderLote)headerLote).VersaoLote = 31; 
                     break;
                 case TipoLancamentoEnum.LiquidacaoProprioBanco:
                 case TipoLancamentoEnum.PagamentoTituloOutroBanco:
-                    ((HeaderLote)headerLote).VersaoLote = 30; //Demais Segmentos, nesse caso o J
+                    ((HeaderLote)headerLote).VersaoLote = 30; 
                     break;
                 case TipoLancamentoEnum.PagamentoTributosCodigoBarra:
-                    ((HeaderLote)headerLote).VersaoLote = 10; //Segmento O 
+                    ((HeaderLote)headerLote).VersaoLote = 10; 
                     break;
             }
 
@@ -85,10 +91,6 @@ namespace BancoBr.CNAB.Santander
                 case TipoLancamentoEnum.CreditoContaMesmoBanco:
                 case TipoLancamentoEnum.CreditoContaPoupancaMesmoBanco:                
                     ((Febraban.SegmentoA)segmento).CodigoFinalidadeComplementar = ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).TipoConta == TipoContaEnum.ContaCorrente ? "CC" : "PP";
-                    break;
-                case TipoLancamentoEnum.PIXTransferencia:
-                case TipoLancamentoEnum.PIXQrCode:
-                    ((Febraban.SegmentoA)segmento).CodigoFinalidadeComplementar = ((MovimentoItemTransferenciaPIX)movimento.MovimentoItem).TipoConta == TipoContaEnum.ContaCorrente ? "CC" : "PP";
                     break;
             }
 
@@ -113,10 +115,6 @@ namespace BancoBr.CNAB.Santander
                     if (!pix.ChavePIX.Contains("+55")) 
                     { 
                         pix.ChavePIX = "+55" + pix.ChavePIX.JustNumbers(); 
-                    }
-                    else
-                    {
-                        pix.ChavePIX = pix.ChavePIX.Substring(0, 3) + pix.ChavePIX.Substring(3).JustNumbers().PadRight(96, ' ');
                     }
                 }
             }
