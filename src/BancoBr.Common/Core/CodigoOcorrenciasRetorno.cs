@@ -168,7 +168,8 @@ namespace BancoBr.Common.Core
             new Ocorrencia("5I", "Ordem de Pagamento emitida", "Pagamento realizado ao favorecido nesta data"),
             new Ocorrencia("5J", "Ordem de pagamento com data limite vencida"),
             new Ocorrencia("5M", "Número de lista de debito invalida", "Número de lista inválido (deve ser numérico)"),
-            new Ocorrencia("5T", "Pagamento realizado em contrato na condição de TESTE")
+            new Ocorrencia("5T", "Pagamento realizado em contrato na condição de TESTE"),
+            new Ocorrencia("NR", "Operação não realizada")
         };
     }
 }
