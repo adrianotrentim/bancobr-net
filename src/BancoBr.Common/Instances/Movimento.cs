@@ -52,7 +52,7 @@ namespace BancoBr.Common.Instances
         public int Banco { get; set; }
         public int NumeroAgencia { get; set; }
         public string DVAgencia { get; set; }
-        public int NumeroConta { get; set; }
+        public long NumeroConta { get; set; }
         public string DVConta { get; set; }
         public FinalidadeTEDEnum CodigoFinalidadeTED { get; set; }
         public TipoContaEnum TipoConta { get; set; }

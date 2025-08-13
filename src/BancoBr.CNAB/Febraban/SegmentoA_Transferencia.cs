@@ -20,7 +20,7 @@ namespace BancoBr.CNAB.Febraban
         public virtual string DVAgenciaFavorecido { get; set; }
 
         [CampoCNAB(30, 12)]
-        public virtual int ContaFavorecido { get; set; }
+        public virtual long ContaFavorecido { get; set; }
 
         [CampoCNAB(42, 1)]
         public virtual string DVContaFavorecido { get; set; }
