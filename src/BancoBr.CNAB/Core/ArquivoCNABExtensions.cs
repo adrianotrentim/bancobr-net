@@ -123,7 +123,7 @@ namespace BancoBr.CNAB.Core
                 }
                 else if (tipoRegistro == "1") //Header de Lote
                 {
-                    if (Convert.ToInt32(linha.Substring(9, 2)) != 20) // 20 = Somente Pagamento de Fornecedores, DDA (Código 3) será desenvolvido posteriormente
+                    if (!new []{20, 22, 30}.Contains(Convert.ToInt32(linha.Substring(9, 2)))) // 20 = Somente Pagamento de Fornecedores, 22 = Tributos, 30 = Salários, DDA (Código 3) será desenvolvido posteriormente
                         continue;
 
                     var tipoLancamento = Convert.ToInt32(linha.Substring(11, 2));
