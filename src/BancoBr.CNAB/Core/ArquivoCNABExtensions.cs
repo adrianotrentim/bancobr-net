@@ -1,14 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using BancoBr.CNAB.Base;
+﻿using BancoBr.CNAB.Base;
 using BancoBr.CNAB.Febraban;
 using BancoBr.Common.Attributes;
 using BancoBr.Common.Core;
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
+using BancoBr.Common.Interfaces.CNAB;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
 
 namespace BancoBr.CNAB.Core
 {
@@ -213,7 +214,7 @@ namespace BancoBr.CNAB.Core
                     if (campo.PropertyType == typeof(string))
                         valueObject = linha.Substring(campoCNAB.Posicao - 1, campoCNAB.Tamanho).Trim();
                     else if (campo.PropertyType.IsEnum)
-                        valueObject = Enum.ToObject(campo.PropertyType, Convert.ToInt32(linha.Substring(campoCNAB.Posicao - 1, campoCNAB.Tamanho)));
+                        valueObject = Enum.ToObject(campo.PropertyType, Convert.ToInt32(string.IsNullOrWhiteSpace(linha.Substring(campoCNAB.Posicao - 1, campoCNAB.Tamanho)) ? "0" : linha.Substring(campoCNAB.Posicao - 1, campoCNAB.Tamanho)));
                     else if (campo.PropertyType == typeof(int) || campo.PropertyType == typeof(int?) || campo.PropertyType == typeof(long) || campo.PropertyType == typeof(long?))
                         valueObject = Convert.ChangeType("0" + linha.Substring(campoCNAB.Posicao - 1, campoCNAB.Tamanho), campo.PropertyType);
                     else if (campo.PropertyType == typeof(decimal) || campo.PropertyType == typeof(decimal?))
