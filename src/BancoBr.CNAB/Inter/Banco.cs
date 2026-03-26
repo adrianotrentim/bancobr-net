@@ -39,16 +39,6 @@ namespace BancoBr.CNAB.Inter
 
             return headerLote;
         }
-
-        internal override RegistroDetalheBase PreencheSegmentoB(RegistroDetalheBase segmento, Movimento movimento)
-        {
-            if (segmento is SegmentoB_PIX pix)
-            {
-                if (pix.FormaIniciacao != FormaIniciacaoEnum.PIX_Telefone && pix.FormaIniciacao != FormaIniciacaoEnum.PIX_Email && pix.FormaIniciacao != FormaIniciacaoEnum.PIX_Aleatorio)
-                    pix.ChavePIX = "".PadRight(99, ' ');
-            }
-
-            return segmento;
-        }
+     
     }
 }
