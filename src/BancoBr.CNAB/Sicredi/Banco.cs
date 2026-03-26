@@ -12,7 +12,7 @@ namespace BancoBr.CNAB.Sicredi
     public class Banco : Base.Banco
     {
         public Banco(Correntista empresa)
-            : base(empresa, 748, "SICREDI", 80) 
+            : base(empresa, 748, "SICREDI", 82) 
         {     
         }
 
@@ -27,6 +27,7 @@ namespace BancoBr.CNAB.Sicredi
 
         internal override HeaderLoteBase PreencheHeaderLote(HeaderLoteBase headerLote, TipoLancamentoEnum tipoLancamento)
         {
+            ((HeaderLote)headerLote).VersaoLote = 42;
             ((HeaderLote)headerLote).Convenio = Empresa.Convenio.PadLeft(4, '0') +
                 "".PadRight(16, ' '); //Filler
 
@@ -41,6 +42,7 @@ namespace BancoBr.CNAB.Sicredi
             return segmento;
         }
 
+       
         internal override RegistroDetalheBase PreencheSegmentoJ(RegistroDetalheBase segmento, Movimento movimento)
         {
             if (movimento.CodigoInstrucao == CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheBloqueado) // Se o movimento for bloqueado, deve ser liberado porque a Sicredi não tem a opção 09
@@ -48,5 +50,6 @@ namespace BancoBr.CNAB.Sicredi
 
             return segmento;
         }
+        
     }
 }

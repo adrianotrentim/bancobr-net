@@ -112,11 +112,7 @@ namespace BancoBr.CNAB.Santander
 
             if (segmento is SegmentoB_PIX pix)
             {        
-                if (pix.FormaIniciacao == FormaIniciacaoEnum.PIX_CPF_CNPJ) 
-                {
-                    pix.ChavePIX = pix.ChavePIX.JustNumbers();
-                }
-                else if (pix.FormaIniciacao == FormaIniciacaoEnum.PIX_Telefone) 
+                if (pix.FormaIniciacao == FormaIniciacaoEnum.PIX_Telefone) 
                 {
                     if (!pix.ChavePIX.Contains("+55")) 
                     { 

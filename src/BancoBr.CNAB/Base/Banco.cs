@@ -177,7 +177,7 @@ namespace BancoBr.CNAB.Base
                 case TipoLancamentoEnum.PIXTransferencia:
                     ((HeaderLote)headerLote).VersaoLote = 46;
                     break;
-                case TipoLancamentoEnum.LiquidacaoProprioBanco:
+                case TipoLancamentoEnum.LiquidacaoProprioBanco:                    
                 case TipoLancamentoEnum.PagamentoTituloOutroBanco:
                     ((HeaderLote)headerLote).VersaoLote = 40;
                     break;
@@ -185,6 +185,7 @@ namespace BancoBr.CNAB.Base
                     ((HeaderLote)headerLote).VersaoLote = 12;
                     break;
             }
+
 
             ((HeaderLote)headerLote).Servico = _tipoServico;
             ((HeaderLote)headerLote).TipoLancamento = _tipoLancamento;
@@ -398,7 +399,10 @@ namespace BancoBr.CNAB.Base
                 segmento.TipoInscricaoFavorecido = movimento.Favorecido.TipoPessoa;
                 segmento.InscricaoFavorecido = long.Parse(movimento.Favorecido.CPF_CNPJ.JustNumbers());
                 segmento.FormaIniciacao = ((MovimentoItemTransferenciaPIX)movimento.MovimentoItem).TipoChavePIX;
-                segmento.ChavePIX = ((MovimentoItemTransferenciaPIX)movimento.MovimentoItem).ChavePIX;
+                
+                if(segmento.FormaIniciacao != FormaIniciacaoEnum.PIX_CPF_CNPJ)
+                    segmento.ChavePIX = ((MovimentoItemTransferenciaPIX)movimento.MovimentoItem).ChavePIX;
+
 
                 return PreencheSegmentoB(segmento, movimento);
             }
