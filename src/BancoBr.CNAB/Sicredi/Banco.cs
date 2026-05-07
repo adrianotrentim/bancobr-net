@@ -42,7 +42,23 @@ namespace BancoBr.CNAB.Sicredi
             return segmento;
         }
 
-       
+        internal override RegistroDetalheBase NovoSegmentoB(TipoLancamentoEnum tipoLancamento)
+        {
+            switch (tipoLancamento)
+            {
+                case TipoLancamentoEnum.CreditoContaMesmoBanco:
+                case TipoLancamentoEnum.CreditoContaPoupancaMesmoBanco:
+                case TipoLancamentoEnum.OrdemPagamento:
+                case TipoLancamentoEnum.TEDMesmaTitularidade:
+                case TipoLancamentoEnum.TEDOutraTitularidade:
+                    return new SegmentoB_Transferencia(this);
+                case TipoLancamentoEnum.PIXTransferencia:
+                    return new SegmentoB_PIX(this);
+                default:
+                    throw new Exception("Tipo de lançamento não implementado");
+            }
+        }
+
         internal override RegistroDetalheBase PreencheSegmentoJ(RegistroDetalheBase segmento, Movimento movimento)
         {
             if (movimento.CodigoInstrucao == CodigoInstrucaoMovimentoEnum.InclusaoRegistroDetalheBloqueado) // Se o movimento for bloqueado, deve ser liberado porque a Sicredi não tem a opção 09
@@ -50,6 +66,23 @@ namespace BancoBr.CNAB.Sicredi
 
             return segmento;
         }
-        
+
+        internal override HeaderLoteBase NovoHeaderLote(TipoLancamentoEnum tipoLancamento)
+        {   
+            if (this.ServicoAtual == TipoServicoEnum.PagamentoSalarios)
+                return new HeaderLote(this);
+
+            return base.NovoHeaderLote(tipoLancamento);
+        }
+
+        internal override RegistroDetalheBase NovoSegmentoA(TipoLancamentoEnum tipoLancamento)
+        {
+            if (this.ServicoAtual == TipoServicoEnum.PagamentoSalarios)
+                return new SegmentoA_TransferenciaFolha(this);
+
+            return base.NovoSegmentoA(tipoLancamento);
+        }
+
+
     }
 }
