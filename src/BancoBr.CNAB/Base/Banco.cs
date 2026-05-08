@@ -12,6 +12,7 @@ namespace BancoBr.CNAB.Base
         private TipoServicoEnum _tipoServico;
         private TipoLancamentoEnum _tipoLancamento;
         private LocalDebitoEnum _localDebito;
+        protected TipoServicoEnum ServicoAtual { get; private set; }
 
         protected Banco(Correntista empresa, int codigo, string nome, int versaoArquivo)
             : base(empresa, codigo, nome, versaoArquivo)
@@ -32,6 +33,8 @@ namespace BancoBr.CNAB.Base
             _tipoServico = tipoServico;
             _tipoLancamento = tipoLancamento;
             _localDebito = localDebito;
+            this.ServicoAtual = _tipoServico;
+
 
             if (tipoLancamento == TipoLancamentoEnum.CartaoSalario && tipoServico != TipoServicoEnum.PagamentoSalarios)
                 throw new InvalidOperationException("A forma de movimento Cartão Salário (4), só é permitida para o Tipo de Serviço Movimento de Salários (30)");
