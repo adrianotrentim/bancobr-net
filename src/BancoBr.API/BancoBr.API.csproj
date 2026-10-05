@@ -5,7 +5,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Bradesco\" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BancoBr.Common\BancoBr.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Testes de mapeamento de wire (PagamentoBoletoClientTests, PagamentoConvenioClientTests)
+         instanciam os clients concretos diretamente via o construtor de HttpClient fake. -->
+    <InternalsVisibleTo Include="BancoBr.Tests" />
   </ItemGroup>
 
 </Project>

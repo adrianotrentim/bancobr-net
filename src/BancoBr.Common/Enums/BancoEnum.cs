@@ -7,6 +7,7 @@
         CEF = 104,
         Sicredi = 748,
         Inter = 77,
-        Santander = 33
+        Santander = 33,
+        Sicoob = 756
     }
 }

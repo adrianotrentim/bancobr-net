@@ -48,6 +48,13 @@ namespace BancoBr.Common.Core
             }
         }
 
+        /// <summary>
+        /// Remove apenas a máscara (pontos, traço, barra) de um CPF/CNPJ — não usa
+        /// <see cref="JustNumbers"/> porque o CNPJ alfanumérico (novo formato) pode conter
+        /// letras.
+        /// </summary>
+        public static string RemoveMascaraCpfCnpj(this string value) => value?.Replace(".", "").Replace("-", "").Replace("/", "");
+
         public static string Truncate(this string value, int length)
         {
             return value.Length > length ? value.Substring(0, length) : value;
