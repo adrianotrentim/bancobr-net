@@ -15,6 +15,10 @@ namespace BancoBr.API.Base
     /// pelo BancoBr.CNAB: cada método recebe o movimento, mapeia para o formato da API do
     /// banco, e aplica a resposta de volta no mesmo objeto — que é então devolvido (mesma
     /// instância, mutada in-place).
+    ///
+    /// <c>origem</c> é a conta pagadora: o Sicoob não precisa dela nestas operações (a conta
+    /// vem das credenciais), mas o Santander a usa para localizar a workspace do Hub de
+    /// Pagamentos que debita essa conta.
     /// </summary>
     internal abstract class PagamentoPixApiBase
     {
@@ -29,7 +33,7 @@ namespace BancoBr.API.Base
         /// Consulta a situação de um pagamento já iniciado. O identificador do pagamento no
         /// banco (EndToEndId) é lido de <see cref="Movimento.NumeroDocumentoNoBanco"/>.
         /// </summary>
-        internal abstract Task<Movimento> ConsultarPagamentoAsync(Movimento movimento, CancellationToken cancellationToken = default);
+        internal abstract Task<Movimento> ConsultarPagamentoAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Resolve a chave DICT informada em
@@ -37,13 +41,13 @@ namespace BancoBr.API.Base
         /// movimentar valores. Espera um <see cref="MovimentoItemTransferenciaPIX"/> como
         /// <see cref="Movimento.MovimentoItem"/>.
         /// </summary>
-        internal abstract Task<Movimento> IniciarPagamentoAsync(Movimento movimento, CancellationToken cancellationToken = default);
+        internal abstract Task<Movimento> IniciarPagamentoAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Efetiva um pagamento previamente iniciado por
         /// <see cref="IniciarPagamentoAsync"/>.
         /// </summary>
-        internal abstract Task<Movimento> ConfirmarPagamentoAsync(Movimento movimento, CancellationToken cancellationToken = default);
+        internal abstract Task<Movimento> ConfirmarPagamentoAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Conveniência para o caso sem aprovação humana entre iniciação e confirmação: chama
@@ -51,7 +55,7 @@ namespace BancoBr.API.Base
         /// no mesmo movimento. Quando o ERP precisa exibir o titular resolvido para confirmação
         /// antes de pagar, use os dois métodos separadamente.
         /// </summary>
-        internal abstract Task<Movimento> PagarComIniciacaoAsync(Movimento movimento, CancellationToken cancellationToken = default);
+        internal abstract Task<Movimento> PagarComIniciacaoAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Paga um Pix Copia e Cola (QR Code estático ou com vencimento) com execução

@@ -30,8 +30,8 @@ namespace BancoBr.Common.Instances
 
         /// <summary>
         /// Identificador do movimento no banco. No CNAB, o número atribuído pelo banco ao
-        /// pagamento; nas APIs bancárias, o EndToEndId (Pix), o IdPagamento (Boleto) ou o
-        /// NSU (Convênio).
+        /// pagamento; nas APIs bancárias, o EndToEndId (Pix Sicoob), o id do pagamento (Pix
+        /// Santander), o IdPagamento (Boleto) ou o NSU (Convênio).
         /// </summary>
         public string NumeroDocumentoNoBanco { get; set; }
 
@@ -103,6 +103,33 @@ namespace BancoBr.Common.Instances
         /// <see cref="TipoChavePIX"/>, que é a classificação Febraban usada no CNAB.
         /// </summary>
         public string TipoChaveConfirmado { get; set; }
+
+        #endregion
+
+        #region ::. Transferência por agência e conta (Santander) .::
+
+        /*************************************************************************************
+         *
+         * Usados apenas pelo Santander, quando ChavePIX está vazia: a transferência é feita
+         * para a conta do beneficiário. Nome, CPF/CNPJ e tipo de pessoa vêm de
+         * Movimento.Favorecido. O banco do beneficiário é identificado por Banco (código
+         * COMPE) OU Ispb — nunca os dois.
+         *
+         *************************************************************************************/
+
+        /// <summary>Código COMPE do banco do beneficiário (ex.: 341). Alternativa a <see cref="Ispb"/>.</summary>
+        public int Banco { get; set; }
+
+        /// <summary>ISPB (8 dígitos) do banco do beneficiário. Alternativa a <see cref="Banco"/>.</summary>
+        public string Ispb { get; set; }
+
+        public int NumeroAgencia { get; set; }
+
+        public long NumeroConta { get; set; }
+
+        public string DVConta { get; set; }
+
+        public TipoContaEnum TipoConta { get; set; }
 
         #endregion
     }

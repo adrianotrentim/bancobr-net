@@ -14,6 +14,7 @@ using BancoBr.API.Sicoob.Pagamentos.Pix;
 using BancoBr.API.Sicoob.Pagamentos.Ted;
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
+using SantanderPagamentoPixClient = BancoBr.API.Santander.Pagamentos.Pix.PagamentoPixClient;
 
 namespace BancoBr.API
 {
@@ -56,6 +57,9 @@ namespace BancoBr.API
                         new TedClient(clientId, clientSecret, certificateSource, tokenEndpointOverride),
                         new ExtratoClient(clientId, clientSecret, certificateSource, tokenEndpointOverride));
 
+                case BancoEnum.Santander:
+                    return new BancoApi(null, null, new SantanderPagamentoPixClient(clientId, clientSecret, certificateSource, tokenEndpointOverride), null, null);
+
                 default:
                     throw new Exception($"Banco não implementado: {banco}!");
             }
@@ -63,7 +67,7 @@ namespace BancoBr.API
 
         /// <summary>
         /// Fluxo com token já emitido (ex.: portal de sandbox), pulando o fluxo OAuth2
-        /// client_credentials — o mesmo token é reaproveitado pelos cinco clientes internos.
+        /// client_credentials — o mesmo token é reaproveitado pelos clientes internos.
         /// </summary>
         public static BancoApi Conectar(BancoEnum banco, string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider)
         {
@@ -76,6 +80,9 @@ namespace BancoBr.API
                         new PagamentoPixClient(clientId, certificateSource, tokenProvider),
                         new TedClient(clientId, certificateSource, tokenProvider),
                         new ExtratoClient(clientId, certificateSource, tokenProvider));
+
+                case BancoEnum.Santander:
+                    return new BancoApi(null, null, new SantanderPagamentoPixClient(clientId, certificateSource, tokenProvider), null, null);
 
                 default:
                     throw new Exception($"Banco não implementado: {banco}!");
@@ -113,22 +120,22 @@ namespace BancoBr.API
                     if (!string.IsNullOrEmpty(itemBoleto.IdentificadorConsulta))
                     {
                         var chave = IdempotencyKey.New(origem.NumeroAgencia, origem.NumeroConta, ParseOuGerarGuid(idempotencyKey));
-                        return await _boleto.PagarBoletoAsync(movimento, origem, chave, cancellationToken).ConfigureAwait(false);
+                        return await Requer(_boleto).PagarBoletoAsync(movimento, origem, chave, cancellationToken).ConfigureAwait(false);
                     }
-                    return await _boleto.PagarBoletoComConsultaAsync(movimento, origem, ParseOuGerarGuid(idempotencyKey), cancellationToken).ConfigureAwait(false);
+                    return await Requer(_boleto).PagarBoletoComConsultaAsync(movimento, origem, ParseOuGerarGuid(idempotencyKey), cancellationToken).ConfigureAwait(false);
 
                 case MovimentoItemPagamentoConvenioCodigoBarra itemConvenio:
                     if (itemConvenio.Transacao == null)
-                        await _convenio.ConsultarCodigoBarrasAsync(movimento, origem, unidade: unidade, cancellationToken: cancellationToken).ConfigureAwait(false);
-                    return await _convenio.PagarConvenioAsync(movimento, origem, unidade, cancellationToken).ConfigureAwait(false);
+                        await Requer(_convenio).ConsultarCodigoBarrasAsync(movimento, origem, unidade: unidade, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    return await Requer(_convenio).PagarConvenioAsync(movimento, origem, unidade, cancellationToken).ConfigureAwait(false);
 
                 case MovimentoItemTransferenciaTED _:
-                    return await _ted.PagarTedAsync(movimento, origem, idempotencyKey ?? Guid.NewGuid().ToString(), cancellationToken).ConfigureAwait(false);
+                    return await Requer(_ted).PagarTedAsync(movimento, origem, idempotencyKey ?? Guid.NewGuid().ToString(), cancellationToken).ConfigureAwait(false);
 
                 case MovimentoItemTransferenciaPIX _:
                     return string.IsNullOrEmpty(movimento.NumeroDocumentoNoBanco)
-                        ? await _pix.PagarComIniciacaoAsync(movimento, cancellationToken).ConfigureAwait(false)
-                        : await _pix.ConfirmarPagamentoAsync(movimento, cancellationToken).ConfigureAwait(false);
+                        ? await _pix.PagarComIniciacaoAsync(movimento, origem, cancellationToken).ConfigureAwait(false)
+                        : await _pix.ConfirmarPagamentoAsync(movimento, origem, cancellationToken).ConfigureAwait(false);
 
                 case MovimentoItemPagamentoTituloPIXQRCode _:
                     return await _pix.PagarViaQrCodeAsync(origem, movimento, cancellationToken).ConfigureAwait(false);
@@ -154,26 +161,26 @@ namespace BancoBr.API
             {
                 case MovimentoItemPagamentoTituloCodigoBarra _:
                     return jaEnviado
-                        ? _boleto.ConsultarComprovantePorIdAsync(movimento, origem, cancellationToken)
-                        : _boleto.ConsultarBoletoAsync(movimento, origem, cancellationToken);
+                        ? Requer(_boleto).ConsultarComprovantePorIdAsync(movimento, origem, cancellationToken)
+                        : Requer(_boleto).ConsultarBoletoAsync(movimento, origem, cancellationToken);
 
                 case MovimentoItemPagamentoConvenioCodigoBarra _:
                     return jaEnviado
-                        ? _convenio.ConsultarComprovantePorNsuAsync(movimento, origem, cancellationToken)
-                        : _convenio.ConsultarCodigoBarrasAsync(movimento, origem, unidade: unidade, cancellationToken: cancellationToken);
+                        ? Requer(_convenio).ConsultarComprovantePorNsuAsync(movimento, origem, cancellationToken)
+                        : Requer(_convenio).ConsultarCodigoBarrasAsync(movimento, origem, unidade: unidade, cancellationToken: cancellationToken);
 
                 case MovimentoItemTransferenciaTED _:
-                    return _ted.ConsultarTedAsync(movimento, cancellationToken);
+                    return Requer(_ted).ConsultarTedAsync(movimento, cancellationToken);
 
                 case MovimentoItemTransferenciaPIX _:
                     return jaEnviado
-                        ? _pix.ConsultarPagamentoAsync(movimento, cancellationToken)
-                        : _pix.IniciarPagamentoAsync(movimento, cancellationToken);
+                        ? _pix.ConsultarPagamentoAsync(movimento, origem, cancellationToken)
+                        : _pix.IniciarPagamentoAsync(movimento, origem, cancellationToken);
 
                 case MovimentoItemPagamentoTituloPIXQRCode _:
                     if (!jaEnviado)
                         throw new NotSupportedException("Pix Copia e Cola não tem consulta prévia — chame EnviarAgendamentoAsync diretamente; ConsultarAgendamentoAsync só se aplica depois do pagamento.");
-                    return _pix.ConsultarPagamentoAsync(movimento, cancellationToken);
+                    return _pix.ConsultarPagamentoAsync(movimento, origem, cancellationToken);
 
                 default:
                     throw OperacaoNaoSuportada("consulta", movimento);
@@ -189,10 +196,10 @@ namespace BancoBr.API
             switch (ExtrairItem(movimento))
             {
                 case MovimentoItemPagamentoTituloCodigoBarra _:
-                    return _boleto.CancelarAgendamentoAsync(movimento, origem, cancellationToken);
+                    return Requer(_boleto).CancelarAgendamentoAsync(movimento, origem, cancellationToken);
 
                 case MovimentoItemTransferenciaTED _:
-                    return _ted.CancelarAgendamentoAsync(movimento, idempotencyKey ?? Guid.NewGuid().ToString(), cancellationToken);
+                    return Requer(_ted).CancelarAgendamentoAsync(movimento, idempotencyKey ?? Guid.NewGuid().ToString(), cancellationToken);
 
                 default:
                     throw new NotSupportedException($"Cancelamento não é suportado para {movimento?.MovimentoItem?.GetType().Name ?? "null"} — a API do Sicoob não expõe esse endpoint para Pix/Convênio.");
@@ -201,11 +208,11 @@ namespace BancoBr.API
 
         /// <summary>Consulta de lista: boletos DDA com vencimento/pagamento num intervalo — cada item vem como um <see cref="Movimento"/> com <see cref="MovimentoItemDDA"/>.</summary>
         public Task<IReadOnlyList<Movimento>> ConsultarDDAAsync(long numeroConta, DateTime dataInicial, DateTime dataFinal, SituacaoBoletoEnum situacao, TipoDataConsultaEnum tipoData, CancellationToken cancellationToken = default)
-            => _boleto.ConsultarBoletosDdaAsync(numeroConta, dataInicial, dataFinal, situacao, tipoData, cancellationToken);
+            => Requer(_boleto).ConsultarBoletosDdaAsync(numeroConta, dataInicial, dataFinal, situacao, tipoData, cancellationToken);
 
         /// <summary>Consulta o extrato da conta no mês/ano informado — o primeiro item é o saldo do período (<see cref="MovimentoItemExtratoSaldo"/>), os demais são um por lançamento (<see cref="MovimentoItemExtratoTransacao"/>).</summary>
         public Task<IReadOnlyList<Movimento>> ConsultarExtratoAsync(long numeroContaCorrente, int mes, int ano, int? diaInicial = null, int? diaFinal = null, bool agruparCnab = false, CancellationToken cancellationToken = default)
-            => _contaCorrente.ConsultarExtratoAsync(numeroContaCorrente, mes, ano, diaInicial, diaFinal, agruparCnab, cancellationToken);
+            => Requer(_contaCorrente).ConsultarExtratoAsync(numeroContaCorrente, mes, ano, diaInicial, diaFinal, agruparCnab, cancellationToken);
 
         private static MovimentoItem ExtrairItem(Movimento movimento)
         {
@@ -216,6 +223,10 @@ namespace BancoBr.API
 
         private static NotSupportedException OperacaoNaoSuportada(string operacao, Movimento movimento)
             => new NotSupportedException($"Não há {operacao} implementada para {movimento.MovimentoItem.GetType().Name}.");
+
+        /// <summary>Bancos com API parcial (ex.: Santander, só Pix por enquanto) deixam as demais operações nulas.</summary>
+        private static T Requer<T>(T api) where T : class
+            => api ?? throw new NotSupportedException("Esta operação ainda não está implementada para o banco conectado.");
 
         private static Guid ParseOuGerarGuid(string idempotencyKey)
             => Guid.TryParse(idempotencyKey, out var guid) ? guid : Guid.NewGuid();

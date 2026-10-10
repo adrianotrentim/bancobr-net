@@ -13,14 +13,18 @@ namespace BancoBr.Tests.Sicoob
 
         public List<HttpRequestMessage> Requests { get; } = new();
 
+        /// <summary>Corpo de cada requisição, na mesma ordem de <see cref="Requests"/> (o conteúdo da requisição já foi descartado quando o teste a inspeciona).</summary>
+        public List<string?> Bodies { get; } = new();
+
         public SequencedFakeHttpMessageHandler(params (HttpStatusCode StatusCode, string? Body)[] responses)
         {
             _responses = new Queue<(HttpStatusCode, string?)>(responses);
         }
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Requests.Add(request);
+            Bodies.Add(request.Content != null ? await request.Content.ReadAsStringAsync(cancellationToken) : null);
 
             var (statusCode, body) = _responses.Dequeue();
             var response = new HttpResponseMessage(statusCode);
@@ -29,7 +33,7 @@ namespace BancoBr.Tests.Sicoob
                 response.Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json");
             }
 
-            return Task.FromResult(response);
+            return response;
         }
     }
 }

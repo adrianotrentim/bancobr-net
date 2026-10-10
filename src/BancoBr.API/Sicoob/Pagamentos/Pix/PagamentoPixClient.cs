@@ -133,7 +133,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Pix
 
         #region ::. Operações .::
 
-        internal override async Task<Movimento> ConsultarPagamentoAsync(Movimento movimento, CancellationToken cancellationToken = default)
+        internal override async Task<Movimento> ConsultarPagamentoAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default)
         {
             if (movimento == null) throw new ArgumentNullException(nameof(movimento));
 
@@ -146,7 +146,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Pix
             return AplicarRetornoPagamento(movimento, dto);
         }
 
-        internal override async Task<Movimento> IniciarPagamentoAsync(Movimento movimento, CancellationToken cancellationToken = default)
+        internal override async Task<Movimento> IniciarPagamentoAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default)
         {
             if (movimento == null) throw new ArgumentNullException(nameof(movimento));
 
@@ -186,7 +186,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Pix
             return movimento;
         }
 
-        internal override async Task<Movimento> ConfirmarPagamentoAsync(Movimento movimento, CancellationToken cancellationToken = default)
+        internal override async Task<Movimento> ConfirmarPagamentoAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default)
         {
             if (movimento == null) throw new ArgumentNullException(nameof(movimento));
 
@@ -259,11 +259,11 @@ namespace BancoBr.API.Sicoob.Pagamentos.Pix
             return movimento;
         }
 
-        internal override async Task<Movimento> PagarComIniciacaoAsync(Movimento movimento, CancellationToken cancellationToken = default)
+        internal override async Task<Movimento> PagarComIniciacaoAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default)
         {
-            await IniciarPagamentoAsync(movimento, cancellationToken).ConfigureAwait(false);
+            await IniciarPagamentoAsync(movimento, origem, cancellationToken).ConfigureAwait(false);
 
-            return await ConfirmarPagamentoAsync(movimento, cancellationToken).ConfigureAwait(false);
+            return await ConfirmarPagamentoAsync(movimento, origem, cancellationToken).ConfigureAwait(false);
         }
 
         #endregion
