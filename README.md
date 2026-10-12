@@ -307,7 +307,8 @@ var boletosDda = await banco.ConsultarDDAAsync(
     dataInicial: DateTime.Today,
     dataFinal: DateTime.Today.AddDays(30),
     situacao: SituacaoBoletoEnum.EmAberto,
-    tipoData: TipoDataConsultaEnum.Vencimento);
+    tipoData: TipoDataConsultaEnum.Vencimento,
+    origem: origem); // obrigatório no Santander (agência/conta/DV); ignorado no Sicoob
 
 foreach (var movimento in boletosDda)
 {
@@ -319,15 +320,19 @@ foreach (var movimento in boletosDda)
 ###### Consultando o extrato da conta corrente
 
 ```csharp
-var extrato = await banco.ConsultarExtratoAsync(numeroContaCorrente: 12345, mes: 9, ano: 2026);
+var extrato = await banco.ConsultarExtratoAsync(
+    numeroContaCorrente: 12345,
+    mes: 9,
+    ano: 2026,
+    origem: origem); // obrigatório no Santander (agência/conta/DV); ignorado no Sicoob
 
-// O primeiro item é sempre o saldo do período.
-var saldo = (MovimentoItemExtratoSaldo)extrato[0].MovimentoItem;
-Console.WriteLine($"Saldo atual: {saldo.SaldoAtual:C}");
+// No Sicoob, o primeiro item é o saldo do período (o Santander não devolve saldo).
+var saldo = extrato.Select(m => m.MovimentoItem).OfType<MovimentoItemExtratoSaldo>().FirstOrDefault();
+if (saldo != null)
+    Console.WriteLine($"Saldo atual: {saldo.SaldoAtual:C}");
 
-foreach (var movimento in extrato.Skip(1))
+foreach (var transacao in extrato.Select(m => m.MovimentoItem).OfType<MovimentoItemExtratoTransacao>())
 {
-    var transacao = (MovimentoItemExtratoTransacao)movimento.MovimentoItem;
     Console.WriteLine($"{transacao.Data:d} [{transacao.Tipo}] {transacao.Descricao}: {transacao.Valor:C}");
 }
 ```

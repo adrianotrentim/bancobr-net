@@ -285,7 +285,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Boletos
             return AplicarComprovante(movimento, (MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem, comprovante);
         }
 
-        internal override async Task<IReadOnlyList<Movimento>> ConsultarBoletosDdaAsync(long numeroConta, DateTime dataInicial, DateTime dataFinal, Base.Models.SituacaoBoletoEnum situacao, Base.Models.TipoDataConsultaEnum tipoData, CancellationToken cancellationToken = default)
+        internal override async Task<IReadOnlyList<Movimento>> ConsultarBoletosDdaAsync(long numeroConta, DateTime dataInicial, DateTime dataFinal, Base.Models.SituacaoBoletoEnum situacao, Base.Models.TipoDataConsultaEnum tipoData, Correntista origem = null, CancellationToken cancellationToken = default)
         {
             var url = $"{_baseUrl}boletos?numeroConta={numeroConta}&dataInicial={dataInicial:yyyy-MM-dd}&dataFinal={dataFinal:yyyy-MM-dd}&situacao={(int)situacao}&tipoData={(int)tipoData}";
 

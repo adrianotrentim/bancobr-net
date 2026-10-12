@@ -22,14 +22,17 @@ namespace BancoBr.API.Base
         protected HttpClient HttpClient { get; }
 
         /// <summary>
-        /// Consulta o extrato da conta no mês/ano informado. O primeiro <see cref="Movimento"/>
-        /// da lista traz o saldo do período (<see cref="MovimentoItemExtratoSaldo"/> — o
-        /// Sicoob não dá saldo por lançamento, só do período inteiro); os demais são um por
-        /// lançamento, com <see cref="MovimentoItemExtratoTransacao"/>.
-        /// <paramref name="diaInicial"/> e <paramref name="diaFinal"/> recortam o período dentro
-        /// daquele mês (nulos = mês inteiro). <paramref name="agruparCnab"/> agrupa o movimento
-        /// proveniente de CNAB.
+        /// Consulta o extrato da conta no mês/ano informado. No Sicoob, o primeiro
+        /// <see cref="Movimento"/> da lista traz o saldo do período
+        /// (<see cref="MovimentoItemExtratoSaldo"/> — o banco não dá saldo por lançamento, só do
+        /// período inteiro); os demais são um por lançamento, com
+        /// <see cref="MovimentoItemExtratoTransacao"/>. O Santander não devolve saldo: só os
+        /// lançamentos. <paramref name="diaInicial"/> e <paramref name="diaFinal"/> recortam o
+        /// período dentro daquele mês (nulos = mês inteiro). <paramref name="agruparCnab"/> agrupa
+        /// o movimento proveniente de CNAB (só Sicoob). <paramref name="origem"/> identifica a
+        /// conta por agência/conta/DV e é obrigatório no Santander (no Sicoob vale
+        /// <paramref name="numeroContaCorrente"/>).
         /// </summary>
-        internal abstract Task<IReadOnlyList<Movimento>> ConsultarExtratoAsync(long numeroContaCorrente, int mes, int ano, int? diaInicial, int? diaFinal, bool agruparCnab, CancellationToken cancellationToken = default);
+        internal abstract Task<IReadOnlyList<Movimento>> ConsultarExtratoAsync(long numeroContaCorrente, int mes, int ano, int? diaInicial, int? diaFinal, bool agruparCnab, Correntista origem = null, CancellationToken cancellationToken = default);
     }
 }

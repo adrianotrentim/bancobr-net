@@ -264,6 +264,107 @@ namespace BancoBr.Tests.Santander
             await Assert.ThrowsAsync<NotSupportedException>(() => client.ConsultarComprovantePorIdempotencyAsync("chave"));
         }
 
+        private const string ListaComWorkspaceDda = @"{
+            ""_pageable"": { ""_totalElements"": 1 },
+            ""_content"": [ {
+                ""workspace_id"": ""ws-1"", ""status"": ""ACTIVE"", ""type"": ""PAYMENTS"",
+                ""mainDebitAccount"": { ""branch"": ""1234"", ""number"": ""000000056789"" },
+                ""bankSlipPaymentsActive"": true, ""bankSlipAvailableActive"": true
+            } ]
+        }";
+
+        private static string PaginaDda(int quantidade) => @"{ ""_limit"": 200, ""_pageNumber"": 1, ""_pageElements"": " + quantidade + @", ""_content"": [" +
+            string.Join(",", Enumerable.Range(0, quantidade).Select(_ => @"{
+                ""code"": ""03391234500000150001234567890123456789012345"", ""authorizedDirectDebitId"": ""987654321"", ""bankIdentificationNumber"": ""1234567890123"",
+                ""kindCode"": ""2"", ""dueDate"": ""2026-10-20"", ""paymentLimitDate"": ""2026-11-20"", ""nominalValue"": 150.00, ""payerDocumentNumber"": ""11222333000181"",
+                ""beneficiaryIdentificationNumber"": ""NF-123"",
+                ""beneficiary"": { ""name"": ""Fornecedor LTDA"", ""documentType"": ""CNPJ"", ""documentNumber"": ""12345678000100"" }
+            }")) + "]}";
+
+        [Fact]
+        public async Task Boleto_ConsultarBoletosDdaAsync_ConsultaPorVencimentoEMapeiaItens()
+        {
+            var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.OK, ListaComWorkspaceDda), (HttpStatusCode.OK, PaginaDda(2)));
+
+            var resultado = await CriarBoleto(handler).ConsultarBoletosDdaAsync(
+                56789, new DateTime(2026, 10, 1), new DateTime(2026, 10, 31),
+                BancoBr.API.Base.Models.SituacaoBoletoEnum.EmAberto, BancoBr.API.Base.Models.TipoDataConsultaEnum.Vencimento, CriarOrigem());
+
+            Assert.Equal(2, handler.Requests.Count);
+            var get = handler.Requests[1];
+            Assert.Equal(HttpMethod.Get, get.Method);
+            Assert.Equal($"{BaseUrl}/workspaces/ws-1/authorized_direct_debits?_limit=200&_PageNumber=1&initialDueDate=2026-10-01&finalDueDate=2026-10-31&titleSituation=ALL", get.RequestUri!.ToString());
+
+            Assert.Equal(2, resultado.Count);
+            var item = Assert.IsType<MovimentoItemDDA>(resultado[0].MovimentoItem);
+            Assert.Equal("03391234500000150001234567890123456789012345", item.NumeroCodigoBarras);
+            Assert.Equal(150.00m, item.ValorBoleto);
+            Assert.Equal(new DateTime(2026, 10, 20), item.DataVencimentoBoleto);
+            Assert.Equal("2026-11-20", item.DataLimitePagamento);
+            Assert.Equal("11222333000181", item.NumeroCpfCnpjPagador);
+            Assert.Equal("1234567890123", item.NumeroNossoNumero);
+            Assert.Equal("NF-123", item.NumeroDocumento);
+            Assert.Equal(2, item.CodigoEspecieDocumento);
+            Assert.Equal(987654321, item.NumeroIdentificadorBoletoCip);
+            Assert.Equal("Fornecedor LTDA", item.NomeRazaoSocialBeneficiario);
+            Assert.Equal("CNPJ", item.TipoPessoaBeneficiario);
+            Assert.Equal("12345678000100", item.NumeroCpfCnpjBeneficiario);
+        }
+
+        [Fact]
+        public async Task Boleto_ConsultarBoletosDdaAsync_PaginaAteUmaPaginaIncompleta()
+        {
+            var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.OK, ListaComWorkspaceDda), (HttpStatusCode.OK, PaginaDda(200)), (HttpStatusCode.OK, PaginaDda(3)));
+
+            var resultado = await CriarBoleto(handler).ConsultarBoletosDdaAsync(
+                56789, new DateTime(2026, 10, 1), new DateTime(2026, 10, 31),
+                BancoBr.API.Base.Models.SituacaoBoletoEnum.Liquidado, BancoBr.API.Base.Models.TipoDataConsultaEnum.Vencimento, CriarOrigem());
+
+            Assert.Equal(203, resultado.Count);
+            Assert.Equal(3, handler.Requests.Count);
+            Assert.Contains("_PageNumber=2", handler.Requests[2].RequestUri!.Query);
+            Assert.Contains("titleSituation=PAID", handler.Requests[2].RequestUri!.Query);
+        }
+
+        [Fact]
+        public async Task Boleto_ConsultarBoletosDdaAsync_WorkspaceSemDdaAtivo_HabilitaDdaEBoletoViaPatch()
+        {
+            var lista = @"{
+                ""_pageable"": { ""_totalElements"": 1 },
+                ""_content"": [ {
+                    ""workspace_id"": ""ws-1"", ""status"": ""ACTIVE"", ""type"": ""PAYMENTS"",
+                    ""mainDebitAccount"": { ""branch"": ""1234"", ""number"": ""000000056789"" },
+                    ""bankSlipPaymentsActive"": false, ""bankSlipAvailableActive"": false
+                } ]
+            }";
+            var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.OK, lista), (HttpStatusCode.OK, @"{ ""id"": ""ws-1"" }"), (HttpStatusCode.NoContent, null));
+
+            var resultado = await CriarBoleto(handler).ConsultarBoletosDdaAsync(
+                56789, new DateTime(2026, 10, 1), new DateTime(2026, 10, 31),
+                BancoBr.API.Base.Models.SituacaoBoletoEnum.EmAberto, BancoBr.API.Base.Models.TipoDataConsultaEnum.Vencimento, CriarOrigem());
+
+            Assert.Empty(resultado);
+            Assert.Equal("PATCH", handler.Requests[1].Method.Method);
+            Assert.Contains(@"""bankSlipAvailableActive"":true", handler.Bodies[1]!);
+            Assert.Contains(@"""bankSlipPaymentsActive"":true", handler.Bodies[1]!);
+        }
+
+        [Fact]
+        public async Task Boleto_ConsultarBoletosDdaAsync_TipoDataDiferenteDeVencimento_Lanca()
+        {
+            await Assert.ThrowsAsync<NotSupportedException>(() => CriarBoleto(Sequencia()).ConsultarBoletosDdaAsync(
+                56789, DateTime.Today, DateTime.Today,
+                BancoBr.API.Base.Models.SituacaoBoletoEnum.EmAberto, BancoBr.API.Base.Models.TipoDataConsultaEnum.Emissao, CriarOrigem()));
+        }
+
+        [Fact]
+        public async Task Boleto_ConsultarBoletosDdaAsync_SemOrigem_Lanca()
+        {
+            await Assert.ThrowsAsync<ArgumentNullException>(() => CriarBoleto(Sequencia()).ConsultarBoletosDdaAsync(
+                56789, DateTime.Today, DateTime.Today,
+                BancoBr.API.Base.Models.SituacaoBoletoEnum.EmAberto, BancoBr.API.Base.Models.TipoDataConsultaEnum.Vencimento));
+        }
+
         [Fact]
         public async Task Boleto_WorkspaceSemBoletoAtivo_HabilitaViaPatchEMantemContasAdicionais()
         {

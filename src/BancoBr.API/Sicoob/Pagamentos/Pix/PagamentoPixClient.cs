@@ -154,8 +154,10 @@ namespace BancoBr.API.Sicoob.Pagamentos.Pix
             if (item == null)
                 throw new InvalidOperationException("IniciarPagamentoAsync espera um MovimentoItemTransferenciaPIX em Movimento.MovimentoItem.");
 
+            // O Sicoob só paga Pix por chave DICT (ou QR Code); não há transferência por
+            // agência/conta como no Santander, cujos campos em MovimentoItemTransferenciaPIX são ignorados aqui.
             if (string.IsNullOrWhiteSpace(item.ChavePIX))
-                throw new InvalidOperationException("A chave Pix não foi informada no movimento.");
+                throw new NotSupportedException("O Sicoob só suporta Pix por chave (DICT) ou QR Code; transferência Pix por agência e conta não é suportada. Informe a chave Pix no movimento.");
 
             var url = $"{_baseUrl}pagamentos";
             var wireRequest = new RequisicaoIniciacaoPix

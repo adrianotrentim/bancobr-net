@@ -84,8 +84,9 @@ namespace BancoBr.API.Base
         /// Consulta de lista (boletos DDA com vencimento/pagamento num intervalo) — não parte de
         /// um único <see cref="Movimento"/> de entrada, mas cada item devolvido vira um
         /// <see cref="Movimento"/> com <see cref="MovimentoItemDDA"/>, como qualquer outra
-        /// operação.
+        /// operação. O <paramref name="origem"/> só é exigido por bancos que localizam a conta
+        /// por agência/conta/DV em vez de só pelo número (Santander).
         /// </summary>
-        internal abstract Task<IReadOnlyList<Movimento>> ConsultarBoletosDdaAsync(long numeroConta, DateTime dataInicial, DateTime dataFinal, SituacaoBoletoEnum situacao, TipoDataConsultaEnum tipoData, CancellationToken cancellationToken = default);
+        internal abstract Task<IReadOnlyList<Movimento>> ConsultarBoletosDdaAsync(long numeroConta, DateTime dataInicial, DateTime dataFinal, SituacaoBoletoEnum situacao, TipoDataConsultaEnum tipoData, Correntista origem = null, CancellationToken cancellationToken = default);
     }
 }

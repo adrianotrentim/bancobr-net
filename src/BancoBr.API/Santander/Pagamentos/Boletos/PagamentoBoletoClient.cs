@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,7 +28,8 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
     /// fica em <see cref="MovimentoItemPagamentoTituloCodigoBarra.IdentificadorConsulta"/> (é o
     /// que a efetivação exige de volta) e, depois de efetivado, também em
     /// <see cref="Movimento.NumeroDocumentoNoBanco"/>. A API não tem cancelamento, consulta de
-    /// comprovante por idempotency key nem DDA, então essas operações não são suportadas.
+    /// comprovante por idempotency key, então essas operações não são suportadas. O DDA
+    /// (authorized_direct_debits) roda numa workspace com o DDA e o pagamento de boletos ligados.
     /// </summary>
     internal class PagamentoBoletoClient : PagamentoBoletoApiBase
     {
@@ -158,8 +160,41 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
         internal override Task<Movimento> ConsultarComprovantePorIdempotencyAsync(string idempotencyKey, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException("A API de boletos do Santander não consulta pagamentos por idempotency key — use o id do pagamento.");
 
-        internal override Task<IReadOnlyList<Movimento>> ConsultarBoletosDdaAsync(long numeroConta, DateTime dataInicial, DateTime dataFinal, SituacaoBoletoEnum situacao, TipoDataConsultaEnum tipoData, CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException("A consulta DDA do Santander ainda não está implementada.");
+        /// <summary>
+        /// Consulta os boletos DDA (authorized_direct_debits) da workspace da conta
+        /// <paramref name="origem"/>, paginando de 200 em 200. O Santander só filtra por
+        /// vencimento, então <paramref name="dataInicial"/>/<paramref name="dataFinal"/> são o
+        /// intervalo de vencimento e outros <paramref name="tipoData"/> não são suportados; o
+        /// <paramref name="numeroConta"/> não é usado — a conta vem de <paramref name="origem"/>.
+        /// </summary>
+        internal override async Task<IReadOnlyList<Movimento>> ConsultarBoletosDdaAsync(long numeroConta, DateTime dataInicial, DateTime dataFinal, SituacaoBoletoEnum situacao, TipoDataConsultaEnum tipoData, Correntista origem = null, CancellationToken cancellationToken = default)
+        {
+            if (tipoData != TipoDataConsultaEnum.Vencimento)
+                throw new NotSupportedException("O DDA do Santander só filtra por data de vencimento (TipoDataConsultaEnum.Vencimento).");
+
+            var titleSituation = MapSituacaoDda(situacao);
+            var workspace = await ResolverWorkspaceDdaAsync(origem, cancellationToken).ConfigureAwait(false);
+
+            const int limite = 200;
+            var movimentos = new List<Movimento>();
+
+            for (var pagina = 1; ; pagina++)
+            {
+                var url = $"{_baseUrl}workspaces/{workspace.WorkspaceId}/authorized_direct_debits?_limit={limite}&_PageNumber={pagina}" +
+                          $"&initialDueDate={dataInicial:yyyy-MM-dd}&finalDueDate={dataFinal:yyyy-MM-dd}&titleSituation={titleSituation}";
+
+                var dto = await _gateway.SendAsync<DdaListResponse>(HttpMethod.Get, url, body: null, cancellationToken).ConfigureAwait(false);
+                if (dto?.Content == null || dto.Content.Count == 0)
+                    break;
+
+                movimentos.AddRange(dto.Content.Select(boleto => MapBoletoDda(boleto, situacao, titleSituation)));
+
+                if (dto.Content.Count < limite)
+                    break;
+            }
+
+            return movimentos;
+        }
 
         #endregion
 
@@ -171,6 +206,13 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
         /// </summary>
         private Task<(string WorkspaceId, ContaDebito Conta)> ResolverWorkspaceAsync(Correntista origem, CancellationToken cancellationToken) =>
             _gateway.ResolverWorkspaceAsync(_baseUrl, origem, "Boletos", w => w.BankSlipPaymentsActive, w => w.BankSlipPaymentsActive = true, cancellationToken);
+
+        /// <summary>
+        /// Como a de boletos, mas com o DDA (<c>bankSlipAvailableActive</c>) ligado — o banco exige
+        /// que o pagamento de boletos também esteja habilitado na mesma workspace.
+        /// </summary>
+        private Task<(string WorkspaceId, ContaDebito Conta)> ResolverWorkspaceDdaAsync(Correntista origem, CancellationToken cancellationToken) =>
+            _gateway.ResolverWorkspaceAsync(_baseUrl, origem, "DDA", w => w.BankSlipAvailableActive && w.BankSlipPaymentsActive, w => w.BankSlipAvailableActive = w.BankSlipPaymentsActive = true, cancellationToken);
 
         #endregion
 
@@ -185,6 +227,47 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
                 throw new InvalidOperationException("As operações de boleto esperam um MovimentoItemPagamentoTituloCodigoBarra em Movimento.MovimentoItem.");
 
             return item;
+        }
+
+        /// <summary>EmAberto traz todos os títulos em aberto (ALL), a vencer e vencidos.</summary>
+        private static string MapSituacaoDda(SituacaoBoletoEnum situacao)
+        {
+            switch (situacao)
+            {
+                case SituacaoBoletoEnum.EmAberto: return "ALL";
+                case SituacaoBoletoEnum.Agendado: return "SCHEDULED";
+                case SituacaoBoletoEnum.Liquidado: return "PAID";
+                case SituacaoBoletoEnum.Baixado: return "ISSUED";
+                default: throw new ArgumentOutOfRangeException(nameof(situacao), situacao, "Situação de boleto DDA não suportada.");
+            }
+        }
+
+        private static Movimento MapBoletoDda(DdaBoletoResponse dto, SituacaoBoletoEnum situacao, string titleSituation)
+        {
+            // A API não devolve a situação do título: ela é a do filtro usado na consulta.
+            var item = new MovimentoItemDDA
+            {
+                CodigoTipoSituacaoBoleto = (int)situacao,
+                DescricaoSituacaoBoleto = titleSituation,
+                NumeroCodigoBarras = dto.Code.JustNumbers(),
+                ValorBoleto = dto.NominalValue.GetValueOrDefault(),
+                DataVencimentoBoleto = dto.DueDate.GetValueOrDefault(),
+                DataLimitePagamento = dto.PaymentLimitDate,
+                NumeroCpfCnpjPagador = dto.PayerDocumentNumber,
+                NumeroNossoNumero = dto.BankIdentificationNumber,
+                NumeroDocumento = dto.BeneficiaryIdentificationNumber,
+                TipoPessoaBeneficiario = dto.Beneficiary?.DocumentType ?? dto.BeneficiaryType,
+                NumeroCpfCnpjBeneficiario = dto.Beneficiary?.DocumentNumber ?? dto.BeneficiaryDocument,
+                NomeRazaoSocialBeneficiario = dto.Beneficiary?.Name ?? dto.BeneficiaryName,
+            };
+
+            if (int.TryParse(dto.KindCode, out var especie))
+                item.CodigoEspecieDocumento = especie;
+
+            if (long.TryParse(dto.AuthorizedDirectDebitId, out var idCip))
+                item.NumeroIdentificadorBoletoCip = idCip;
+
+            return new Movimento { MovimentoItem = item };
         }
 
         private static Movimento AplicarResposta(Movimento movimento, MovimentoItemPagamentoTituloCodigoBarra item, PagamentoCodigoResponse dto, bool iniciacao)

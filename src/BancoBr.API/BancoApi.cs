@@ -14,7 +14,8 @@ using BancoBr.API.Sicoob.Pagamentos.Pix;
 using BancoBr.API.Sicoob.Pagamentos.Ted;
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
-using SantanderPagamentoBoletoClient = BancoBr.API.Santander.Pagamentos.Boletos.PagamentoBoletoClient;
+using SantanderExtratoClient = BancoBr.API.Santander.ContaCorrente.ExtratoClient;
+using SantanderPagamentoBoletoClient =BancoBr.API.Santander.Pagamentos.Boletos.PagamentoBoletoClient;
 using SantanderPagamentoConvenioClient = BancoBr.API.Santander.Pagamentos.Convenios.PagamentoConvenioClient;
 using SantanderPagamentoPixClient = BancoBr.API.Santander.Pagamentos.Pix.PagamentoPixClient;
 
@@ -65,7 +66,7 @@ namespace BancoBr.API
                         new SantanderPagamentoConvenioClient(clientId, clientSecret, certificateSource, tokenEndpointOverride),
                         new SantanderPagamentoPixClient(clientId, clientSecret, certificateSource, tokenEndpointOverride),
                         null,
-                        null);
+                        new SantanderExtratoClient(clientId, clientSecret, certificateSource, tokenEndpointOverride));
 
                 default:
                     throw new Exception($"Banco não implementado: {banco}!");
@@ -94,7 +95,7 @@ namespace BancoBr.API
                         new SantanderPagamentoConvenioClient(clientId, certificateSource, tokenProvider),
                         new SantanderPagamentoPixClient(clientId, certificateSource, tokenProvider),
                         null,
-                        null);
+                        new SantanderExtratoClient(clientId, certificateSource, tokenProvider));
 
                 default:
                     throw new Exception($"Banco não implementado: {banco}!");
@@ -219,13 +220,25 @@ namespace BancoBr.API
             }
         }
 
-        /// <summary>Consulta de lista: boletos DDA com vencimento/pagamento num intervalo — cada item vem como um <see cref="Movimento"/> com <see cref="MovimentoItemDDA"/>.</summary>
-        public Task<IReadOnlyList<Movimento>> ConsultarDDAAsync(long numeroConta, DateTime dataInicial, DateTime dataFinal, SituacaoBoletoEnum situacao, TipoDataConsultaEnum tipoData, CancellationToken cancellationToken = default)
-            => Requer(_boleto).ConsultarBoletosDdaAsync(numeroConta, dataInicial, dataFinal, situacao, tipoData, cancellationToken);
+        /// <summary>
+        /// Consulta de lista: boletos DDA com vencimento/pagamento num intervalo — cada item vem
+        /// como um <see cref="Movimento"/> com <see cref="MovimentoItemDDA"/>. No Santander a
+        /// conta é localizada por <paramref name="origem"/> (agência/conta/DV), que é obrigatório,
+        /// e só há filtro por vencimento (<see cref="TipoDataConsultaEnum.Vencimento"/>).
+        /// </summary>
+        public Task<IReadOnlyList<Movimento>> ConsultarDDAAsync(long numeroConta, DateTime dataInicial, DateTime dataFinal, SituacaoBoletoEnum situacao, TipoDataConsultaEnum tipoData, Correntista origem = null, CancellationToken cancellationToken = default)
+            => Requer(_boleto).ConsultarBoletosDdaAsync(numeroConta, dataInicial, dataFinal, situacao, tipoData, origem, cancellationToken);
 
-        /// <summary>Consulta o extrato da conta no mês/ano informado — o primeiro item é o saldo do período (<see cref="MovimentoItemExtratoSaldo"/>), os demais são um por lançamento (<see cref="MovimentoItemExtratoTransacao"/>).</summary>
-        public Task<IReadOnlyList<Movimento>> ConsultarExtratoAsync(long numeroContaCorrente, int mes, int ano, int? diaInicial = null, int? diaFinal = null, bool agruparCnab = false, CancellationToken cancellationToken = default)
-            => Requer(_contaCorrente).ConsultarExtratoAsync(numeroContaCorrente, mes, ano, diaInicial, diaFinal, agruparCnab, cancellationToken);
+        /// <summary>
+        /// Consulta o extrato da conta no mês/ano informado. No Sicoob, o primeiro item é o saldo
+        /// do período (<see cref="MovimentoItemExtratoSaldo"/>) e os demais são um por lançamento
+        /// (<see cref="MovimentoItemExtratoTransacao"/>); o Santander devolve só os lançamentos.
+        /// No Santander a conta é localizada por <paramref name="origem"/> (agência/conta/DV),
+        /// que é obrigatório; no Sicoob vale <paramref name="numeroContaCorrente"/>.
+        /// <paramref name="agruparCnab"/> só se aplica ao Sicoob.
+        /// </summary>
+        public Task<IReadOnlyList<Movimento>> ConsultarExtratoAsync(long numeroContaCorrente, int mes, int ano, int? diaInicial = null, int? diaFinal = null, bool agruparCnab = false, Correntista origem = null, CancellationToken cancellationToken = default)
+            => Requer(_contaCorrente).ConsultarExtratoAsync(numeroContaCorrente, mes, ano, diaInicial, diaFinal, agruparCnab, origem, cancellationToken);
 
         private static MovimentoItem ExtrairItem(Movimento movimento)
         {
@@ -237,7 +250,7 @@ namespace BancoBr.API
         private static NotSupportedException OperacaoNaoSuportada(string operacao, Movimento movimento)
             => new NotSupportedException($"Não há {operacao} implementada para {movimento.MovimentoItem.GetType().Name}.");
 
-        /// <summary>Bancos com API parcial (ex.: Santander, ainda sem TED e conta corrente) deixam as demais operações nulas.</summary>
+        /// <summary>Bancos com API parcial (ex.: Santander, ainda sem TED) deixam as demais operações nulas.</summary>
         private static T Requer<T>(T api) where T : class
             => api ?? throw new NotSupportedException("Esta operação ainda não está implementada para o banco conectado.");
 

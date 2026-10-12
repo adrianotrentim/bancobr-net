@@ -32,6 +32,9 @@ namespace BancoBr.API.Santander.Http
         /// <summary>Base da API do Hub de Pagamentos (management_payments_partners v1), igual para Pix, boleto e convênio.</summary>
         public static readonly Uri PagamentosBaseUrl = new Uri("https://trust-open.api.santander.com.br/management_payments_partners/v1");
 
+        /// <summary>Base da API de consulta de extrato (bank_account_information v1).</summary>
+        public static readonly Uri ContaCorrenteBaseUrl = new Uri("https://trust-open.api.santander.com.br/bank_account_information/v1");
+
         private static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings();
 
         private readonly HttpClient _httpClient;
