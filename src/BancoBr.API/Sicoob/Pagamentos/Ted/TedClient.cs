@@ -165,7 +165,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Ted
             }
         }
 
-        internal override async Task<Movimento> ConsultarTedAsync(Movimento movimento, CancellationToken cancellationToken = default)
+        internal override async Task<Movimento> ConsultarTedAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default)
         {
             if (movimento == null) throw new ArgumentNullException(nameof(movimento));
 

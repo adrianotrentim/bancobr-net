@@ -28,7 +28,7 @@ namespace BancoBr.Tests.Santander
         public async Task ConsultarExtratoAsync_MontaUrlMapeiaLancamentos()
         {
             var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.OK, @"{ ""_content"": [
-                { ""creditDebitType"": ""CREDITO"", ""transactionName"": ""PIX RECEBIDO"", ""amount"": 150.25, ""transactionDate"": ""2026-09-03"" },
+                { ""transactionId"": ""tx-001"", ""creditDebitType"": ""CREDITO"", ""transactionName"": ""PIX RECEBIDO"", ""amount"": 150.25, ""transactionDate"": ""2026-09-03"" },
                 { ""creditDebitType"": ""DEBITO"", ""transactionName"": ""TARIFA"", ""amount"": -7.90, ""transactionDate"": ""2026-09-04"" }
             ] }"));
 
@@ -41,6 +41,7 @@ namespace BancoBr.Tests.Santander
 
             Assert.Equal(2, resultado.Count);
             var credito = (MovimentoItemExtratoTransacao)resultado[0].MovimentoItem;
+            Assert.Equal("tx-001", credito.TransactionId);
             Assert.Equal(BancoBrTipoCreditoDebitoEnum.Credito, credito.Tipo);
             Assert.Equal(150.25m, credito.Valor);
             Assert.Equal(new DateTime(2026, 9, 3), credito.Data);

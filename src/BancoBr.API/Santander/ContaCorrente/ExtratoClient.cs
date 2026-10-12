@@ -91,6 +91,7 @@ namespace BancoBr.API.Santander.ContaCorrente
         {
             MovimentoItem = new MovimentoItemExtratoTransacao
             {
+                TransactionId = dto.TransactionId,
                 Tipo = MapTipo(dto.CreditDebitType),
                 Valor = Math.Abs(dto.Amount),
                 Data = dto.TransactionDate,

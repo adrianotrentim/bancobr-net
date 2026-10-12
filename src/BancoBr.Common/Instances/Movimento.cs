@@ -183,6 +183,9 @@ namespace BancoBr.Common.Instances
 
         public int NumeroBancoFavorecido { get; set; }
 
+        /// <summary>Código de autenticação da transferência, devolvido pelo Santander na consulta de uma TED efetivada.</summary>
+        public string CodigoAutenticacao { get; set; }
+
         #endregion
     }
 

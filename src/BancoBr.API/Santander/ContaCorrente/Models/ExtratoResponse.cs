@@ -13,6 +13,9 @@ namespace BancoBr.API.Santander.ContaCorrente.Models
 
     internal class ExtratoTransacaoResponse
     {
+        [JsonProperty("transactionId")]
+        public string TransactionId { get; set; }
+
         /// <summary>Tipo do lançamento: crédito ou débito.</summary>
         [JsonProperty("creditDebitType")]
         public string CreditDebitType { get; set; }

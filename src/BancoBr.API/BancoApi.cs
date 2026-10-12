@@ -18,6 +18,7 @@ using SantanderExtratoClient = BancoBr.API.Santander.ContaCorrente.ExtratoClient
 using SantanderPagamentoBoletoClient =BancoBr.API.Santander.Pagamentos.Boletos.PagamentoBoletoClient;
 using SantanderPagamentoConvenioClient = BancoBr.API.Santander.Pagamentos.Convenios.PagamentoConvenioClient;
 using SantanderPagamentoPixClient = BancoBr.API.Santander.Pagamentos.Pix.PagamentoPixClient;
+using SantanderPagamentoTedClient = BancoBr.API.Santander.Pagamentos.Ted.PagamentoTedClient;
 
 namespace BancoBr.API
 {
@@ -65,7 +66,7 @@ namespace BancoBr.API
                         new SantanderPagamentoBoletoClient(clientId, clientSecret, certificateSource, tokenEndpointOverride),
                         new SantanderPagamentoConvenioClient(clientId, clientSecret, certificateSource, tokenEndpointOverride),
                         new SantanderPagamentoPixClient(clientId, clientSecret, certificateSource, tokenEndpointOverride),
-                        null,
+                        new SantanderPagamentoTedClient(clientId, clientSecret, certificateSource, tokenEndpointOverride),
                         new SantanderExtratoClient(clientId, clientSecret, certificateSource, tokenEndpointOverride));
 
                 default:
@@ -94,7 +95,7 @@ namespace BancoBr.API
                         new SantanderPagamentoBoletoClient(clientId, certificateSource, tokenProvider),
                         new SantanderPagamentoConvenioClient(clientId, certificateSource, tokenProvider),
                         new SantanderPagamentoPixClient(clientId, certificateSource, tokenProvider),
-                        null,
+                        new SantanderPagamentoTedClient(clientId, certificateSource, tokenProvider),
                         new SantanderExtratoClient(clientId, certificateSource, tokenProvider));
 
                 default:
@@ -184,7 +185,7 @@ namespace BancoBr.API
                         : Requer(_convenio).ConsultarCodigoBarrasAsync(movimento, origem, unidade: unidade, cancellationToken: cancellationToken);
 
                 case MovimentoItemTransferenciaTED _:
-                    return Requer(_ted).ConsultarTedAsync(movimento, cancellationToken);
+                    return Requer(_ted).ConsultarTedAsync(movimento, origem, cancellationToken);
 
                 case MovimentoItemTransferenciaPIX _:
                     return jaEnviado
@@ -250,7 +251,7 @@ namespace BancoBr.API
         private static NotSupportedException OperacaoNaoSuportada(string operacao, Movimento movimento)
             => new NotSupportedException($"Não há {operacao} implementada para {movimento.MovimentoItem.GetType().Name}.");
 
-        /// <summary>Bancos com API parcial (ex.: Santander, ainda sem TED) deixam as demais operações nulas.</summary>
+        /// <summary>Bancos com API parcial deixam as demais operações nulas.</summary>
         private static T Requer<T>(T api) where T : class
             => api ?? throw new NotSupportedException("Esta operação ainda não está implementada para o banco conectado.");
 

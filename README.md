@@ -12,7 +12,7 @@ Biblioteca para integração bancária para pagamentos de contas, transferência
 - [x] Leitura de retorno padrão CNAB 240
 - [ ] Integração via API
   - [x] Sicoob
-  - [ ] Santander (Pix por chave DICT e QR Code, pagamento de boletos e convênios; TED e conta corrente pendentes)
+  - [ ] Santander (Pix por chave DICT e QR Code, pagamento de boletos e convênios, TED)
   - [ ] Demais instituições
 
 ## Segmentos
@@ -211,9 +211,9 @@ var banco = BancoApi.Conectar(BancoEnum.Sicoob, clientId: "seu-client-id", clien
 // Alternativa: token já emitido (ex.: portal de sandbox do Sicoob), pulando o fluxo OAuth2.
 // var banco = BancoApi.Conectar(BancoEnum.Sicoob, clientId: "seu-client-id", certificateSource, new StaticAccessTokenProvider("token-bearer"));
 
-// Santander (Pix, pagamento de boletos e convênios): mesmo fluxo, com certificado mTLS + OAuth2. As chamadas do Hub de Pagamentos
+// Santander (Pix, pagamento de boletos e convênios, TED): mesmo fluxo, com certificado mTLS + OAuth2. As chamadas do Hub de Pagamentos
 // acontecem dentro de uma "workspace", que o BancoBr resolve sozinho pela conta pagadora (origem): usa a workspace
-// ativa que contém a conta, habilita o produto (Pix, boleto ou convênio) nela se estiver desligado e cria uma se não existir.
+// ativa que contém a conta, habilita o produto (Pix, boleto, convênio ou TED) nela se estiver desligado e cria uma se não existir.
 // var banco = BancoApi.Conectar(BancoEnum.Santander, clientId: "seu-client-id", clientSecret: "seu-client-secret", certificateSource);
 ```
 
@@ -296,7 +296,7 @@ var movimentoTed = new Movimento
 
 await banco.EnviarAgendamentoAsync(movimentoTed, origem);
 await banco.ConsultarAgendamentoAsync(movimentoTed, origem); // situação/comprovante
-// await banco.CancelarAgendamentoAsync(movimentoTed, origem); // enquanto agendada
+// await banco.CancelarAgendamentoAsync(movimentoTed, origem); // enquanto agendada (só Sicoob; o Santander não tem cancelamento de TED)
 ```
 
 ###### Consultando o DDA (boletos a pagar)
