@@ -1,0 +1,265 @@
+using System;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+using BancoBr.API.Base;
+using BancoBr.API.Base.Models;
+using BancoBr.API.Core.Http;
+using BancoBr.API.Core.OAuth;
+using BancoBr.API.Santander.Http;
+using BancoBr.API.Santander.Pagamentos.Models;
+using BancoBr.API.Santander.Pagamentos.Pix.Models;
+using BancoBr.Common.Core;
+using BancoBr.Common.Enums;
+using BancoBr.Common.Instances;
+
+namespace BancoBr.API.Santander.Pagamentos.Boletos
+{
+    /// <summary>
+    /// Cliente para a API "Boletos" (bank_slip_payments) do Hub de Pagamentos do Santander
+    /// (management_payments_partners v1) — boletos do Santander e de outros bancos. Todo
+    /// pagamento tem dois passos: POST (iniciação, valida o boleto e devolve READY_TO_PAY com os
+    /// valores atualizados) e PATCH (efetivação, enviando AUTHORIZED e o pagador final).
+    ///
+    /// Assim como o Pix, a chamada acontece dentro de uma workspace do Hub de Pagamentos,
+    /// resolvida sozinha pela conta pagadora (<c>origem</c>). O id do pagamento devolvido pelo POST
+    /// fica em <see cref="MovimentoItemPagamentoTituloCodigoBarra.IdentificadorConsulta"/> (é o
+    /// que a efetivação exige de volta) e, depois de efetivado, também em
+    /// <see cref="Movimento.NumeroDocumentoNoBanco"/>. A API não tem cancelamento, consulta de
+    /// comprovante por idempotency key nem DDA, então essas operações não são suportadas.
+    /// </summary>
+    internal class PagamentoBoletoClient : PagamentoBoletoApiBase
+    {
+        private const string Recurso = "bank_slip_payments";
+
+        private readonly SantanderHttpGateway _gateway;
+        private readonly string _baseUrl;
+
+        internal PagamentoBoletoClient(string clientId, string clientSecret, CertificateSource certificateSource, Uri tokenEndpoint = null)
+            : this(clientId, certificateSource, SantanderHttpGateway.BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint))
+        {
+        }
+
+        internal PagamentoBoletoClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider)
+            : this(SantanderHttpGateway.BuildHttpClient(certificateSource), tokenProvider, clientId, SantanderHttpGateway.PagamentosBaseUrl)
+        {
+        }
+
+        /// <summary>
+        /// Construtor para testes: permite injetar um HttpClient/IAccessTokenProvider fake.
+        /// </summary>
+        public PagamentoBoletoClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl)
+            : base(httpClient)
+        {
+            if (baseUrl == null) throw new ArgumentNullException(nameof(baseUrl));
+
+            _gateway = new SantanderHttpGateway(httpClient, tokenProvider, clientId);
+            var baseUrlText = baseUrl.ToString();
+            _baseUrl = baseUrlText.EndsWith("/") ? baseUrlText : baseUrlText + "/";
+        }
+
+        #region ::. Operações .::
+
+        /// <summary>
+        /// Inicia o pagamento (POST): valida o boleto e traz valor, vencimento, pagador e
+        /// beneficiário. Rejeições de negócio (boleto vencido, já pago...) chegam como erro do
+        /// banco (<see cref="Core.Errors.BancoApiException"/>).
+        /// </summary>
+        internal override async Task<Movimento> ConsultarBoletoAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default)
+        {
+            var item = ExtrairItem(movimento);
+
+            var codigo = !string.IsNullOrWhiteSpace(item.CodigoBarras) ? item.CodigoBarras : item.NumeroLinhaDigitavel;
+            if (string.IsNullOrWhiteSpace(codigo))
+                throw new InvalidOperationException("Informe o código de barras (CodigoBarras) ou a linha digitável (NumeroLinhaDigitavel) do boleto.");
+
+            var workspace = await ResolverWorkspaceAsync(origem, cancellationToken).ConfigureAwait(false);
+            var dto = await _gateway.IniciarPagamentoCodigoAsync(_baseUrl, Recurso, workspace.WorkspaceId, codigo.JustNumbers(), movimento.DataPagamento, cancellationToken).ConfigureAwait(false);
+
+            return AplicarResposta(movimento, item, dto, iniciacao: true);
+        }
+
+        /// <summary>
+        /// Efetiva o pagamento (PATCH) do boleto já iniciado, com o id guardado em
+        /// <see cref="MovimentoItemPagamentoTituloCodigoBarra.IdentificadorConsulta"/>. A
+        /// <paramref name="idempotencyKey"/> não é usada: o Santander deduplica pelo id do pagamento.
+        /// </summary>
+        internal override async Task<Movimento> PagarBoletoAsync(Movimento movimento, Correntista origem, string idempotencyKey, CancellationToken cancellationToken = default)
+        {
+            var item = ExtrairItem(movimento);
+
+            var id = item.IdentificadorConsulta;
+            if (string.IsNullOrWhiteSpace(id))
+                throw new InvalidOperationException("Para pagar o boleto, o movimento precisa ter o id do pagamento (devolvido por ConsultarBoletoAsync) em IdentificadorConsulta.");
+
+            if (movimento.ValorPagamento <= 0)
+                throw new InvalidOperationException("Informe o valor do pagamento (Movimento.ValorPagamento).");
+
+            var workspace = await ResolverWorkspaceAsync(origem, cancellationToken).ConfigureAwait(false);
+            var dto = await _gateway.EfetivarPagamentoCodigoAsync(_baseUrl, Recurso, workspace, id, movimento.ValorPagamento, origem, cancellationToken).ConfigureAwait(false);
+
+            return AplicarResposta(movimento, item, dto, iniciacao: false);
+        }
+
+        internal override async Task<Movimento> PagarBoletoComConsultaAsync(Movimento movimento, Correntista origem, Guid idLancamento, CancellationToken cancellationToken = default)
+        {
+            await ConsultarBoletoAsync(movimento, origem, cancellationToken).ConfigureAwait(false);
+            if (movimento.SituacaoBancoBr == BancoBrSituacaoEnum.Rejeitado)
+                return movimento;
+
+            return await PagarBoletoAsync(movimento, origem, idempotencyKey: null, cancellationToken).ConfigureAwait(false);
+        }
+
+        internal override async Task<IReadOnlyList<PagamentoBoletoLoteResultadoItem>> PagarLoteBoletosAsync(IEnumerable<(Movimento Movimento, Guid IdLancamento)> itens, Correntista origem, CancellationToken cancellationToken = default)
+        {
+            if (itens == null) throw new ArgumentNullException(nameof(itens));
+
+            var resultados = new List<PagamentoBoletoLoteResultadoItem>();
+
+            foreach (var item in itens)
+            {
+                try
+                {
+                    var movimento = await PagarBoletoComConsultaAsync(item.Movimento, origem, item.IdLancamento, cancellationToken).ConfigureAwait(false);
+
+                    resultados.Add(PagamentoBoletoLoteResultadoItem.ComSucesso(movimento, item.IdLancamento));
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    resultados.Add(PagamentoBoletoLoteResultadoItem.ComFalha(item.Movimento, item.IdLancamento, ex));
+                }
+            }
+
+            return resultados;
+        }
+
+        internal override async Task<Movimento> ConsultarComprovantePorIdAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default)
+        {
+            var item = ExtrairItem(movimento);
+
+            var id = !string.IsNullOrWhiteSpace(movimento.NumeroDocumentoNoBanco) ? movimento.NumeroDocumentoNoBanco : item.IdentificadorConsulta;
+            if (string.IsNullOrWhiteSpace(id))
+                throw new InvalidOperationException("Para consultar o pagamento, o movimento precisa ter o id do pagamento em NumeroDocumentoNoBanco.");
+
+            var workspace = await ResolverWorkspaceAsync(origem, cancellationToken).ConfigureAwait(false);
+            var dto = await _gateway.ConsultarPagamentoCodigoAsync(_baseUrl, Recurso, workspace.WorkspaceId, id, cancellationToken).ConfigureAwait(false);
+
+            return AplicarResposta(movimento, item, dto, iniciacao: false);
+        }
+
+        internal override Task<Movimento> CancelarAgendamentoAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("A API de boletos do Santander não tem cancelamento de agendamento.");
+
+        internal override Task<Movimento> ConsultarComprovantePorIdempotencyAsync(string idempotencyKey, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("A API de boletos do Santander não consulta pagamentos por idempotency key — use o id do pagamento.");
+
+        internal override Task<IReadOnlyList<Movimento>> ConsultarBoletosDdaAsync(long numeroConta, DateTime dataInicial, DateTime dataFinal, SituacaoBoletoEnum situacao, TipoDataConsultaEnum tipoData, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("A consulta DDA do Santander ainda não está implementada.");
+
+        #endregion
+
+        #region ::. Workspace .::
+
+        /// <summary>
+        /// A workspace PAYMENTS ativa que contém a conta pagadora e tem o pagamento de boletos
+        /// ligado — achada, habilitada ou criada pelo gateway, e mantida em cache por conta.
+        /// </summary>
+        private Task<(string WorkspaceId, ContaDebito Conta)> ResolverWorkspaceAsync(Correntista origem, CancellationToken cancellationToken) =>
+            _gateway.ResolverWorkspaceAsync(_baseUrl, origem, "Boletos", w => w.BankSlipPaymentsActive, w => w.BankSlipPaymentsActive = true, cancellationToken);
+
+        #endregion
+
+        #region ::. Mapeamento de resposta .::
+
+        private static MovimentoItemPagamentoTituloCodigoBarra ExtrairItem(Movimento movimento)
+        {
+            if (movimento == null) throw new ArgumentNullException(nameof(movimento));
+
+            var item = movimento.MovimentoItem as MovimentoItemPagamentoTituloCodigoBarra;
+            if (item == null)
+                throw new InvalidOperationException("As operações de boleto esperam um MovimentoItemPagamentoTituloCodigoBarra em Movimento.MovimentoItem.");
+
+            return item;
+        }
+
+        private static Movimento AplicarResposta(Movimento movimento, MovimentoItemPagamentoTituloCodigoBarra item, PagamentoCodigoResponse dto, bool iniciacao)
+        {
+            if (dto == null)
+                return movimento;
+
+            if (!string.IsNullOrWhiteSpace(dto.Id))
+            {
+                item.IdentificadorConsulta = dto.Id;
+
+                // Na iniciação o boleto ainda não foi pago, então o id fica só como identificador da consulta.
+                if (!iniciacao)
+                    movimento.NumeroDocumentoNoBanco = dto.Id;
+            }
+
+            SantanderHttpGateway.AplicarStatusCodigo(movimento, dto);
+
+            var codigo = dto.Code.JustNumbers();
+            if (codigo?.Length == 44)
+                item.CodigoBarras = codigo;
+            else if (codigo?.Length == 47)
+                item.NumeroLinhaDigitavel = codigo;
+
+            if (dto.DueDate.HasValue)
+                item.DataVencimento = dto.DueDate;
+
+            if (dto.NominalValue.HasValue)
+                item.ValorCodigoBarra = dto.NominalValue.Value;
+
+            if (dto.DeductedValue.HasValue)
+                item.Desconto = dto.DeductedValue.Value;
+
+            if (dto.AddedValue.HasValue)
+                item.Acrescimo = dto.AddedValue.Value;
+
+            if (!string.IsNullOrWhiteSpace(dto.Transaction?.Code))
+                item.NumeroAutenticacaoPagamento = dto.Transaction.Code;
+
+            if (dto.Payer != null)
+            {
+                item.PagadorConfirmadoNome = dto.Payer.Name;
+                item.PagadorConfirmadoDocumento = dto.Payer.DocumentNumber;
+                item.PagadorConfirmadoTipoPessoa = dto.Payer.DocumentType;
+            }
+
+            AplicarBeneficiario(movimento, dto.Beneficiary);
+
+            return movimento;
+        }
+
+        /// <summary>
+        /// Preenche o <see cref="Favorecido"/> com a identidade do beneficiário confirmada pelo
+        /// banco, sem apagar o que o ERP já tinha quando o banco não devolve o campo.
+        /// </summary>
+        private static void AplicarBeneficiario(Movimento movimento, PixBeneficiario beneficiario)
+        {
+            if (beneficiario == null || (string.IsNullOrWhiteSpace(beneficiario.Name) && string.IsNullOrWhiteSpace(beneficiario.DocumentNumber)))
+                return;
+
+            if (movimento.Favorecido == null)
+                movimento.Favorecido = new Favorecido();
+
+            if (!string.IsNullOrWhiteSpace(beneficiario.Name))
+                movimento.Favorecido.Nome = beneficiario.Name;
+
+            if (!string.IsNullOrWhiteSpace(beneficiario.DocumentNumber))
+            {
+                movimento.Favorecido.CPF_CNPJ = beneficiario.DocumentNumber;
+                movimento.Favorecido.TipoPessoa = string.Equals(beneficiario.DocumentType, "CNPJ", StringComparison.OrdinalIgnoreCase)
+                    ? TipoInscricaoCPFCNPJEnum.CNPJ
+                    : TipoInscricaoCPFCNPJEnum.CPF;
+            }
+        }
+
+        #endregion
+    }
+}

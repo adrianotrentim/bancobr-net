@@ -14,6 +14,8 @@ using BancoBr.API.Sicoob.Pagamentos.Pix;
 using BancoBr.API.Sicoob.Pagamentos.Ted;
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
+using SantanderPagamentoBoletoClient = BancoBr.API.Santander.Pagamentos.Boletos.PagamentoBoletoClient;
+using SantanderPagamentoConvenioClient = BancoBr.API.Santander.Pagamentos.Convenios.PagamentoConvenioClient;
 using SantanderPagamentoPixClient = BancoBr.API.Santander.Pagamentos.Pix.PagamentoPixClient;
 
 namespace BancoBr.API
@@ -58,7 +60,12 @@ namespace BancoBr.API
                         new ExtratoClient(clientId, clientSecret, certificateSource, tokenEndpointOverride));
 
                 case BancoEnum.Santander:
-                    return new BancoApi(null, null, new SantanderPagamentoPixClient(clientId, clientSecret, certificateSource, tokenEndpointOverride), null, null);
+                    return new BancoApi(
+                        new SantanderPagamentoBoletoClient(clientId, clientSecret, certificateSource, tokenEndpointOverride),
+                        new SantanderPagamentoConvenioClient(clientId, clientSecret, certificateSource, tokenEndpointOverride),
+                        new SantanderPagamentoPixClient(clientId, clientSecret, certificateSource, tokenEndpointOverride),
+                        null,
+                        null);
 
                 default:
                     throw new Exception($"Banco não implementado: {banco}!");
@@ -82,7 +89,12 @@ namespace BancoBr.API
                         new ExtratoClient(clientId, certificateSource, tokenProvider));
 
                 case BancoEnum.Santander:
-                    return new BancoApi(null, null, new SantanderPagamentoPixClient(clientId, certificateSource, tokenProvider), null, null);
+                    return new BancoApi(
+                        new SantanderPagamentoBoletoClient(clientId, certificateSource, tokenProvider),
+                        new SantanderPagamentoConvenioClient(clientId, certificateSource, tokenProvider),
+                        new SantanderPagamentoPixClient(clientId, certificateSource, tokenProvider),
+                        null,
+                        null);
 
                 default:
                     throw new Exception($"Banco não implementado: {banco}!");
@@ -125,7 +137,8 @@ namespace BancoBr.API
                     return await Requer(_boleto).PagarBoletoComConsultaAsync(movimento, origem, ParseOuGerarGuid(idempotencyKey), cancellationToken).ConfigureAwait(false);
 
                 case MovimentoItemPagamentoConvenioCodigoBarra itemConvenio:
-                    if (itemConvenio.Transacao == null)
+                    // Transacao (Sicoob) ou o id do pagamento em NumeroDocumentoNoBanco (Santander) indicam consulta prévia já feita.
+                    if (itemConvenio.Transacao == null && string.IsNullOrEmpty(movimento.NumeroDocumentoNoBanco))
                         await Requer(_convenio).ConsultarCodigoBarrasAsync(movimento, origem, unidade: unidade, cancellationToken: cancellationToken).ConfigureAwait(false);
                     return await Requer(_convenio).PagarConvenioAsync(movimento, origem, unidade, cancellationToken).ConfigureAwait(false);
 
@@ -224,7 +237,7 @@ namespace BancoBr.API
         private static NotSupportedException OperacaoNaoSuportada(string operacao, Movimento movimento)
             => new NotSupportedException($"Não há {operacao} implementada para {movimento.MovimentoItem.GetType().Name}.");
 
-        /// <summary>Bancos com API parcial (ex.: Santander, só Pix por enquanto) deixam as demais operações nulas.</summary>
+        /// <summary>Bancos com API parcial (ex.: Santander, ainda sem TED e conta corrente) deixam as demais operações nulas.</summary>
         private static T Requer<T>(T api) where T : class
             => api ?? throw new NotSupportedException("Esta operação ainda não está implementada para o banco conectado.");
 
