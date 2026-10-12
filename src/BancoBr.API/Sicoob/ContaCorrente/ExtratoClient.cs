@@ -100,7 +100,7 @@ namespace BancoBr.API.Sicoob.ContaCorrente
 
         #region ::. Operações .::
 
-        internal override async Task<IReadOnlyList<Movimento>> ConsultarExtratoAsync(long numeroContaCorrente, int mes, int ano, int? diaInicial, int? diaFinal, bool agruparCnab, Correntista origem = null, CancellationToken cancellationToken = default)
+        internal override async Task<IReadOnlyList<Movimento>> ConsultarExtratoAsync(long numeroContaCorrente, int mes, int ano, int? diaInicial, int? diaFinal, bool agruparCnab, CancellationToken cancellationToken = default, Correntista origem = null)
         {
             var url = $"{_baseUrl}extrato/{mes}/{ano}?numeroContaCorrente={numeroContaCorrente}&agruparCNAB={(agruparCnab ? "true" : "false")}";
 

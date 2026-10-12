@@ -58,7 +58,7 @@ namespace BancoBr.API.Santander.ContaCorrente
         /// <paramref name="origem"/>. <paramref name="numeroContaCorrente"/> e
         /// <paramref name="agruparCnab"/> não são usados.
         /// </summary>
-        internal override async Task<IReadOnlyList<Movimento>> ConsultarExtratoAsync(long numeroContaCorrente, int mes, int ano, int? diaInicial, int? diaFinal, bool agruparCnab, Correntista origem = null, CancellationToken cancellationToken = default)
+        internal override async Task<IReadOnlyList<Movimento>> ConsultarExtratoAsync(long numeroContaCorrente, int mes, int ano, int? diaInicial, int? diaFinal, bool agruparCnab, CancellationToken cancellationToken = default, Correntista origem = null)
         {
             if (origem == null)
                 throw new ArgumentNullException(nameof(origem), "O Santander exige a conta (origem: agência/conta/DV) para consultar o extrato.");

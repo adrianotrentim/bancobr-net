@@ -237,8 +237,8 @@ namespace BancoBr.API
         /// que é obrigatório; no Sicoob vale <paramref name="numeroContaCorrente"/>.
         /// <paramref name="agruparCnab"/> só se aplica ao Sicoob.
         /// </summary>
-        public Task<IReadOnlyList<Movimento>> ConsultarExtratoAsync(long numeroContaCorrente, int mes, int ano, int? diaInicial = null, int? diaFinal = null, bool agruparCnab = false, Correntista origem = null, CancellationToken cancellationToken = default)
-            => Requer(_contaCorrente).ConsultarExtratoAsync(numeroContaCorrente, mes, ano, diaInicial, diaFinal, agruparCnab, origem, cancellationToken);
+        public Task<IReadOnlyList<Movimento>> ConsultarExtratoAsync(long numeroContaCorrente, int mes, int ano, int? diaInicial = null, int? diaFinal = null, bool agruparCnab = false, CancellationToken cancellationToken = default, Correntista origem = null)
+            => Requer(_contaCorrente).ConsultarExtratoAsync(numeroContaCorrente, mes, ano, diaInicial, diaFinal, agruparCnab, cancellationToken, origem);
 
         private static MovimentoItem ExtrairItem(Movimento movimento)
         {

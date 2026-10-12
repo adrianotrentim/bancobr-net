@@ -32,7 +32,7 @@ namespace BancoBr.Tests.Santander
                 { ""creditDebitType"": ""DEBITO"", ""transactionName"": ""TARIFA"", ""amount"": -7.90, ""transactionDate"": ""2026-09-04"" }
             ] }"));
 
-            var resultado = await Criar(handler).ConsultarExtratoAsync(0, 9, 2026, null, null, false, CriarOrigem());
+            var resultado = await Criar(handler).ConsultarExtratoAsync(0, 9, 2026, null, null, false, default, CriarOrigem());
 
             var request = Assert.Single(handler.Requests);
             Assert.Equal(HttpMethod.Get, request.Method);
@@ -56,7 +56,7 @@ namespace BancoBr.Tests.Santander
         {
             var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.OK, Pagina(50)), (HttpStatusCode.OK, Pagina(3)));
 
-            var resultado = await Criar(handler).ConsultarExtratoAsync(0, 2, 2026, 5, 10, false, CriarOrigem());
+            var resultado = await Criar(handler).ConsultarExtratoAsync(0, 2, 2026, 5, 10, false, default, CriarOrigem());
 
             Assert.Equal(53, resultado.Count);
             Assert.Equal(2, handler.Requests.Count);

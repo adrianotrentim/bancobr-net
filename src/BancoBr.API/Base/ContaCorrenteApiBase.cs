@@ -33,6 +33,6 @@ namespace BancoBr.API.Base
         /// conta por agência/conta/DV e é obrigatório no Santander (no Sicoob vale
         /// <paramref name="numeroContaCorrente"/>).
         /// </summary>
-        internal abstract Task<IReadOnlyList<Movimento>> ConsultarExtratoAsync(long numeroContaCorrente, int mes, int ano, int? diaInicial, int? diaFinal, bool agruparCnab, Correntista origem = null, CancellationToken cancellationToken = default);
+        internal abstract Task<IReadOnlyList<Movimento>> ConsultarExtratoAsync(long numeroContaCorrente, int mes, int ano, int? diaInicial, int? diaFinal, bool agruparCnab, CancellationToken cancellationToken = default, Correntista origem = null);
     }
 }
