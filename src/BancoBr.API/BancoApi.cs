@@ -19,6 +19,7 @@ using SantanderPagamentoBoletoClient =BancoBr.API.Santander.Pagamentos.Boletos.P
 using SantanderPagamentoConvenioClient = BancoBr.API.Santander.Pagamentos.Convenios.PagamentoConvenioClient;
 using SantanderPagamentoPixClient = BancoBr.API.Santander.Pagamentos.Pix.PagamentoPixClient;
 using SantanderPagamentoTedClient = BancoBr.API.Santander.Pagamentos.Ted.PagamentoTedClient;
+using SantanderWorkspaceClient = BancoBr.API.Santander.Pagamentos.Workspaces.WorkspaceClient;
 
 namespace BancoBr.API
 {
@@ -49,7 +50,13 @@ namespace BancoBr.API
         /// Só necessário em ambientes fora do padrão (ex.: sandbox com realm próprio); cada banco
         /// já tem um endpoint OAuth2 padrão embutido.
         /// </param>
-        public static BancoApi Conectar(BancoEnum banco, string clientId, string clientSecret, CertificateSource certificateSource, Uri tokenEndpointOverride = null)
+        /// <param name="idWorkspace">
+        /// Só se aplica ao Santander: id da workspace do Hub de Pagamentos usada em Pix, Boleto,
+        /// Convênio, TED e DDA. Obtenha-o uma vez com <see cref="ObterOuCriarWorkspaceAsync"/> e
+        /// guarde-o — assim as próximas conexões não consultam as workspaces do banco. Pode ser
+        /// omitido na própria conexão usada para obter o id.
+        /// </param>
+        public static BancoApi Conectar(BancoEnum banco, string clientId, string clientSecret, CertificateSource certificateSource, Uri tokenEndpointOverride = null, string idWorkspace = null)
         {
             switch (banco)
             {
@@ -63,11 +70,12 @@ namespace BancoBr.API
 
                 case BancoEnum.Santander:
                     return new BancoApi(
-                        new SantanderPagamentoBoletoClient(clientId, clientSecret, certificateSource, tokenEndpointOverride),
-                        new SantanderPagamentoConvenioClient(clientId, clientSecret, certificateSource, tokenEndpointOverride),
-                        new SantanderPagamentoPixClient(clientId, clientSecret, certificateSource, tokenEndpointOverride),
-                        new SantanderPagamentoTedClient(clientId, clientSecret, certificateSource, tokenEndpointOverride),
-                        new SantanderExtratoClient(clientId, clientSecret, certificateSource, tokenEndpointOverride));
+                        new SantanderPagamentoBoletoClient(clientId, clientSecret, certificateSource, tokenEndpointOverride, idWorkspace),
+                        new SantanderPagamentoConvenioClient(clientId, clientSecret, certificateSource, tokenEndpointOverride, idWorkspace),
+                        new SantanderPagamentoPixClient(clientId, clientSecret, certificateSource, tokenEndpointOverride, idWorkspace),
+                        new SantanderPagamentoTedClient(clientId, clientSecret, certificateSource, tokenEndpointOverride, idWorkspace),
+                        new SantanderExtratoClient(clientId, clientSecret, certificateSource, tokenEndpointOverride),
+                        new SantanderWorkspaceClient(clientId, clientSecret, certificateSource, tokenEndpointOverride));
 
                 default:
                     throw new Exception($"Banco não implementado: {banco}!");
@@ -77,8 +85,9 @@ namespace BancoBr.API
         /// <summary>
         /// Fluxo com token já emitido (ex.: portal de sandbox), pulando o fluxo OAuth2
         /// client_credentials — o mesmo token é reaproveitado pelos clientes internos.
+        /// <paramref name="idWorkspace"/> funciona como na outra sobrecarga (só Santander).
         /// </summary>
-        public static BancoApi Conectar(BancoEnum banco, string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider)
+        public static BancoApi Conectar(BancoEnum banco, string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider, string idWorkspace = null)
         {
             switch (banco)
             {
@@ -92,11 +101,12 @@ namespace BancoBr.API
 
                 case BancoEnum.Santander:
                     return new BancoApi(
-                        new SantanderPagamentoBoletoClient(clientId, certificateSource, tokenProvider),
-                        new SantanderPagamentoConvenioClient(clientId, certificateSource, tokenProvider),
-                        new SantanderPagamentoPixClient(clientId, certificateSource, tokenProvider),
-                        new SantanderPagamentoTedClient(clientId, certificateSource, tokenProvider),
-                        new SantanderExtratoClient(clientId, certificateSource, tokenProvider));
+                        new SantanderPagamentoBoletoClient(clientId, certificateSource, tokenProvider, idWorkspace),
+                        new SantanderPagamentoConvenioClient(clientId, certificateSource, tokenProvider, idWorkspace),
+                        new SantanderPagamentoPixClient(clientId, certificateSource, tokenProvider, idWorkspace),
+                        new SantanderPagamentoTedClient(clientId, certificateSource, tokenProvider, idWorkspace),
+                        new SantanderExtratoClient(clientId, certificateSource, tokenProvider),
+                        new SantanderWorkspaceClient(clientId, certificateSource, tokenProvider));
 
                 default:
                     throw new Exception($"Banco não implementado: {banco}!");
@@ -108,9 +118,21 @@ namespace BancoBr.API
         private readonly PagamentoPixApiBase _pix;
         private readonly PagamentoTedApiBase _ted;
         private readonly ContaCorrenteApiBase _contaCorrente;
+        private readonly WorkspaceApiBase _workspace;
 
-        private BancoApi(PagamentoBoletoApiBase boleto, PagamentoConvenioApiBase convenio, PagamentoPixApiBase pix, PagamentoTedApiBase ted, ContaCorrenteApiBase contaCorrente) =>
-            (_boleto, _convenio, _pix, _ted, _contaCorrente) = (boleto, convenio, pix, ted, contaCorrente);
+        private BancoApi(PagamentoBoletoApiBase boleto, PagamentoConvenioApiBase convenio, PagamentoPixApiBase pix, PagamentoTedApiBase ted, ContaCorrenteApiBase contaCorrente, WorkspaceApiBase workspace = null) =>
+            (_boleto, _convenio, _pix, _ted, _contaCorrente, _workspace) = (boleto, convenio, pix, ted, contaCorrente, workspace);
+
+        /// <summary>
+        /// Só Santander. Consulta as workspaces do Hub de Pagamentos e devolve o id da workspace
+        /// ativa que contém a conta pagadora (<paramref name="origem"/>); se não existir, cria
+        /// uma, e se existir com algum produto (Pix, boleto, DDA, convênio, TED) desligado,
+        /// liga. Chame uma vez, guarde o id e informe-o em <see cref="Conectar(BancoEnum, string, string, CertificateSource, Uri, string)"/>
+        /// nas próximas conexões — as operações de pagamento, efetivação e consulta usam esse id
+        /// sem consultar o banco.
+        /// </summary>
+        public Task<string> ObterOuCriarWorkspaceAsync(Correntista origem, CancellationToken cancellationToken = default)
+            => Requer(_workspace).ObterOuCriarWorkspaceAsync(origem, cancellationToken);
 
         /// <summary>
         /// Envia o movimento — consulta prévia (quando o banco exige) + pagamento, na mesma

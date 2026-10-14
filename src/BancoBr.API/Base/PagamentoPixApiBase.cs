@@ -17,8 +17,8 @@ namespace BancoBr.API.Base
     /// instância, mutada in-place).
     ///
     /// <c>origem</c> é a conta pagadora: o Sicoob não precisa dela nestas operações (a conta
-    /// vem das credenciais), mas o Santander a usa para localizar a workspace do Hub de
-    /// Pagamentos que debita essa conta.
+    /// vem das credenciais), mas o Santander a usa como conta de débito na workspace do Hub de
+    /// Pagamentos.
     /// </summary>
     internal abstract class PagamentoPixApiBase
     {

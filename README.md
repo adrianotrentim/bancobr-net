@@ -211,10 +211,13 @@ var banco = BancoApi.Conectar(BancoEnum.Sicoob, clientId: "seu-client-id", clien
 // Alternativa: token já emitido (ex.: portal de sandbox do Sicoob), pulando o fluxo OAuth2.
 // var banco = BancoApi.Conectar(BancoEnum.Sicoob, clientId: "seu-client-id", certificateSource, new StaticAccessTokenProvider("token-bearer"));
 
-// Santander (Pix, pagamento de boletos e convênios, TED): mesmo fluxo, com certificado mTLS + OAuth2. As chamadas do Hub de Pagamentos
-// acontecem dentro de uma "workspace", que o BancoBr resolve sozinho pela conta pagadora (origem): usa a workspace
-// ativa que contém a conta, habilita o produto (Pix, boleto, convênio ou TED) nela se estiver desligado e cria uma se não existir.
+// Santander (Pix, pagamento de boletos e convênios, TED, DDA): mesmo fluxo, com certificado mTLS + OAuth2. As chamadas do Hub de Pagamentos
+// acontecem dentro de uma "workspace". Ela é obtida uma única vez, num endpoint separado, que acha a workspace ativa que contém a conta
+// pagadora (ou cria uma) e liga nela Pix, boleto, DDA, convênio e TED. Guarde o id e informe-o em Conectar (idWorkspace, opcional): as
+// operações de pagamento, efetivação e consulta o usam direto, sem consultar as workspaces do banco a cada instância da API.
 // var banco = BancoApi.Conectar(BancoEnum.Santander, clientId: "seu-client-id", clientSecret: "seu-client-secret", certificateSource);
+// var idWorkspace = await banco.ObterOuCriarWorkspaceAsync(origem); // guarde este id
+// var bancoComWorkspace = BancoApi.Conectar(BancoEnum.Santander, "seu-client-id", "seu-client-secret", certificateSource, idWorkspace: idWorkspace);
 ```
 
 ###### Pagando um boleto (consulta prévia + pagamento)

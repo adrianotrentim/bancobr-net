@@ -37,7 +37,7 @@ namespace BancoBr.API.Base
         /// <summary>
         /// Consulta a TED identificada por <see cref="Movimento.NumeroDocumentoNoBanco"/>
         /// (numeroControleIF, devolvido por <see cref="PagarTedAsync"/>). <paramref name="origem"/>
-        /// só é usada pelo Santander, que localiza a workspace pela conta pagadora.
+        /// só é usada pelo Santander, como conta de débito na workspace.
         /// </summary>
         internal abstract Task<Movimento> ConsultarTedAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default);
 

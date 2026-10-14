@@ -22,8 +22,8 @@ namespace BancoBr.API.Santander.Pagamentos.Convenios
     /// (iniciação, valida o código e devolve READY_TO_PAY) e PATCH (efetivação, enviando
     /// AUTHORIZED e o pagador final).
     ///
-    /// Assim como o Pix, a chamada acontece dentro de uma workspace do Hub de Pagamentos,
-    /// resolvida sozinha pela conta pagadora (<c>origem</c>). O id do pagamento devolvido pelo POST
+    /// Assim como o Pix, a chamada acontece dentro de uma workspace do Hub de Pagamentos, cujo id
+    /// vem de <c>BancoApi.Conectar</c> (obtido por <c>ObterOuCriarWorkspaceAsync</c>). O id do pagamento devolvido pelo POST
     /// fica em <see cref="Movimento.NumeroDocumentoNoBanco"/> — o Santander não tem NSU nem
     /// transação numérica como o Sicoob, então <see cref="MovimentoItemPagamentoConvenioCodigoBarra.Nsu"/>
     /// e <see cref="MovimentoItemPagamentoConvenioCodigoBarra.Transacao"/> não são preenchidos.
@@ -35,21 +35,22 @@ namespace BancoBr.API.Santander.Pagamentos.Convenios
 
         private readonly SantanderHttpGateway _gateway;
         private readonly string _baseUrl;
+        private readonly string _idWorkspace;
 
-        internal PagamentoConvenioClient(string clientId, string clientSecret, CertificateSource certificateSource, Uri tokenEndpoint = null)
-            : this(clientId, certificateSource, SantanderHttpGateway.BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint))
+        internal PagamentoConvenioClient(string clientId, string clientSecret, CertificateSource certificateSource, Uri tokenEndpoint = null, string idWorkspace = null)
+            : this(clientId, certificateSource, SantanderHttpGateway.BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint), idWorkspace)
         {
         }
 
-        internal PagamentoConvenioClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider)
-            : this(SantanderHttpGateway.BuildHttpClient(certificateSource), tokenProvider, clientId, SantanderHttpGateway.PagamentosBaseUrl)
+        internal PagamentoConvenioClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider, string idWorkspace = null)
+            : this(SantanderHttpGateway.BuildHttpClient(certificateSource), tokenProvider, clientId, SantanderHttpGateway.PagamentosBaseUrl, idWorkspace)
         {
         }
 
         /// <summary>
         /// Construtor para testes: permite injetar um HttpClient/IAccessTokenProvider fake.
         /// </summary>
-        public PagamentoConvenioClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl)
+        public PagamentoConvenioClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl, string idWorkspace = null)
             : base(httpClient)
         {
             if (baseUrl == null) throw new ArgumentNullException(nameof(baseUrl));
@@ -57,6 +58,7 @@ namespace BancoBr.API.Santander.Pagamentos.Convenios
             _gateway = new SantanderHttpGateway(httpClient, tokenProvider, clientId);
             var baseUrlText = baseUrl.ToString();
             _baseUrl = baseUrlText.EndsWith("/") ? baseUrlText : baseUrlText + "/";
+            _idWorkspace = idWorkspace;
         }
 
         #region ::. Operações .::
@@ -72,7 +74,7 @@ namespace BancoBr.API.Santander.Pagamentos.Convenios
             if (string.IsNullOrWhiteSpace(item.CodigoBarra))
                 throw new InvalidOperationException("Informe o código de barras (CodigoBarra) do convênio.");
 
-            var workspace = await ResolverWorkspaceAsync(origem, cancellationToken).ConfigureAwait(false);
+            var workspace = ResolverWorkspace(origem);
             var dto = await _gateway.IniciarPagamentoCodigoAsync(_baseUrl, Recurso, workspace.WorkspaceId, item.CodigoBarra.JustNumbers(), movimento.DataPagamento, cancellationToken).ConfigureAwait(false);
 
             return AplicarResposta(movimento, item, dto);
@@ -89,7 +91,7 @@ namespace BancoBr.API.Santander.Pagamentos.Convenios
             if (movimento.ValorPagamento <= 0)
                 throw new InvalidOperationException("Informe o valor do pagamento (Movimento.ValorPagamento).");
 
-            var workspace = await ResolverWorkspaceAsync(origem, cancellationToken).ConfigureAwait(false);
+            var workspace = ResolverWorkspace(origem);
             var dto = await _gateway.EfetivarPagamentoCodigoAsync(_baseUrl, Recurso, workspace, movimento.NumeroDocumentoNoBanco, movimento.ValorPagamento, origem, cancellationToken).ConfigureAwait(false);
 
             return AplicarResposta(movimento, item, dto);
@@ -103,7 +105,7 @@ namespace BancoBr.API.Santander.Pagamentos.Convenios
             if (string.IsNullOrWhiteSpace(movimento.NumeroDocumentoNoBanco))
                 throw new InvalidOperationException("Para consultar o pagamento, o movimento precisa ter o id do pagamento em NumeroDocumentoNoBanco.");
 
-            var workspace = await ResolverWorkspaceAsync(origem, cancellationToken).ConfigureAwait(false);
+            var workspace = ResolverWorkspace(origem);
             var dto = await _gateway.ConsultarPagamentoCodigoAsync(_baseUrl, Recurso, workspace.WorkspaceId, movimento.NumeroDocumentoNoBanco, cancellationToken).ConfigureAwait(false);
 
             return AplicarResposta(movimento, item, dto);
@@ -123,11 +125,11 @@ namespace BancoBr.API.Santander.Pagamentos.Convenios
         #region ::. Workspace .::
 
         /// <summary>
-        /// A workspace PAYMENTS ativa que contém a conta pagadora e tem o pagamento por código de
-        /// barras ligado — achada, habilitada ou criada pelo gateway, e mantida em cache por conta.
+        /// A workspace informada em <c>BancoApi.Conectar</c> (obtida por <c>ObterOuCriarWorkspaceAsync</c>)
+        /// e a conta de débito da conta pagadora — sem consultar o banco.
         /// </summary>
-        private Task<(string WorkspaceId, ContaDebito Conta)> ResolverWorkspaceAsync(Correntista origem, CancellationToken cancellationToken) =>
-            _gateway.ResolverWorkspaceAsync(_baseUrl, origem, "Convênios", w => w.BarCodePaymentsActive, w => w.BarCodePaymentsActive = true, cancellationToken);
+        private (string WorkspaceId, ContaDebito Conta) ResolverWorkspace(Correntista origem) =>
+            SantanderHttpGateway.UsarWorkspace(_idWorkspace, origem, "Convênios");
 
         #endregion
 

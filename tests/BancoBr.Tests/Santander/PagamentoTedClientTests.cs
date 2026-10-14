@@ -20,20 +20,11 @@ namespace BancoBr.Tests.Santander
             ""destinationAccount"": {{ ""bankCode"": ""341"", ""branchCode"": ""0528"", ""accountNumber"": ""543218"" }}{extras}
         }}";
 
-        private static string ListaComWorkspace(bool tedAtivo = true) => $@"{{
-            ""_pageable"": {{ ""_totalElements"": 1 }},
-            ""_content"": [ {{
-                ""workspace_id"": ""ws-1"", ""status"": ""ACTIVE"", ""type"": ""PAYMENTS"", ""description"": ""Minha workspace"",
-                ""mainDebitAccount"": {{ ""branch"": ""1234"", ""number"": ""000000056789"" }},
-                ""pixPaymentsActive"": true, ""bankTransferPaymentsActive"": {(tedAtivo ? "true" : "false")}
-            }} ]
-        }}";
-
         private static PagamentoTedClient CriarClient(HttpMessageHandler handler) =>
-            new PagamentoTedClient(new HttpClient(handler), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl);
+            new PagamentoTedClient(new HttpClient(handler), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, "ws-1");
 
         private static SequencedFakeHttpMessageHandler Sequencia(params (HttpStatusCode, string?)[] operacao) =>
-            new SequencedFakeHttpMessageHandler(new (HttpStatusCode, string?)[] { (HttpStatusCode.OK, ListaComWorkspace()) }.Concat(operacao).ToArray());
+            new SequencedFakeHttpMessageHandler(operacao);
 
         private static Correntista CriarOrigem() => new Correntista { NumeroAgencia = 1234, NumeroConta = 5678, DVConta = "9" };
 
@@ -67,13 +58,13 @@ namespace BancoBr.Tests.Santander
             var resultado = await CriarClient(handler).PagarTedAsync(movimento, CriarOrigem(), Guid.NewGuid().ToString());
 
             Assert.Same(movimento, resultado);
-            Assert.Equal(3, handler.Requests.Count);
+            Assert.Equal(2, handler.Requests.Count);
 
-            var post = handler.Requests[1];
+            var post = handler.Requests[0];
             Assert.Equal(HttpMethod.Post, post.Method);
             Assert.Equal($"{BaseUrl}/workspaces/ws-1/transfer", post.RequestUri!.ToString());
             Assert.Equal("fake-client-id", post.Headers.GetValues("X-Application-Key").Single());
-            var corpo = handler.Bodies[1]!;
+            var corpo = handler.Bodies[0]!;
             Assert.Contains(@"""sourceAccount"":{""branchCode"":""1234"",""accountNumber"":""000000056789""}", corpo);
             Assert.Contains(@"""bankCode"":""341""", corpo);
             Assert.Contains(@"""branchCode"":""0528""", corpo);
@@ -88,11 +79,11 @@ namespace BancoBr.Tests.Santander
             Assert.Contains(@"""destinationType"":""STR0008""", corpo);
             Assert.DoesNotContain("ispbCode", corpo);
 
-            var patch = handler.Requests[2];
+            var patch = handler.Requests[1];
             Assert.Equal("PATCH", patch.Method.Method);
             Assert.Equal($"{BaseUrl}/workspaces/ws-1/transfer/{TransferId}", patch.RequestUri!.ToString());
-            Assert.Contains(@"""status"":""AUTHORIZED""", handler.Bodies[2]!);
-            Assert.Contains(@"""sourceAccount"":{""branchCode"":""1234"",""accountNumber"":""000000056789""}", handler.Bodies[2]!);
+            Assert.Contains(@"""status"":""AUTHORIZED""", handler.Bodies[1]!);
+            Assert.Contains(@"""sourceAccount"":{""branchCode"":""1234"",""accountNumber"":""000000056789""}", handler.Bodies[1]!);
 
             Assert.Equal(TransferId, resultado.NumeroDocumentoNoBanco);
             Assert.Equal(BancoBrSituacaoEnum.Agendado, resultado.SituacaoBancoBr);
@@ -109,7 +100,7 @@ namespace BancoBr.Tests.Santander
 
             await CriarClient(handler).PagarTedAsync(CriarMovimento(), CriarOrigem(), "92446ad6-d52a-4141-bee4-58a019358faa");
 
-            Assert.Contains(@"""id"":""92446ad6-d52a-4141-bee4-58a019358faa""", handler.Bodies[1]!);
+            Assert.Contains(@"""id"":""92446ad6-d52a-4141-bee4-58a019358faa""", handler.Bodies[0]!);
         }
 
         [Fact]
@@ -119,7 +110,7 @@ namespace BancoBr.Tests.Santander
 
             await CriarClient(handler).PagarTedAsync(CriarMovimento(), CriarOrigem(), "chave-qualquer");
 
-            Assert.DoesNotContain(@"""id""", handler.Bodies[1]!);
+            Assert.DoesNotContain(@"""id""", handler.Bodies[0]!);
         }
 
         [Fact]
@@ -130,7 +121,7 @@ namespace BancoBr.Tests.Santander
 
             await CriarClient(handler).PagarTedAsync(movimento, CriarOrigem(), "x");
 
-            var corpo = handler.Bodies[1]!;
+            var corpo = handler.Bodies[0]!;
             Assert.Contains(@"""bankCode"":""260""", corpo);
             Assert.Contains(@"""ispbCode"":""18236120""", corpo);
             Assert.Contains(@"""typeAccount"":""PG""", corpo);
@@ -144,7 +135,7 @@ namespace BancoBr.Tests.Santander
 
             await CriarClient(handler).PagarTedAsync(movimento, CriarOrigem(), "x");
 
-            Assert.Contains(@"""typeAccount"":""PP""", handler.Bodies[1]!);
+            Assert.Contains(@"""typeAccount"":""PP""", handler.Bodies[0]!);
         }
 
         [Fact]
@@ -157,7 +148,7 @@ namespace BancoBr.Tests.Santander
 
             await CriarClient(handler).PagarTedAsync(movimento, CriarOrigem(), "x");
 
-            Assert.Contains(@"""legalEntityIdentifier"":""CNPJ"",""documentIdentifierNumber"":""12345678000100""", handler.Bodies[1]!);
+            Assert.Contains(@"""legalEntityIdentifier"":""CNPJ"",""documentIdentifierNumber"":""12345678000100""", handler.Bodies[0]!);
         }
 
         [Fact]
@@ -168,7 +159,7 @@ namespace BancoBr.Tests.Santander
 
             var resultado = await CriarClient(handler).PagarTedAsync(movimento, CriarOrigem(), "x");
 
-            Assert.Equal(2, handler.Requests.Count);
+            Assert.Equal(1, handler.Requests.Count);
             Assert.Equal(BancoBrSituacaoEnum.Rejeitado, resultado.SituacaoBancoBr);
             Assert.Equal("CONTA_INVALIDA", resultado.DetalheRejeicaoBancoBr);
         }
@@ -193,22 +184,6 @@ namespace BancoBr.Tests.Santander
         }
 
         [Fact]
-        public async Task PagarTedAsync_WorkspaceSemTed_HabilitaAntes()
-        {
-            var handler = new SequencedFakeHttpMessageHandler(
-                (HttpStatusCode.OK, ListaComWorkspace(tedAtivo: false)),
-                (HttpStatusCode.OK, "{}"),
-                (HttpStatusCode.Created, Resposta("READY_TO_PAY")),
-                (HttpStatusCode.OK, Resposta("PENDING_CONFIRMATION")));
-
-            await CriarClient(handler).PagarTedAsync(CriarMovimento(), CriarOrigem(), "x");
-
-            Assert.Equal("PATCH", handler.Requests[1].Method.Method);
-            Assert.Equal($"{BaseUrl}/workspaces/ws-1", handler.Requests[1].RequestUri!.ToString());
-            Assert.Contains(@"""bankTransferPaymentsActive"":true", handler.Bodies[1]!);
-        }
-
-        [Fact]
         public async Task ConsultarTedAsync_Efetivada_MapeiaSituacaoEAutenticacao()
         {
             var handler = Sequencia((HttpStatusCode.OK, Resposta("PAYED", @", ""transaction"": { ""value"": ""2500.65"", ""code"": ""VXBT202403252085158bd9a"", ""date"": ""2026-10-12"" }")));
@@ -217,7 +192,7 @@ namespace BancoBr.Tests.Santander
 
             var resultado = await CriarClient(handler).ConsultarTedAsync(movimento, CriarOrigem());
 
-            var get = handler.Requests[1];
+            var get = handler.Requests[0];
             Assert.Equal(HttpMethod.Get, get.Method);
             Assert.Equal($"{BaseUrl}/workspaces/ws-1/transfer/{TransferId}", get.RequestUri!.ToString());
             Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
@@ -231,6 +206,15 @@ namespace BancoBr.Tests.Santander
             var client = CriarClient(Sequencia());
 
             await Assert.ThrowsAsync<InvalidOperationException>(() => client.ConsultarTedAsync(CriarMovimento(), CriarOrigem()));
+        }
+
+        [Fact]
+        public async Task SemIdWorkspace_Lanca()
+        {
+            var client = new PagamentoTedClient(new HttpClient(Sequencia()), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl);
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => client.PagarTedAsync(CriarMovimento(), CriarOrigem(), "x"));
+            Assert.Contains("idWorkspace", ex.Message);
         }
 
         [Fact]

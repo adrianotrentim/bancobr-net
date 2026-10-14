@@ -23,13 +23,13 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
     /// pagamento tem dois passos: POST (iniciação, valida o boleto e devolve READY_TO_PAY com os
     /// valores atualizados) e PATCH (efetivação, enviando AUTHORIZED e o pagador final).
     ///
-    /// Assim como o Pix, a chamada acontece dentro de uma workspace do Hub de Pagamentos,
-    /// resolvida sozinha pela conta pagadora (<c>origem</c>). O id do pagamento devolvido pelo POST
+    /// Assim como o Pix, a chamada acontece dentro de uma workspace do Hub de Pagamentos, cujo id
+    /// vem de <c>BancoApi.Conectar</c> (obtido por <c>ObterOuCriarWorkspaceAsync</c>). O id do pagamento devolvido pelo POST
     /// fica em <see cref="MovimentoItemPagamentoTituloCodigoBarra.IdentificadorConsulta"/> (é o
     /// que a efetivação exige de volta) e, depois de efetivado, também em
     /// <see cref="Movimento.NumeroDocumentoNoBanco"/>. A API não tem cancelamento, consulta de
     /// comprovante por idempotency key, então essas operações não são suportadas. O DDA
-    /// (authorized_direct_debits) roda numa workspace com o DDA e o pagamento de boletos ligados.
+    /// (authorized_direct_debits) exige que a workspace tenha o DDA e o pagamento de boletos ligados.
     /// </summary>
     internal class PagamentoBoletoClient : PagamentoBoletoApiBase
     {
@@ -37,21 +37,22 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
 
         private readonly SantanderHttpGateway _gateway;
         private readonly string _baseUrl;
+        private readonly string _idWorkspace;
 
-        internal PagamentoBoletoClient(string clientId, string clientSecret, CertificateSource certificateSource, Uri tokenEndpoint = null)
-            : this(clientId, certificateSource, SantanderHttpGateway.BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint))
+        internal PagamentoBoletoClient(string clientId, string clientSecret, CertificateSource certificateSource, Uri tokenEndpoint = null, string idWorkspace = null)
+            : this(clientId, certificateSource, SantanderHttpGateway.BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint), idWorkspace)
         {
         }
 
-        internal PagamentoBoletoClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider)
-            : this(SantanderHttpGateway.BuildHttpClient(certificateSource), tokenProvider, clientId, SantanderHttpGateway.PagamentosBaseUrl)
+        internal PagamentoBoletoClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider, string idWorkspace = null)
+            : this(SantanderHttpGateway.BuildHttpClient(certificateSource), tokenProvider, clientId, SantanderHttpGateway.PagamentosBaseUrl, idWorkspace)
         {
         }
 
         /// <summary>
         /// Construtor para testes: permite injetar um HttpClient/IAccessTokenProvider fake.
         /// </summary>
-        public PagamentoBoletoClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl)
+        public PagamentoBoletoClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl, string idWorkspace = null)
             : base(httpClient)
         {
             if (baseUrl == null) throw new ArgumentNullException(nameof(baseUrl));
@@ -59,6 +60,7 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
             _gateway = new SantanderHttpGateway(httpClient, tokenProvider, clientId);
             var baseUrlText = baseUrl.ToString();
             _baseUrl = baseUrlText.EndsWith("/") ? baseUrlText : baseUrlText + "/";
+            _idWorkspace = idWorkspace;
         }
 
         #region ::. Operações .::
@@ -76,7 +78,7 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
             if (string.IsNullOrWhiteSpace(codigo))
                 throw new InvalidOperationException("Informe o código de barras (CodigoBarras) ou a linha digitável (NumeroLinhaDigitavel) do boleto.");
 
-            var workspace = await ResolverWorkspaceAsync(origem, cancellationToken).ConfigureAwait(false);
+            var workspace = ResolverWorkspace(origem);
             var dto = await _gateway.IniciarPagamentoCodigoAsync(_baseUrl, Recurso, workspace.WorkspaceId, codigo.JustNumbers(), movimento.DataPagamento, cancellationToken).ConfigureAwait(false);
 
             return AplicarResposta(movimento, item, dto, iniciacao: true);
@@ -98,7 +100,7 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
             if (movimento.ValorPagamento <= 0)
                 throw new InvalidOperationException("Informe o valor do pagamento (Movimento.ValorPagamento).");
 
-            var workspace = await ResolverWorkspaceAsync(origem, cancellationToken).ConfigureAwait(false);
+            var workspace = ResolverWorkspace(origem);
             var dto = await _gateway.EfetivarPagamentoCodigoAsync(_baseUrl, Recurso, workspace, id, movimento.ValorPagamento, origem, cancellationToken).ConfigureAwait(false);
 
             return AplicarResposta(movimento, item, dto, iniciacao: false);
@@ -148,7 +150,7 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
             if (string.IsNullOrWhiteSpace(id))
                 throw new InvalidOperationException("Para consultar o pagamento, o movimento precisa ter o id do pagamento em NumeroDocumentoNoBanco.");
 
-            var workspace = await ResolverWorkspaceAsync(origem, cancellationToken).ConfigureAwait(false);
+            var workspace = ResolverWorkspace(origem);
             var dto = await _gateway.ConsultarPagamentoCodigoAsync(_baseUrl, Recurso, workspace.WorkspaceId, id, cancellationToken).ConfigureAwait(false);
 
             return AplicarResposta(movimento, item, dto, iniciacao: false);
@@ -161,8 +163,8 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
             throw new NotSupportedException("A API de boletos do Santander não consulta pagamentos por idempotency key — use o id do pagamento.");
 
         /// <summary>
-        /// Consulta os boletos DDA (authorized_direct_debits) da workspace da conta
-        /// <paramref name="origem"/>, paginando de 200 em 200. O Santander só filtra por
+        /// Consulta os boletos DDA (authorized_direct_debits) da workspace informada em
+        /// <c>Conectar</c>, paginando de 200 em 200. O Santander só filtra por
         /// vencimento, então <paramref name="dataInicial"/>/<paramref name="dataFinal"/> são o
         /// intervalo de vencimento e outros <paramref name="tipoData"/> não são suportados; o
         /// <paramref name="numeroConta"/> não é usado — a conta vem de <paramref name="origem"/>.
@@ -173,7 +175,7 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
                 throw new NotSupportedException("O DDA do Santander só filtra por data de vencimento (TipoDataConsultaEnum.Vencimento).");
 
             var titleSituation = MapSituacaoDda(situacao);
-            var workspace = await ResolverWorkspaceDdaAsync(origem, cancellationToken).ConfigureAwait(false);
+            var workspace = ResolverWorkspace(origem);
 
             const int limite = 200;
             var movimentos = new List<Movimento>();
@@ -201,18 +203,11 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
         #region ::. Workspace .::
 
         /// <summary>
-        /// A workspace PAYMENTS ativa que contém a conta pagadora e tem o pagamento de boletos
-        /// ligado — achada, habilitada ou criada pelo gateway, e mantida em cache por conta.
+        /// A workspace informada em <c>BancoApi.Conectar</c> (obtida por <c>ObterOuCriarWorkspaceAsync</c>)
+        /// e a conta de débito da conta pagadora — sem consultar o banco.
         /// </summary>
-        private Task<(string WorkspaceId, ContaDebito Conta)> ResolverWorkspaceAsync(Correntista origem, CancellationToken cancellationToken) =>
-            _gateway.ResolverWorkspaceAsync(_baseUrl, origem, "Boletos", w => w.BankSlipPaymentsActive, w => w.BankSlipPaymentsActive = true, cancellationToken);
-
-        /// <summary>
-        /// Como a de boletos, mas com o DDA (<c>bankSlipAvailableActive</c>) ligado — o banco exige
-        /// que o pagamento de boletos também esteja habilitado na mesma workspace.
-        /// </summary>
-        private Task<(string WorkspaceId, ContaDebito Conta)> ResolverWorkspaceDdaAsync(Correntista origem, CancellationToken cancellationToken) =>
-            _gateway.ResolverWorkspaceAsync(_baseUrl, origem, "DDA", w => w.BankSlipAvailableActive && w.BankSlipPaymentsActive, w => w.BankSlipAvailableActive = w.BankSlipPaymentsActive = true, cancellationToken);
+        private (string WorkspaceId, ContaDebito Conta) ResolverWorkspace(Correntista origem) =>
+            SantanderHttpGateway.UsarWorkspace(_idWorkspace, origem, "Boletos");
 
         #endregion
 

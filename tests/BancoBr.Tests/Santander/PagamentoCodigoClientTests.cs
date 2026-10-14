@@ -35,24 +35,14 @@ namespace BancoBr.Tests.Santander
             ""concessionary"": { ""code"": ""0123"", ""name"": ""Companhia de Energia"" }
         }";
 
-        private static string ListaComWorkspace(bool boletoAtivo = true, bool codigoBarrasAtivo = true) => $@"{{
-            ""_pageable"": {{ ""_totalElements"": 1 }},
-            ""_content"": [ {{
-                ""workspace_id"": ""ws-1"", ""status"": ""ACTIVE"", ""type"": ""PAYMENTS"", ""description"": ""Minha workspace"",
-                ""mainDebitAccount"": {{ ""branch"": ""1234"", ""number"": ""000000056789"" }},
-                ""pixPaymentsActive"": true, ""bankSlipPaymentsActive"": {(boletoAtivo ? "true" : "false")}, ""barCodePaymentsActive"": {(codigoBarrasAtivo ? "true" : "false")}
-            }} ]
-        }}";
-
         private static PagamentoBoletoClient CriarBoleto(HttpMessageHandler handler) =>
-            new PagamentoBoletoClient(new HttpClient(handler), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl);
+            new PagamentoBoletoClient(new HttpClient(handler), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, "ws-1");
 
         private static PagamentoConvenioClient CriarConvenio(HttpMessageHandler handler) =>
-            new PagamentoConvenioClient(new HttpClient(handler), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl);
+            new PagamentoConvenioClient(new HttpClient(handler), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, "ws-1");
 
-        /// <summary>Handler que responde primeiro a listagem de workspaces e depois as respostas da operação.</summary>
         private static SequencedFakeHttpMessageHandler Sequencia(params (HttpStatusCode, string?)[] operacao) =>
-            new SequencedFakeHttpMessageHandler(new (HttpStatusCode, string?)[] { (HttpStatusCode.OK, ListaComWorkspace()) }.Concat(operacao).ToArray());
+            new SequencedFakeHttpMessageHandler(operacao);
 
         private static Correntista CriarOrigem() => new Correntista
         {
@@ -81,12 +71,12 @@ namespace BancoBr.Tests.Santander
             var resultado = await CriarBoleto(handler).ConsultarBoletoAsync(movimento, CriarOrigem());
 
             Assert.Same(movimento, resultado);
-            Assert.Equal(2, handler.Requests.Count);
-            var post = handler.Requests[1];
+            Assert.Equal(1, handler.Requests.Count);
+            var post = handler.Requests[0];
             Assert.Equal(HttpMethod.Post, post.Method);
             Assert.Equal($"{BaseUrl}/workspaces/ws-1/bank_slip_payments", post.RequestUri!.ToString());
             Assert.Equal("fake-client-id", post.Headers.GetValues("X-Application-Key").Single());
-            Assert.Equal(@"{""code"":""" + CodigoBarrasBoleto + @"""}", handler.Bodies[1]);
+            Assert.Equal(@"{""code"":""" + CodigoBarrasBoleto + @"""}", handler.Bodies[0]);
 
             var item = (MovimentoItemPagamentoTituloCodigoBarra)resultado.MovimentoItem;
             Assert.Equal(PaymentId, item.IdentificadorConsulta);
@@ -112,7 +102,7 @@ namespace BancoBr.Tests.Santander
 
             await CriarBoleto(handler).ConsultarBoletoAsync(movimento, CriarOrigem());
 
-            var body = handler.Bodies[1]!;
+            var body = handler.Bodies[0]!;
             Assert.Contains(@"""code"":""03399123456789012345678901234567890123456789""", body);
             Assert.Contains($@"""paymentDate"":""{DateTime.Today.AddDays(3):yyyy-MM-dd}""", body);
         }
@@ -126,7 +116,7 @@ namespace BancoBr.Tests.Santander
 
             await CriarBoleto(handler).ConsultarBoletoAsync(movimento, CriarOrigem());
 
-            Assert.DoesNotContain("paymentDate", handler.Bodies[1]!);
+            Assert.DoesNotContain("paymentDate", handler.Bodies[0]!);
         }
 
         [Fact]
@@ -148,10 +138,10 @@ namespace BancoBr.Tests.Santander
 
             var resultado = await CriarBoleto(handler).PagarBoletoAsync(movimento, CriarOrigem(), idempotencyKey: "ignorada");
 
-            var patch = handler.Requests[1];
+            var patch = handler.Requests[0];
             Assert.Equal("PATCH", patch.Method.Method);
             Assert.Equal($"{BaseUrl}/workspaces/ws-1/bank_slip_payments/{PaymentId}", patch.RequestUri!.ToString());
-            var body = handler.Bodies[1]!;
+            var body = handler.Bodies[0]!;
             Assert.Contains(@"""paymentValue"":147.5", body);
             Assert.Contains(@"""status"":""AUTHORIZED""", body);
             Assert.Contains(@"""debitAccount"":{""branch"":""1234"",""number"":""000000056789""}", body);
@@ -192,10 +182,10 @@ namespace BancoBr.Tests.Santander
 
             var resultado = await CriarBoleto(handler).PagarBoletoComConsultaAsync(movimento, CriarOrigem(), Guid.NewGuid());
 
-            Assert.Equal(3, handler.Requests.Count);
-            Assert.Equal(HttpMethod.Post, handler.Requests[1].Method);
-            Assert.Equal("PATCH", handler.Requests[2].Method.Method);
-            Assert.Contains(@"""paymentValue"":147.5", handler.Bodies[2]!);
+            Assert.Equal(2, handler.Requests.Count);
+            Assert.Equal(HttpMethod.Post, handler.Requests[0].Method);
+            Assert.Equal("PATCH", handler.Requests[1].Method.Method);
+            Assert.Contains(@"""paymentValue"":147.5", handler.Bodies[1]!);
             Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
             Assert.Equal(PaymentId, resultado.NumeroDocumentoNoBanco);
         }
@@ -208,7 +198,7 @@ namespace BancoBr.Tests.Santander
 
             var resultado = await CriarBoleto(handler).PagarBoletoComConsultaAsync(movimento, CriarOrigem(), Guid.NewGuid());
 
-            Assert.Equal(2, handler.Requests.Count);
+            Assert.Equal(1, handler.Requests.Count);
             Assert.Equal(BancoBrSituacaoEnum.Rejeitado, resultado.SituacaoBancoBr);
             Assert.Equal("Boleto vencido", resultado.DetalheRejeicaoBancoBr);
         }
@@ -222,7 +212,7 @@ namespace BancoBr.Tests.Santander
 
             var resultado = await CriarBoleto(handler).ConsultarComprovantePorIdAsync(movimento, CriarOrigem());
 
-            var get = handler.Requests[1];
+            var get = handler.Requests[0];
             Assert.Equal(HttpMethod.Get, get.Method);
             Assert.Equal($"{BaseUrl}/workspaces/ws-1/bank_slip_payments/{PaymentId}", get.RequestUri!.ToString());
             Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
@@ -256,6 +246,15 @@ namespace BancoBr.Tests.Santander
         }
 
         [Fact]
+        public async Task Boleto_SemIdWorkspace_Lanca()
+        {
+            var client = new PagamentoBoletoClient(new HttpClient(Sequencia()), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl);
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => client.ConsultarBoletoAsync(CriarMovimentoBoleto(), CriarOrigem()));
+            Assert.Contains("idWorkspace", ex.Message);
+        }
+
+        [Fact]
         public async Task Boleto_OperacoesSemEndpointNaoSaoSuportadas()
         {
             var client = CriarBoleto(Sequencia());
@@ -263,15 +262,6 @@ namespace BancoBr.Tests.Santander
             await Assert.ThrowsAsync<NotSupportedException>(() => client.CancelarAgendamentoAsync(CriarMovimentoBoleto(), CriarOrigem()));
             await Assert.ThrowsAsync<NotSupportedException>(() => client.ConsultarComprovantePorIdempotencyAsync("chave"));
         }
-
-        private const string ListaComWorkspaceDda = @"{
-            ""_pageable"": { ""_totalElements"": 1 },
-            ""_content"": [ {
-                ""workspace_id"": ""ws-1"", ""status"": ""ACTIVE"", ""type"": ""PAYMENTS"",
-                ""mainDebitAccount"": { ""branch"": ""1234"", ""number"": ""000000056789"" },
-                ""bankSlipPaymentsActive"": true, ""bankSlipAvailableActive"": true
-            } ]
-        }";
 
         private static string PaginaDda(int quantidade) => @"{ ""_limit"": 200, ""_pageNumber"": 1, ""_pageElements"": " + quantidade + @", ""_content"": [" +
             string.Join(",", Enumerable.Range(0, quantidade).Select(_ => @"{
@@ -284,14 +274,14 @@ namespace BancoBr.Tests.Santander
         [Fact]
         public async Task Boleto_ConsultarBoletosDdaAsync_ConsultaPorVencimentoEMapeiaItens()
         {
-            var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.OK, ListaComWorkspaceDda), (HttpStatusCode.OK, PaginaDda(2)));
+            var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.OK, PaginaDda(2)));
 
             var resultado = await CriarBoleto(handler).ConsultarBoletosDdaAsync(
                 56789, new DateTime(2026, 10, 1), new DateTime(2026, 10, 31),
                 BancoBr.API.Base.Models.SituacaoBoletoEnum.EmAberto, BancoBr.API.Base.Models.TipoDataConsultaEnum.Vencimento, CriarOrigem());
 
-            Assert.Equal(2, handler.Requests.Count);
-            var get = handler.Requests[1];
+            Assert.Equal(1, handler.Requests.Count);
+            var get = handler.Requests[0];
             Assert.Equal(HttpMethod.Get, get.Method);
             Assert.Equal($"{BaseUrl}/workspaces/ws-1/authorized_direct_debits?_limit=200&_PageNumber=1&initialDueDate=2026-10-01&finalDueDate=2026-10-31&titleSituation=ALL", get.RequestUri!.ToString());
 
@@ -314,39 +304,16 @@ namespace BancoBr.Tests.Santander
         [Fact]
         public async Task Boleto_ConsultarBoletosDdaAsync_PaginaAteUmaPaginaIncompleta()
         {
-            var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.OK, ListaComWorkspaceDda), (HttpStatusCode.OK, PaginaDda(200)), (HttpStatusCode.OK, PaginaDda(3)));
+            var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.OK, PaginaDda(200)), (HttpStatusCode.OK, PaginaDda(3)));
 
             var resultado = await CriarBoleto(handler).ConsultarBoletosDdaAsync(
                 56789, new DateTime(2026, 10, 1), new DateTime(2026, 10, 31),
                 BancoBr.API.Base.Models.SituacaoBoletoEnum.Liquidado, BancoBr.API.Base.Models.TipoDataConsultaEnum.Vencimento, CriarOrigem());
 
             Assert.Equal(203, resultado.Count);
-            Assert.Equal(3, handler.Requests.Count);
-            Assert.Contains("_PageNumber=2", handler.Requests[2].RequestUri!.Query);
-            Assert.Contains("titleSituation=PAID", handler.Requests[2].RequestUri!.Query);
-        }
-
-        [Fact]
-        public async Task Boleto_ConsultarBoletosDdaAsync_WorkspaceSemDdaAtivo_HabilitaDdaEBoletoViaPatch()
-        {
-            var lista = @"{
-                ""_pageable"": { ""_totalElements"": 1 },
-                ""_content"": [ {
-                    ""workspace_id"": ""ws-1"", ""status"": ""ACTIVE"", ""type"": ""PAYMENTS"",
-                    ""mainDebitAccount"": { ""branch"": ""1234"", ""number"": ""000000056789"" },
-                    ""bankSlipPaymentsActive"": false, ""bankSlipAvailableActive"": false
-                } ]
-            }";
-            var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.OK, lista), (HttpStatusCode.OK, @"{ ""id"": ""ws-1"" }"), (HttpStatusCode.NoContent, null));
-
-            var resultado = await CriarBoleto(handler).ConsultarBoletosDdaAsync(
-                56789, new DateTime(2026, 10, 1), new DateTime(2026, 10, 31),
-                BancoBr.API.Base.Models.SituacaoBoletoEnum.EmAberto, BancoBr.API.Base.Models.TipoDataConsultaEnum.Vencimento, CriarOrigem());
-
-            Assert.Empty(resultado);
-            Assert.Equal("PATCH", handler.Requests[1].Method.Method);
-            Assert.Contains(@"""bankSlipAvailableActive"":true", handler.Bodies[1]!);
-            Assert.Contains(@"""bankSlipPaymentsActive"":true", handler.Bodies[1]!);
+            Assert.Equal(2, handler.Requests.Count);
+            Assert.Contains("_PageNumber=2", handler.Requests[1].RequestUri!.Query);
+            Assert.Contains("titleSituation=PAID", handler.Requests[1].RequestUri!.Query);
         }
 
         [Fact]
@@ -365,50 +332,6 @@ namespace BancoBr.Tests.Santander
                 BancoBr.API.Base.Models.SituacaoBoletoEnum.EmAberto, BancoBr.API.Base.Models.TipoDataConsultaEnum.Vencimento));
         }
 
-        [Fact]
-        public async Task Boleto_WorkspaceSemBoletoAtivo_HabilitaViaPatchEMantemContasAdicionais()
-        {
-            var lista = @"{
-                ""_pageable"": { ""_totalElements"": 1 },
-                ""_content"": [ {
-                    ""workspace_id"": ""ws-1"", ""status"": ""ACTIVE"", ""type"": ""PAYMENTS"", ""description"": ""Minha workspace"",
-                    ""mainDebitAccount"": { ""branch"": ""1234"", ""number"": ""000000056789"" },
-                    ""pixPaymentsActive"": true, ""bankSlipPaymentsActive"": false
-                } ]
-            }";
-            var handler = new SequencedFakeHttpMessageHandler(
-                (HttpStatusCode.OK, lista),
-                (HttpStatusCode.OK, @"{ ""id"": ""ws-1"" }"),
-                (HttpStatusCode.Created, BoletoReadyToPay));
-
-            await CriarBoleto(handler).ConsultarBoletoAsync(CriarMovimentoBoleto(), CriarOrigem());
-
-            Assert.Equal(3, handler.Requests.Count);
-            Assert.Equal("PATCH", handler.Requests[1].Method.Method);
-            Assert.Equal($"{BaseUrl}/workspaces/ws-1", handler.Requests[1].RequestUri!.ToString());
-            Assert.Contains(@"""bankSlipPaymentsActive"":true", handler.Bodies[1]!);
-            Assert.Contains(@"""pixPaymentsActive"":true", handler.Bodies[1]!);
-            Assert.Equal($"{BaseUrl}/workspaces/ws-1/bank_slip_payments", handler.Requests[2].RequestUri!.ToString());
-        }
-
-        [Fact]
-        public async Task Boleto_SemWorkspace_CriaComOProdutoLigado()
-        {
-            var handler = new SequencedFakeHttpMessageHandler(
-                (HttpStatusCode.OK, @"{ ""_pageable"": { ""_totalElements"": 0 }, ""_content"": [] }"),
-                (HttpStatusCode.Created, @"{ ""id"": ""ws-novo"" }"),
-                (HttpStatusCode.Created, BoletoReadyToPay));
-
-            await CriarBoleto(handler).ConsultarBoletoAsync(CriarMovimentoBoleto(), CriarOrigem());
-
-            Assert.Equal(HttpMethod.Post, handler.Requests[1].Method);
-            Assert.Equal($"{BaseUrl}/workspaces", handler.Requests[1].RequestUri!.ToString());
-            Assert.Contains(@"""type"":""PAYMENTS""", handler.Bodies[1]!);
-            Assert.Contains(@"""bankSlipPaymentsActive"":true", handler.Bodies[1]!);
-            Assert.Contains(@"""pixPaymentsActive"":false", handler.Bodies[1]!);
-            Assert.Equal($"{BaseUrl}/workspaces/ws-novo/bank_slip_payments", handler.Requests[2].RequestUri!.ToString());
-        }
-
         #endregion
 
         #region ::. Convênio .::
@@ -421,10 +344,10 @@ namespace BancoBr.Tests.Santander
 
             var resultado = await CriarConvenio(handler).ConsultarCodigoBarrasAsync(movimento, CriarOrigem());
 
-            var post = handler.Requests[1];
+            var post = handler.Requests[0];
             Assert.Equal(HttpMethod.Post, post.Method);
             Assert.Equal($"{BaseUrl}/workspaces/ws-1/barcode_payments", post.RequestUri!.ToString());
-            Assert.Equal(@"{""code"":""" + CodigoBarrasConvenio + @"""}", handler.Bodies[1]);
+            Assert.Equal(@"{""code"":""" + CodigoBarrasConvenio + @"""}", handler.Bodies[0]);
 
             Assert.Equal(PaymentId, resultado.NumeroDocumentoNoBanco);
             Assert.Equal(89.90m, resultado.ValorPagamento);
@@ -444,10 +367,10 @@ namespace BancoBr.Tests.Santander
 
             var resultado = await CriarConvenio(handler).PagarConvenioAsync(movimento, CriarOrigem());
 
-            var patch = handler.Requests[1];
+            var patch = handler.Requests[0];
             Assert.Equal("PATCH", patch.Method.Method);
             Assert.Equal($"{BaseUrl}/workspaces/ws-1/barcode_payments/{PaymentId}", patch.RequestUri!.ToString());
-            Assert.Contains(@"""finalPayer"":{""name"":""Minha Empresa LTDA"",""documentType"":""CNPJ"",""documentNumber"":""11222333000181""}", handler.Bodies[1]!);
+            Assert.Contains(@"""finalPayer"":{""name"":""Minha Empresa LTDA"",""documentType"":""CNPJ"",""documentNumber"":""11222333000181""}", handler.Bodies[0]!);
             Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
             Assert.Equal("AUTH9", ((MovimentoItemPagamentoConvenioCodigoBarra)resultado.MovimentoItem).Autenticacao);
         }
@@ -470,24 +393,18 @@ namespace BancoBr.Tests.Santander
 
             var resultado = await CriarConvenio(handler).ConsultarComprovantePorNsuAsync(movimento, CriarOrigem());
 
-            Assert.Equal(HttpMethod.Get, handler.Requests[1].Method);
-            Assert.Equal($"{BaseUrl}/workspaces/ws-1/barcode_payments/{PaymentId}", handler.Requests[1].RequestUri!.ToString());
+            Assert.Equal(HttpMethod.Get, handler.Requests[0].Method);
+            Assert.Equal($"{BaseUrl}/workspaces/ws-1/barcode_payments/{PaymentId}", handler.Requests[0].RequestUri!.ToString());
             Assert.Equal(BancoBrSituacaoEnum.Agendado, resultado.SituacaoBancoBr);
         }
 
         [Fact]
-        public async Task Convenio_WorkspaceSemCodigoDeBarrasAtivo_HabilitaViaPatch()
+        public async Task Convenio_SemIdWorkspace_Lanca()
         {
-            var lista = ListaComWorkspace(codigoBarrasAtivo: false);
-            var handler = new SequencedFakeHttpMessageHandler(
-                (HttpStatusCode.OK, lista),
-                (HttpStatusCode.OK, @"{ ""id"": ""ws-1"" }"),
-                (HttpStatusCode.Created, ConvenioReadyToPay));
+            var client = new PagamentoConvenioClient(new HttpClient(Sequencia()), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl);
 
-            await CriarConvenio(handler).ConsultarCodigoBarrasAsync(CriarMovimentoConvenio(), CriarOrigem());
-
-            Assert.Equal("PATCH", handler.Requests[1].Method.Method);
-            Assert.Contains(@"""barCodePaymentsActive"":true", handler.Bodies[1]!);
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => client.ConsultarCodigoBarrasAsync(CriarMovimentoConvenio(), CriarOrigem()));
+            Assert.Contains("idWorkspace", ex.Message);
         }
 
         [Fact]

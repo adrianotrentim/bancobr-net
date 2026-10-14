@@ -20,22 +20,11 @@ namespace BancoBr.Tests.Santander
             ""beneficiary"": { ""name"": ""Fornecedor LTDA"", ""documentType"": ""CNPJ"", ""documentNumber"": ""12345678000100"" }
         }";
 
-        /// <summary>Resposta de GET /workspaces com uma única workspace ativa que tem a conta 1234 / 000000056789 como principal.</summary>
-        private static string ListaComWorkspace(bool pixAtivo = true, string extras = "") => $@"{{
-            ""_pageable"": {{ ""_totalElements"": 1 }},
-            ""_content"": [ {{
-                ""workspace_id"": ""ws-1"", ""status"": ""ACTIVE"", ""type"": ""PAYMENTS"", ""description"": ""Minha workspace"",
-                ""mainDebitAccount"": {{ ""branch"": ""1234"", ""number"": ""000000056789"" }},
-                ""bankSlipPaymentsActive"": true, ""pixPaymentsActive"": {(pixAtivo ? "true" : "false")}{extras}
-            }} ]
-        }}";
-
         private static PagamentoPixClient CriarClient(HttpMessageHandler handler) =>
-            new PagamentoPixClient(new HttpClient(handler), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl);
+            new PagamentoPixClient(new HttpClient(handler), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, "ws-1");
 
-        /// <summary>Handler que responde primeiro a listagem de workspaces e depois as respostas da operação.</summary>
         private static SequencedFakeHttpMessageHandler Sequencia(params (HttpStatusCode, string?)[] operacao) =>
-            new SequencedFakeHttpMessageHandler(new (HttpStatusCode, string?)[] { (HttpStatusCode.OK, ListaComWorkspace()) }.Concat(operacao).ToArray());
+            new SequencedFakeHttpMessageHandler(operacao);
 
         private static Correntista CriarOrigem() => new Correntista { NumeroAgencia = 1234, NumeroConta = 5678, DVConta = "9" };
 
@@ -55,13 +44,13 @@ namespace BancoBr.Tests.Santander
             var resultado = await CriarClient(handler).IniciarPagamentoAsync(movimento, CriarOrigem());
 
             Assert.Same(movimento, resultado);
-            Assert.Equal(2, handler.Requests.Count);
-            var post = handler.Requests[1];
+            Assert.Equal(1, handler.Requests.Count);
+            var post = handler.Requests[0];
             Assert.Equal(HttpMethod.Post, post.Method);
             Assert.Equal($"{BaseUrl}/workspaces/ws-1/pix_payments", post.RequestUri!.ToString());
             Assert.Equal("fake-client-id", post.Headers.GetValues("X-Application-Key").Single());
             Assert.Equal("Bearer", post.Headers.Authorization!.Scheme);
-            var body = handler.Bodies[1]!;
+            var body = handler.Bodies[0]!;
             Assert.Contains(@"""dictCodeType"":""EMAIL""", body);
             Assert.Contains(@"""dictCode"":""fornecedor@dominio.com.br""", body);
             Assert.Contains(@"""paymentValue"":150", body);
@@ -88,7 +77,7 @@ namespace BancoBr.Tests.Santander
 
             await CriarClient(handler).IniciarPagamentoAsync(movimento, CriarOrigem());
 
-            Assert.Contains($@"""dictCodeType"":""{esperado}""", handler.Bodies[1]!);
+            Assert.Contains($@"""dictCodeType"":""{esperado}""", handler.Bodies[0]!);
         }
 
         private static Movimento CriarMovimentoConta(Action<MovimentoItemTransferenciaPIX>? ajustar = null)
@@ -111,7 +100,7 @@ namespace BancoBr.Tests.Santander
 
             var resultado = await CriarClient(handler).IniciarPagamentoAsync(movimento, CriarOrigem());
 
-            var body = handler.Bodies[1]!;
+            var body = handler.Bodies[0]!;
             Assert.Contains(@"""beneficiary"":{""name"":""Fornecedor A"",""documentType"":""CPF"",""documentNumber"":""12345678900"",""bankCode"":""341"",""branch"":""0528"",""number"":""543218"",""type"":""CONTA_POUPANCA""}", body);
             Assert.DoesNotContain("ispb", body);
             Assert.DoesNotContain("dictCode", body);
@@ -129,7 +118,7 @@ namespace BancoBr.Tests.Santander
 
             await CriarClient(handler).IniciarPagamentoAsync(movimento, CriarOrigem());
 
-            var body = handler.Bodies[1]!;
+            var body = handler.Bodies[0]!;
             Assert.Contains(@"""ispb"":""18236120""", body);
             Assert.DoesNotContain("bankCode", body);
             Assert.Contains(@"""documentType"":""CNPJ"",""documentNumber"":""12345678000100""", body);
@@ -183,9 +172,9 @@ namespace BancoBr.Tests.Santander
 
             var resultado = await CriarClient(handler).PagarComIniciacaoAsync(movimento, CriarOrigem());
 
-            Assert.Equal(3, handler.Requests.Count); // GET /workspaces + POST + PATCH
-            Assert.Equal("PATCH", handler.Requests[2].Method.Method);
-            Assert.Equal($"{BaseUrl}/workspaces/ws-1/pix_payments/{PaymentId}", handler.Requests[2].RequestUri!.ToString());
+            Assert.Equal(2, handler.Requests.Count);
+            Assert.Equal("PATCH", handler.Requests[1].Method.Method);
+            Assert.Equal($"{BaseUrl}/workspaces/ws-1/pix_payments/{PaymentId}", handler.Requests[1].RequestUri!.ToString());
             Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
             Assert.NotNull(resultado.HorarioBancoBr);
             // o PATCH não devolve o titular de novo — o que veio do POST é mantido
@@ -201,7 +190,7 @@ namespace BancoBr.Tests.Santander
 
             var resultado = await CriarClient(handler).ConfirmarPagamentoAsync(movimento, CriarOrigem());
 
-            var body = handler.Bodies[1]!;
+            var body = handler.Bodies[0]!;
             Assert.Contains(@"""status"":""AUTHORIZED""", body);
             Assert.Contains(@"""paymentValue"":150", body);
             Assert.Contains(@"""debitAccount"":{""branch"":""1234"",""number"":""000000056789""}", body);
@@ -216,7 +205,7 @@ namespace BancoBr.Tests.Santander
 
             var resultado = await CriarClient(handler).PagarComIniciacaoAsync(CriarMovimentoChave(), CriarOrigem());
 
-            Assert.Equal(2, handler.Requests.Count); // GET /workspaces + POST, sem PATCH
+            Assert.Equal(1, handler.Requests.Count);
             Assert.Equal(BancoBrSituacaoEnum.Rejeitado, resultado.SituacaoBancoBr);
             Assert.Equal("Chave inexistente", resultado.DetalheRejeicaoBancoBr);
         }
@@ -230,8 +219,8 @@ namespace BancoBr.Tests.Santander
 
             var resultado = await CriarClient(handler).ConsultarPagamentoAsync(movimento, CriarOrigem());
 
-            Assert.Equal(HttpMethod.Get, handler.Requests[1].Method);
-            Assert.EndsWith($"/workspaces/ws-1/pix_payments/{PaymentId}", handler.Requests[1].RequestUri!.ToString());
+            Assert.Equal(HttpMethod.Get, handler.Requests[0].Method);
+            Assert.EndsWith($"/workspaces/ws-1/pix_payments/{PaymentId}", handler.Requests[0].RequestUri!.ToString());
             Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
         }
 
@@ -245,8 +234,8 @@ namespace BancoBr.Tests.Santander
 
             var resultado = await CriarClient(handler).PagarViaQrCodeAsync(CriarOrigem(), movimento);
 
-            Assert.Equal(3, handler.Requests.Count);
-            Assert.Contains(@"""qrCode"":""00020126...""", handler.Bodies[1]!);
+            Assert.Equal(2, handler.Requests.Count);
+            Assert.Contains(@"""qrCode"":""00020126...""", handler.Bodies[0]!);
             Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
             var item = (MovimentoItemPagamentoTituloPIXQRCode)resultado.MovimentoItem;
             Assert.Equal("TX123", item.TXID);
@@ -254,127 +243,18 @@ namespace BancoBr.Tests.Santander
         }
 
         [Fact]
-        public async Task Workspace_Resolvida_FicaEmCache()
+        public async Task SemIdWorkspace_Lanca()
         {
-            var handler = Sequencia(
-                (HttpStatusCode.Created, ReadyToPay),
-                (HttpStatusCode.OK, @"{ ""id"": """ + PaymentId + @""", ""status"": ""PAYED"" }"));
-            var client = CriarClient(handler);
+            var client = new PagamentoPixClient(new HttpClient(Sequencia()), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl);
 
-            await client.IniciarPagamentoAsync(CriarMovimentoChave(), CriarOrigem());
-            var movimento = CriarMovimentoChave();
-            movimento.NumeroDocumentoNoBanco = PaymentId;
-            await client.ConsultarPagamentoAsync(movimento, CriarOrigem());
-
-            Assert.Equal(1, handler.Requests.Count(r => r.RequestUri!.AbsolutePath.EndsWith("/workspaces")));
-        }
-
-        [Fact]
-        public async Task Workspace_ContaAdicional_EnviaEssaContaNoDebito()
-        {
-            var lista = @"{ ""_pageable"": { ""_totalElements"": 1 }, ""_content"": [ {
-                ""workspace_id"": ""ws-1"", ""status"": ""ACTIVE"", ""type"": ""PAYMENTS"", ""pixPaymentsActive"": true,
-                ""mainDebitAccount"": { ""branch"": ""0001"", ""number"": ""000000000001"" },
-                ""additionalDebitAccounts"": [ { ""branch"": ""1234"", ""number"": ""56789"" } ] } ] }";
-            var handler = new SequencedFakeHttpMessageHandler(
-                (HttpStatusCode.OK, lista),
-                (HttpStatusCode.OK, @"{ ""id"": """ + PaymentId + @""", ""status"": ""PAYED"" }"));
-            var movimento = CriarMovimentoChave();
-            movimento.NumeroDocumentoNoBanco = PaymentId;
-
-            await CriarClient(handler).ConfirmarPagamentoAsync(movimento, CriarOrigem());
-
-            // a conta é enviada do jeito que o banco a grafou (sem zeros à esquerda aqui)
-            Assert.Contains(@"""debitAccount"":{""branch"":""1234"",""number"":""56789""}", handler.Bodies[1]!);
-        }
-
-        [Fact]
-        public async Task Workspace_PixDesligado_HabilitaPreservandoOsDemaisDados()
-        {
-            var lista = ListaComWorkspace(pixAtivo: false, extras: @", ""webhookURL"": ""https://erp.exemplo/dda"", ""tags"": [""a""], ""addicionalDebitAccounts"": [ { ""branch"": ""0001"", ""number"": ""00000000000A"" } ]");
-            var handler = new SequencedFakeHttpMessageHandler(
-                (HttpStatusCode.OK, lista),
-                (HttpStatusCode.OK, @"{ ""id"": ""ws-1"", ""pixPaymentsActive"": true }"),
-                (HttpStatusCode.Created, ReadyToPay));
-
-            await CriarClient(handler).IniciarPagamentoAsync(CriarMovimentoChave(), CriarOrigem());
-
-            Assert.Equal(3, handler.Requests.Count);
-            var patch = handler.Requests[1];
-            Assert.Equal("PATCH", patch.Method.Method);
-            Assert.EndsWith("/workspaces/ws-1", patch.RequestUri!.ToString());
-            var body = handler.Bodies[1]!;
-            Assert.Contains(@"""pixPaymentsActive"":true", body);
-            Assert.Contains(@"""bankSlipPaymentsActive"":true", body);
-            Assert.Contains(@"""mainDebitAccount"":{""branch"":""1234"",""number"":""000000056789""}", body);
-            Assert.Contains(@"""additionalDebitAccounts"":[{""branch"":""0001"",""number"":""00000000000A""}]", body);
-            Assert.DoesNotContain("addicionalDebitAccounts", body);
-            Assert.Contains(@"""webhookURL"":""https://erp.exemplo/dda""", body);
-            Assert.Contains(@"""description"":""Minha workspace""", body);
-            Assert.DoesNotContain(@"""id""", body);
-            Assert.DoesNotContain(@"""workspace_id""", body);
-            Assert.DoesNotContain(@"""status""", body);
-            Assert.DoesNotContain(@"""type""", body);
-            Assert.Contains("/workspaces/ws-1/pix_payments", handler.Requests[2].RequestUri!.ToString());
-        }
-
-        [Fact]
-        public async Task Workspace_Inexistente_Cria()
-        {
-            var handler = new SequencedFakeHttpMessageHandler(
-                (HttpStatusCode.OK, @"{ ""_pageable"": { ""_totalElements"": 0 }, ""_content"": [] }"),
-                (HttpStatusCode.Created, @"{ ""id"": ""ws-nova"", ""status"": ""ACTIVE"", ""type"": ""PAYMENTS"", ""pixPaymentsActive"": true }"),
-                (HttpStatusCode.Created, ReadyToPay));
-
-            await CriarClient(handler).IniciarPagamentoAsync(CriarMovimentoChave(), CriarOrigem());
-
-            Assert.Equal(3, handler.Requests.Count);
-            var criacao = handler.Requests[1];
-            Assert.Equal(HttpMethod.Post, criacao.Method);
-            Assert.EndsWith("/workspaces", criacao.RequestUri!.ToString());
-            var body = handler.Bodies[1]!;
-            Assert.Contains(@"""type"":""PAYMENTS""", body);
-            Assert.Contains(@"""mainDebitAccount"":{""branch"":""1234"",""number"":""000000056789""}", body);
-            Assert.Contains(@"""pixPaymentsActive"":true", body);
-            Assert.Contains("/workspaces/ws-nova/pix_payments", handler.Requests[2].RequestUri!.ToString());
-        }
-
-        [Fact]
-        public async Task Workspace_DeOutraConta_OuInativa_NaoEhUsada()
-        {
-            var lista = @"{ ""_pageable"": { ""_totalElements"": 2 }, ""_content"": [
-                { ""workspace_id"": ""ws-outra"", ""status"": ""ACTIVE"", ""type"": ""PAYMENTS"", ""pixPaymentsActive"": true, ""mainDebitAccount"": { ""branch"": ""1234"", ""number"": ""000000099999"" } },
-                { ""workspace_id"": ""ws-inativa"", ""status"": ""INACTIVE"", ""type"": ""PAYMENTS"", ""pixPaymentsActive"": true, ""mainDebitAccount"": { ""branch"": ""1234"", ""number"": ""000000056789"" } } ] }";
-            var handler = new SequencedFakeHttpMessageHandler(
-                (HttpStatusCode.OK, lista),
-                (HttpStatusCode.Created, @"{ ""id"": ""ws-nova"" }"),
-                (HttpStatusCode.Created, ReadyToPay));
-
-            await CriarClient(handler).IniciarPagamentoAsync(CriarMovimentoChave(), CriarOrigem());
-
-            Assert.Contains("/workspaces/ws-nova/pix_payments", handler.Requests[2].RequestUri!.ToString());
-        }
-
-        [Fact]
-        public async Task Workspace_ListagemPaginada_PercorreTodasAsPaginas()
-        {
-            var handler = new SequencedFakeHttpMessageHandler(
-                (HttpStatusCode.OK, @"{ ""_pageable"": { ""_totalElements"": 2 }, ""_content"": [
-                    { ""workspace_id"": ""ws-outra"", ""status"": ""ACTIVE"", ""type"": ""PAYMENTS"", ""pixPaymentsActive"": true, ""mainDebitAccount"": { ""branch"": ""0001"", ""number"": ""1"" } } ] }"),
-                (HttpStatusCode.OK, ListaComWorkspace()),
-                (HttpStatusCode.Created, ReadyToPay));
-
-            await CriarClient(handler).IniciarPagamentoAsync(CriarMovimentoChave(), CriarOrigem());
-
-            Assert.Contains("_offset=0", handler.Requests[0].RequestUri!.ToString());
-            Assert.Contains("_offset=1", handler.Requests[1].RequestUri!.ToString());
-            Assert.Contains("/workspaces/ws-1/pix_payments", handler.Requests[2].RequestUri!.ToString());
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => client.IniciarPagamentoAsync(CriarMovimentoChave(), CriarOrigem()));
+            Assert.Contains("idWorkspace", ex.Message);
         }
 
         [Fact]
         public async Task SemOrigem_Lanca()
         {
-            var handler = new FakeHttpMessageHandler(HttpStatusCode.OK, ListaComWorkspace());
+            var handler = new FakeHttpMessageHandler(HttpStatusCode.OK, "{}");
 
             await Assert.ThrowsAsync<ArgumentNullException>(() => CriarClient(handler).IniciarPagamentoAsync(CriarMovimentoChave(), origem: null!));
         }

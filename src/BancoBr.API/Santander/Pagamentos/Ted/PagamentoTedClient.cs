@@ -23,9 +23,9 @@ namespace BancoBr.API.Santander.Pagamentos.Ted
     /// AUTHORIZED). Só a câmara STR0008 (TED comum) é suportada. Não há cancelamento: a API do
     /// Santander não expõe esse endpoint.
     ///
-    /// A chamada acontece dentro de uma workspace do Hub de Pagamentos, resolvida sozinha pela
-    /// conta pagadora (<c>origem</c>) — a workspace precisa ter transferências bancárias
-    /// (<c>bankTransferPaymentsActive</c>) habilitadas, o que o cliente liga se estiver desligado.
+    /// A chamada acontece dentro de uma workspace do Hub de Pagamentos, cujo id vem de
+    /// <c>BancoApi.Conectar</c> — a workspace precisa ter transferências bancárias
+    /// (<c>bankTransferPaymentsActive</c>) habilitadas, o que <c>ObterOuCriarWorkspaceAsync</c> garante.
     /// O id do pagamento (UUID do POST) fica em <see cref="Movimento.NumeroDocumentoNoBanco"/> e
     /// em <see cref="MovimentoItemTransferenciaTED.NumeroControleIF"/>.
     /// </summary>
@@ -35,21 +35,22 @@ namespace BancoBr.API.Santander.Pagamentos.Ted
 
         private readonly SantanderHttpGateway _gateway;
         private readonly string _baseUrl;
+        private readonly string _idWorkspace;
 
-        internal PagamentoTedClient(string clientId, string clientSecret, CertificateSource certificateSource, Uri tokenEndpoint = null)
-            : this(clientId, certificateSource, SantanderHttpGateway.BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint))
+        internal PagamentoTedClient(string clientId, string clientSecret, CertificateSource certificateSource, Uri tokenEndpoint = null, string idWorkspace = null)
+            : this(clientId, certificateSource, SantanderHttpGateway.BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint), idWorkspace)
         {
         }
 
-        internal PagamentoTedClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider)
-            : this(SantanderHttpGateway.BuildHttpClient(certificateSource), tokenProvider, clientId, BaseUrl)
+        internal PagamentoTedClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider, string idWorkspace = null)
+            : this(SantanderHttpGateway.BuildHttpClient(certificateSource), tokenProvider, clientId, BaseUrl, idWorkspace)
         {
         }
 
         /// <summary>
         /// Construtor para testes: permite injetar um HttpClient/IAccessTokenProvider fake.
         /// </summary>
-        public PagamentoTedClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl)
+        public PagamentoTedClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl, string idWorkspace = null)
             : base(httpClient)
         {
             if (baseUrl == null) throw new ArgumentNullException(nameof(baseUrl));
@@ -57,6 +58,7 @@ namespace BancoBr.API.Santander.Pagamentos.Ted
             _gateway = new SantanderHttpGateway(httpClient, tokenProvider, clientId);
             var baseUrlText = baseUrl.ToString();
             _baseUrl = baseUrlText.EndsWith("/") ? baseUrlText : baseUrlText + "/";
+            _idWorkspace = idWorkspace;
         }
 
         #region ::. Operações .::
@@ -73,7 +75,7 @@ namespace BancoBr.API.Santander.Pagamentos.Ted
             if (item == null)
                 throw new InvalidOperationException("PagarTedAsync espera um MovimentoItemTransferenciaTED em Movimento.MovimentoItem.");
 
-            var workspace = await ResolverWorkspaceAsync(origem, cancellationToken).ConfigureAwait(false);
+            var workspace = ResolverWorkspace(origem);
 
             var wireRequest = MontarRequisicao(movimento, item, workspace.Conta);
             if (Guid.TryParse(idempotencyKey, out var id))
@@ -105,7 +107,7 @@ namespace BancoBr.API.Santander.Pagamentos.Ted
             if (item == null)
                 throw new InvalidOperationException("ConsultarTedAsync espera um MovimentoItemTransferenciaTED em Movimento.MovimentoItem.");
 
-            var workspace = await ResolverWorkspaceAsync(origem, cancellationToken).ConfigureAwait(false);
+            var workspace = ResolverWorkspace(origem);
             var url = $"{_baseUrl}workspaces/{workspace.WorkspaceId}/transfer/{movimento.NumeroDocumentoNoBanco}";
             var dto = await _gateway.SendAsync<RespostaTedSantander>(HttpMethod.Get, url, body: null, cancellationToken).ConfigureAwait(false);
 
@@ -119,8 +121,12 @@ namespace BancoBr.API.Santander.Pagamentos.Ted
 
         #region ::. Workspace .::
 
-        private Task<(string WorkspaceId, ContaDebito Conta)> ResolverWorkspaceAsync(Correntista origem, CancellationToken cancellationToken) =>
-            _gateway.ResolverWorkspaceAsync(_baseUrl, origem, "TED", w => w.BankTransferPaymentsActive, w => w.BankTransferPaymentsActive = true, cancellationToken);
+        /// <summary>
+        /// A workspace informada em <c>BancoApi.Conectar</c> (obtida por <c>ObterOuCriarWorkspaceAsync</c>)
+        /// e a conta de débito da conta pagadora — sem consultar o banco.
+        /// </summary>
+        private (string WorkspaceId, ContaDebito Conta) ResolverWorkspace(Correntista origem) =>
+            SantanderHttpGateway.UsarWorkspace(_idWorkspace, origem, "TED");
 
         #endregion
 

@@ -21,8 +21,8 @@ namespace BancoBr.API.Santander.Http
     /// <summary>
     /// Plumbing HTTP comum às APIs do Santander: mTLS, OAuth2 com renovação automática do token
     /// no 401, header <c>X-Application-Key</c> e normalização do corpo de erro em
-    /// <see cref="BancoApiException"/>, mais a resolução de workspace do Hub de Pagamentos e a
-    /// normalização de status, comuns a Pix, Boleto e Convênio. Usado por composição (os clientes já herdam de uma
+    /// <see cref="BancoApiException"/>, mais a obtenção/criação de workspace do Hub de Pagamentos e a
+    /// normalização de status, comuns a Pix, Boleto, Convênio e TED. Usado por composição (os clientes já herdam de uma
     /// <c>*ApiBase</c>, então não dá para herdar daqui).
     /// </summary>
     internal class SantanderHttpGateway
@@ -40,7 +40,6 @@ namespace BancoBr.API.Santander.Http
         private readonly HttpClient _httpClient;
         private readonly IAccessTokenProvider _tokenProvider;
         private readonly string _clientId;
-        private readonly Dictionary<string, (string WorkspaceId, ContaDebito Conta)> _workspaces = new Dictionary<string, (string WorkspaceId, ContaDebito Conta)>();
         private readonly SemaphoreSlim _workspacesLock = new SemaphoreSlim(1, 1);
 
         public SantanderHttpGateway(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId)
@@ -162,71 +161,87 @@ namespace BancoBr.API.Santander.Http
         #region ::. Workspace do Hub de Pagamentos .::
 
         /// <summary>
-        /// Acha a workspace PAYMENTS ativa que contém a conta pagadora (principal ou adicional)
-        /// com o produto <paramref name="produto"/> habilitado. Se existir com o produto desligado,
-        /// liga; se não existir, cria. O resultado fica em cache por conta, e a trava evita criar
-        /// duas workspaces em chamadas concorrentes.
+        /// Workspace informada pelo chamador em <c>BancoApi.Conectar</c>, com a conta de débito
+        /// derivada da conta pagadora (<paramref name="origem"/>). Não consulta o banco: a
+        /// workspace é obtida uma única vez por <see cref="ObterOuCriarWorkspaceAsync"/> e o id é
+        /// guardado pelo ERP.
         /// </summary>
-        /// <param name="ativo">Diz se o produto (Pix, boleto, código de barras...) está ligado na workspace.</param>
-        /// <param name="ativar">Liga o produto na workspace.</param>
-        public async Task<(string WorkspaceId, ContaDebito Conta)> ResolverWorkspaceAsync(string baseUrl, Correntista origem, string produto, Func<Workspace, bool> ativo, Action<Workspace> ativar, CancellationToken cancellationToken)
+        public static (string WorkspaceId, ContaDebito Conta) UsarWorkspace(string idWorkspace, Correntista origem, string produto)
         {
             if (origem == null)
-                throw new ArgumentNullException(nameof(origem), $"O Santander exige a conta pagadora (origem) para localizar a workspace de {produto}.");
+                throw new ArgumentNullException(nameof(origem), $"O Santander exige a conta pagadora (origem) para operar {produto}.");
 
-            var alvo = new ContaDebito
-            {
-                Branch = origem.NumeroAgencia.ToString("D4"),
-                Number = $"{origem.NumeroConta}{origem.DVConta}".ToUpperInvariant().PadLeft(12, '0'),
-            };
-            var chave = $"{produto}/{NormalizarConta(alvo.Branch)}/{NormalizarConta(alvo.Number)}";
+            if (string.IsNullOrWhiteSpace(idWorkspace))
+                throw new InvalidOperationException($"O Santander exige o id da workspace para operar {produto}: obtenha-o com BancoApi.ObterOuCriarWorkspaceAsync e informe em BancoApi.Conectar (idWorkspace).");
+
+            return (idWorkspace, ContaDebitoDe(origem));
+        }
+
+        /// <summary>Conta pagadora no formato do Hub de Pagamentos: agência com 4 dígitos e conta com DV em 12.</summary>
+        private static ContaDebito ContaDebitoDe(Correntista origem) => new ContaDebito
+        {
+            Branch = origem.NumeroAgencia.ToString("D4"),
+            Number = $"{origem.NumeroConta}{origem.DVConta}".ToUpperInvariant().PadLeft(12, '0'),
+        };
+
+        /// <summary>
+        /// Acha a workspace PAYMENTS ativa que contém a conta pagadora (principal ou adicional)
+        /// e devolve o seu id. Se existir com algum produto desligado, liga todos; se não
+        /// existir, cria já com todos ligados. Havendo mais de uma, prefere a que já tem mais
+        /// produtos ligados. A trava evita criar duas workspaces em chamadas concorrentes.
+        /// </summary>
+        public async Task<string> ObterOuCriarWorkspaceAsync(string baseUrl, Correntista origem, CancellationToken cancellationToken)
+        {
+            if (origem == null)
+                throw new ArgumentNullException(nameof(origem), "O Santander exige a conta pagadora (origem) para localizar a workspace.");
+
+            var alvo = ContaDebitoDe(origem);
 
             await _workspacesLock.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
-                if (_workspaces.TryGetValue(chave, out var emCache))
-                    return emCache;
-
                 var existentes = await ListarWorkspacesAsync(baseUrl, cancellationToken).ConfigureAwait(false);
                 var workspace = existentes
                     .Where(w => w.Status == "ACTIVE" && w.Type == "PAYMENTS" && ContaDaWorkspace(w, alvo) != null)
-                    .OrderByDescending(ativo)
+                    .OrderByDescending(ProdutosAtivos)
                     .FirstOrDefault();
 
-                (string WorkspaceId, ContaDebito Conta) resolvida;
                 if (workspace == null)
                 {
-                    var nova = new Workspace { Type = "PAYMENTS", Description = $"BancoBr {produto}", MainDebitAccount = alvo };
-                    ativar(nova);
+                    var nova = new Workspace { Type = "PAYMENTS", Description = "BancoBr", MainDebitAccount = alvo };
+                    AtivarProdutos(nova);
                     var criada = await SendAsync<Workspace>(HttpMethod.Post, $"{baseUrl}workspaces", nova, cancellationToken).ConfigureAwait(false);
-                    resolvida = (criada.IdResolvido, alvo);
+                    return criada.IdResolvido;
                 }
-                else
+
+                var id = workspace.IdResolvido;
+
+                if (ProdutosAtivos(workspace) < TotalProdutos)
                 {
-                    var conta = ContaDaWorkspace(workspace, alvo);
-                    var id = workspace.IdResolvido;
-
-                    if (!ativo(workspace))
-                    {
-                        // PATCH reenvia a workspace como veio do GET, mudando só a flag do produto.
-                        workspace.Id = workspace.WorkspaceId = workspace.Status = workspace.Type = null;
-                        workspace.AdditionalDebitAccounts = workspace.AdditionalDebitAccounts ?? workspace.AddicionalDebitAccounts;
-                        workspace.AddicionalDebitAccounts = null;
-                        ativar(workspace);
-                        await SendAsync<Workspace>(new HttpMethod("PATCH"), $"{baseUrl}workspaces/{id}", workspace, cancellationToken).ConfigureAwait(false);
-                    }
-
-                    resolvida = (id, conta);
+                    // PATCH reenvia a workspace como veio do GET, mudando só as flags dos produtos.
+                    workspace.Id = workspace.WorkspaceId = workspace.Status = workspace.Type = null;
+                    workspace.AdditionalDebitAccounts = workspace.AdditionalDebitAccounts ?? workspace.AddicionalDebitAccounts;
+                    workspace.AddicionalDebitAccounts = null;
+                    AtivarProdutos(workspace);
+                    await SendAsync<Workspace>(new HttpMethod("PATCH"), $"{baseUrl}workspaces/{id}", workspace, cancellationToken).ConfigureAwait(false);
                 }
 
-                _workspaces[chave] = resolvida;
-                return resolvida;
+                return id;
             }
             finally
             {
                 _workspacesLock.Release();
             }
         }
+
+        /// <summary>Pix, boleto, DDA, código de barras (convênio) e TED — os produtos usados pela BancoBr.</summary>
+        private const int TotalProdutos = 5;
+
+        private static int ProdutosAtivos(Workspace w) =>
+            new[] { w.PixPaymentsActive, w.BankSlipPaymentsActive, w.BankSlipAvailableActive, w.BarCodePaymentsActive, w.BankTransferPaymentsActive }.Count(ativo => ativo);
+
+        private static void AtivarProdutos(Workspace w) =>
+            w.PixPaymentsActive = w.BankSlipPaymentsActive = w.BankSlipAvailableActive = w.BarCodePaymentsActive = w.BankTransferPaymentsActive = true;
 
         private async Task<List<Workspace>> ListarWorkspacesAsync(string baseUrl, CancellationToken cancellationToken)
         {

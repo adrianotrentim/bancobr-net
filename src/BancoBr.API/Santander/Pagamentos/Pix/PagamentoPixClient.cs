@@ -21,10 +21,8 @@ namespace BancoBr.API.Santander.Pagamentos.Pix
     /// passos: POST (iniciação, valida a chave/QR e devolve READY_TO_PAY) e PATCH (efetivação,
     /// enviando AUTHORIZED). Transferência por agência e conta e webhook não são implementados.
     ///
-    /// Toda chamada acontece dentro de uma workspace do Hub de Pagamentos. O cliente a resolve
-    /// sozinho pela conta pagadora (<c>origem</c>): usa a workspace PAYMENTS ativa que contém a
-    /// conta, habilita o Pix nela se estiver desligado e cria uma nova se não existir — o ERP
-    /// nunca lida com workspace.
+    /// Toda chamada acontece dentro de uma workspace do Hub de Pagamentos, cujo id vem de
+    /// <c>BancoApi.Conectar</c> (obtido uma vez por <c>ObterOuCriarWorkspaceAsync</c>).
     ///
     /// Assim como no Sicoob, esta classe é o limite de mapeamento entre o contrato público
     /// (<see cref="Movimento"/>/<see cref="MovimentoItem"/>) e os DTOs de wire
@@ -38,21 +36,22 @@ namespace BancoBr.API.Santander.Pagamentos.Pix
 
         private readonly SantanderHttpGateway _gateway;
         private readonly string _baseUrl;
+        private readonly string _idWorkspace;
 
-        internal PagamentoPixClient(string clientId, string clientSecret, CertificateSource certificateSource, Uri tokenEndpoint = null)
-            : this(clientId, certificateSource, SantanderHttpGateway.BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint))
+        internal PagamentoPixClient(string clientId, string clientSecret, CertificateSource certificateSource, Uri tokenEndpoint = null, string idWorkspace = null)
+            : this(clientId, certificateSource, SantanderHttpGateway.BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint), idWorkspace)
         {
         }
 
-        internal PagamentoPixClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider)
-            : this(SantanderHttpGateway.BuildHttpClient(certificateSource), tokenProvider, clientId, BaseUrl)
+        internal PagamentoPixClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider, string idWorkspace = null)
+            : this(SantanderHttpGateway.BuildHttpClient(certificateSource), tokenProvider, clientId, BaseUrl, idWorkspace)
         {
         }
 
         /// <summary>
         /// Construtor para testes: permite injetar um HttpClient/IAccessTokenProvider fake.
         /// </summary>
-        public PagamentoPixClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl)
+        public PagamentoPixClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl, string idWorkspace = null)
             : base(httpClient)
         {
             if (baseUrl == null) throw new ArgumentNullException(nameof(baseUrl));
@@ -60,6 +59,7 @@ namespace BancoBr.API.Santander.Pagamentos.Pix
             _gateway = new SantanderHttpGateway(httpClient, tokenProvider, clientId);
             var baseUrlText = baseUrl.ToString();
             _baseUrl = baseUrlText.EndsWith("/") ? baseUrlText : baseUrlText + "/";
+            _idWorkspace = idWorkspace;
         }
 
         #region ::. Operações .::
@@ -71,7 +71,7 @@ namespace BancoBr.API.Santander.Pagamentos.Pix
             if (string.IsNullOrWhiteSpace(movimento.NumeroDocumentoNoBanco))
                 throw new InvalidOperationException("Para consultar um pagamento Pix, o movimento precisa ter o id do pagamento em NumeroDocumentoNoBanco.");
 
-            var workspace = await ResolverWorkspaceAsync(origem, cancellationToken).ConfigureAwait(false);
+            var workspace = ResolverWorkspace(origem);
             var url = $"{_baseUrl}workspaces/{workspace.WorkspaceId}/pix_payments/{movimento.NumeroDocumentoNoBanco}";
             var dto = await _gateway.SendAsync<PagamentoPixResponse>(HttpMethod.Get, url, body: null, cancellationToken).ConfigureAwait(false);
 
@@ -113,7 +113,7 @@ namespace BancoBr.API.Santander.Pagamentos.Pix
             if (string.IsNullOrWhiteSpace(movimento.NumeroDocumentoNoBanco))
                 throw new InvalidOperationException("Para confirmar um pagamento Pix, o movimento precisa ter o id do pagamento (devolvido por IniciarPagamentoAsync) em NumeroDocumentoNoBanco.");
 
-            var workspace = await ResolverWorkspaceAsync(origem, cancellationToken).ConfigureAwait(false);
+            var workspace = ResolverWorkspace(origem);
             var url = $"{_baseUrl}workspaces/{workspace.WorkspaceId}/pix_payments/{movimento.NumeroDocumentoNoBanco}";
 
             // A conta é enviada explicitamente: se a workspace foi achada por uma conta adicional,
@@ -163,7 +163,7 @@ namespace BancoBr.API.Santander.Pagamentos.Pix
 
         private async Task<Movimento> IniciarAsync(Movimento movimento, Correntista origem, RequisicaoPagamentoPix wireRequest, CancellationToken cancellationToken)
         {
-            var workspace = await ResolverWorkspaceAsync(origem, cancellationToken).ConfigureAwait(false);
+            var workspace = ResolverWorkspace(origem);
             var url = $"{_baseUrl}workspaces/{workspace.WorkspaceId}/pix_payments";
 
             var dto = await _gateway.SendAsync<PagamentoPixResponse>(HttpMethod.Post, url, wireRequest, cancellationToken).ConfigureAwait(false);
@@ -176,11 +176,11 @@ namespace BancoBr.API.Santander.Pagamentos.Pix
         #region ::. Workspace .::
 
         /// <summary>
-        /// A workspace PAYMENTS ativa que contém a conta pagadora e tem o Pix ligado — achada,
-        /// habilitada ou criada pelo gateway, e mantida em cache por conta.
+        /// A workspace informada em <c>BancoApi.Conectar</c> (obtida por <c>ObterOuCriarWorkspaceAsync</c>)
+        /// e a conta de débito da conta pagadora — sem consultar o banco.
         /// </summary>
-        private Task<(string WorkspaceId, ContaDebito Conta)> ResolverWorkspaceAsync(Correntista origem, CancellationToken cancellationToken) =>
-            _gateway.ResolverWorkspaceAsync(_baseUrl, origem, "Pix", w => w.PixPaymentsActive, w => w.PixPaymentsActive = true, cancellationToken);
+        private (string WorkspaceId, ContaDebito Conta) ResolverWorkspace(Correntista origem) =>
+            SantanderHttpGateway.UsarWorkspace(_idWorkspace, origem, "Pix");
 
         #endregion
 
