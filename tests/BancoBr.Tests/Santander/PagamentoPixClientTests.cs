@@ -21,7 +21,7 @@ namespace BancoBr.Tests.Santander
         }";
 
         private static PagamentoPixClient CriarClient(HttpMessageHandler handler) =>
-            new PagamentoPixClient(new HttpClient(handler), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, "ws-1");
+            new PagamentoPixClient(new HttpClient(handler), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, CriarOrigem(), "ws-1");
 
         private static SequencedFakeHttpMessageHandler Sequencia(params (HttpStatusCode, string?)[] operacao) =>
             new SequencedFakeHttpMessageHandler(operacao);
@@ -41,7 +41,7 @@ namespace BancoBr.Tests.Santander
             var handler = Sequencia((HttpStatusCode.Created, ReadyToPay));
             var movimento = CriarMovimentoChave();
 
-            var resultado = await CriarClient(handler).IniciarPagamentoAsync(movimento, CriarOrigem());
+            var resultado = await CriarClient(handler).IniciarPagamentoAsync(movimento);
 
             Assert.Same(movimento, resultado);
             Assert.Equal(1, handler.Requests.Count);
@@ -75,7 +75,7 @@ namespace BancoBr.Tests.Santander
             var handler = Sequencia((HttpStatusCode.Created, ReadyToPay));
             var movimento = new Movimento { ValorPagamento = 1m, MovimentoItem = new MovimentoItemTransferenciaPIX { TipoChavePIX = forma, ChavePIX = chave } };
 
-            await CriarClient(handler).IniciarPagamentoAsync(movimento, CriarOrigem());
+            await CriarClient(handler).IniciarPagamentoAsync(movimento);
 
             Assert.Contains($@"""dictCodeType"":""{esperado}""", handler.Bodies[0]!);
         }
@@ -98,7 +98,7 @@ namespace BancoBr.Tests.Santander
             var handler = Sequencia((HttpStatusCode.Created, @"{ ""id"": """ + PaymentId + @""", ""status"": ""READY_TO_PAY"", ""beneficiary"": { ""name"": ""Fornecedor A"", ""documentType"": ""CPF"", ""documentNumber"": ""12345678900"" } }"));
             var movimento = CriarMovimentoConta();
 
-            var resultado = await CriarClient(handler).IniciarPagamentoAsync(movimento, CriarOrigem());
+            var resultado = await CriarClient(handler).IniciarPagamentoAsync(movimento);
 
             var body = handler.Bodies[0]!;
             Assert.Contains(@"""beneficiary"":{""name"":""Fornecedor A"",""documentType"":""CPF"",""documentNumber"":""12345678900"",""bankCode"":""341"",""branch"":""0528"",""number"":""543218"",""type"":""CONTA_POUPANCA""}", body);
@@ -116,7 +116,7 @@ namespace BancoBr.Tests.Santander
             movimento.Favorecido!.TipoPessoa = TipoInscricaoCPFCNPJEnum.CNPJ;
             movimento.Favorecido.CPF_CNPJ = "12.345.678/0001-00";
 
-            await CriarClient(handler).IniciarPagamentoAsync(movimento, CriarOrigem());
+            await CriarClient(handler).IniciarPagamentoAsync(movimento);
 
             var body = handler.Bodies[0]!;
             Assert.Contains(@"""ispb"":""18236120""", body);
@@ -131,7 +131,7 @@ namespace BancoBr.Tests.Santander
             var client = CriarClient(Sequencia());
             var movimento = CriarMovimentoConta(i => i.Ispb = "18236120");
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() => client.IniciarPagamentoAsync(movimento, CriarOrigem()));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => client.IniciarPagamentoAsync(movimento));
         }
 
         [Fact]
@@ -140,7 +140,7 @@ namespace BancoBr.Tests.Santander
             var client = CriarClient(Sequencia());
             var movimento = CriarMovimentoConta(i => i.Banco = 0);
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() => client.IniciarPagamentoAsync(movimento, CriarOrigem()));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => client.IniciarPagamentoAsync(movimento));
         }
 
         [Fact]
@@ -150,7 +150,7 @@ namespace BancoBr.Tests.Santander
             var movimento = CriarMovimentoConta();
             movimento.Favorecido = null;
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() => client.IniciarPagamentoAsync(movimento, CriarOrigem()));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => client.IniciarPagamentoAsync(movimento));
         }
 
         [Fact]
@@ -159,7 +159,7 @@ namespace BancoBr.Tests.Santander
             var client = CriarClient(Sequencia());
             var movimento = new Movimento { ValorPagamento = 1m, MovimentoItem = new MovimentoItemTransferenciaPIX() };
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() => client.IniciarPagamentoAsync(movimento, CriarOrigem()));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => client.IniciarPagamentoAsync(movimento));
         }
 
         [Fact]
@@ -170,7 +170,7 @@ namespace BancoBr.Tests.Santander
                 (HttpStatusCode.OK, @"{ ""id"": """ + PaymentId + @""", ""status"": ""PAYED"", ""paymentValue"": 150.00, ""transaction"": { ""date"": ""2026-10-09T10:15:00Z"", ""endToEnd"": ""E123"" } }"));
             var movimento = CriarMovimentoChave();
 
-            var resultado = await CriarClient(handler).PagarComIniciacaoAsync(movimento, CriarOrigem());
+            var resultado = await CriarClient(handler).PagarComIniciacaoAsync(movimento);
 
             Assert.Equal(2, handler.Requests.Count);
             Assert.Equal("PATCH", handler.Requests[1].Method.Method);
@@ -188,7 +188,7 @@ namespace BancoBr.Tests.Santander
             var movimento = CriarMovimentoChave();
             movimento.NumeroDocumentoNoBanco = PaymentId;
 
-            var resultado = await CriarClient(handler).ConfirmarPagamentoAsync(movimento, CriarOrigem());
+            var resultado = await CriarClient(handler).ConfirmarPagamentoAsync(movimento);
 
             var body = handler.Bodies[0]!;
             Assert.Contains(@"""status"":""AUTHORIZED""", body);
@@ -203,7 +203,7 @@ namespace BancoBr.Tests.Santander
             var handler = Sequencia(
                 (HttpStatusCode.Created, @"{ ""id"": """ + PaymentId + @""", ""status"": ""REJECTED"", ""rejectReason"": ""Chave inexistente"" }"));
 
-            var resultado = await CriarClient(handler).PagarComIniciacaoAsync(CriarMovimentoChave(), CriarOrigem());
+            var resultado = await CriarClient(handler).PagarComIniciacaoAsync(CriarMovimentoChave());
 
             Assert.Equal(1, handler.Requests.Count);
             Assert.Equal(BancoBrSituacaoEnum.Rejeitado, resultado.SituacaoBancoBr);
@@ -217,7 +217,7 @@ namespace BancoBr.Tests.Santander
             var movimento = CriarMovimentoChave();
             movimento.NumeroDocumentoNoBanco = PaymentId;
 
-            var resultado = await CriarClient(handler).ConsultarPagamentoAsync(movimento, CriarOrigem());
+            var resultado = await CriarClient(handler).ConsultarPagamentoAsync(movimento);
 
             Assert.Equal(HttpMethod.Get, handler.Requests[0].Method);
             Assert.EndsWith($"/workspaces/ws-1/pix_payments/{PaymentId}", handler.Requests[0].RequestUri!.ToString());
@@ -232,7 +232,7 @@ namespace BancoBr.Tests.Santander
                 (HttpStatusCode.OK, @"{ ""id"": """ + PaymentId + @""", ""status"": ""PAYED"", ""paymentValue"": 100.00 }"));
             var movimento = new Movimento { ValorPagamento = 100m, MovimentoItem = new MovimentoItemPagamentoTituloPIXQRCode { QrCode = "00020126..." } };
 
-            var resultado = await CriarClient(handler).PagarViaQrCodeAsync(CriarOrigem(), movimento);
+            var resultado = await CriarClient(handler).PagarViaQrCodeAsync(movimento);
 
             Assert.Equal(2, handler.Requests.Count);
             Assert.Contains(@"""qrCode"":""00020126...""", handler.Bodies[0]!);
@@ -245,9 +245,9 @@ namespace BancoBr.Tests.Santander
         [Fact]
         public async Task SemIdWorkspace_Lanca()
         {
-            var client = new PagamentoPixClient(new HttpClient(Sequencia()), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl);
+            var client = new PagamentoPixClient(new HttpClient(Sequencia()), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, CriarOrigem());
 
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => client.IniciarPagamentoAsync(CriarMovimentoChave(), CriarOrigem()));
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => client.IniciarPagamentoAsync(CriarMovimentoChave()));
             Assert.Contains("idWorkspace", ex.Message);
         }
 
@@ -256,7 +256,7 @@ namespace BancoBr.Tests.Santander
         {
             var handler = new FakeHttpMessageHandler(HttpStatusCode.OK, "{}");
 
-            await Assert.ThrowsAsync<ArgumentNullException>(() => CriarClient(handler).IniciarPagamentoAsync(CriarMovimentoChave(), origem: null!));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => new PagamentoPixClient(new HttpClient(handler), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, null!, "ws-1").IniciarPagamentoAsync(CriarMovimentoChave()));
         }
 
         [Fact]
@@ -266,7 +266,7 @@ namespace BancoBr.Tests.Santander
                 ""_errorCode"": ""400"", ""_message"": ""Bad request"", ""_details"": ""Dados inválidos"", ""_traceId"": ""abc"",
                 ""_errors"": [ { ""_code"": ""E1"", ""_field"": ""paymentValue"", ""_message"": ""deve ser maior que zero"" } ] }"));
 
-            var ex = await Assert.ThrowsAsync<BancoApiException>(() => CriarClient(handler).IniciarPagamentoAsync(CriarMovimentoChave(), CriarOrigem()));
+            var ex = await Assert.ThrowsAsync<BancoApiException>(() => CriarClient(handler).IniciarPagamentoAsync(CriarMovimentoChave()));
 
             Assert.Equal(400, ex.HttpStatusCode);
             Assert.Equal("Dados inválidos", ex.Mensagens[0].Mensagem);

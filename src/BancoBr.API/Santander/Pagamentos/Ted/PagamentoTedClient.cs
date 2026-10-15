@@ -37,21 +37,21 @@ namespace BancoBr.API.Santander.Pagamentos.Ted
         private readonly string _baseUrl;
         private readonly string _idWorkspace;
 
-        internal PagamentoTedClient(string clientId, string clientSecret, CertificateSource certificateSource, Uri tokenEndpoint = null, string idWorkspace = null)
-            : this(clientId, certificateSource, SantanderHttpGateway.BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint), idWorkspace)
+        internal PagamentoTedClient(string clientId, string clientSecret, CertificateSource certificateSource, Correntista origem, Uri tokenEndpoint = null, string idWorkspace = null)
+            : this(clientId, certificateSource, SantanderHttpGateway.BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint), origem, idWorkspace)
         {
         }
 
-        internal PagamentoTedClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider, string idWorkspace = null)
-            : this(SantanderHttpGateway.BuildHttpClient(certificateSource), tokenProvider, clientId, BaseUrl, idWorkspace)
+        internal PagamentoTedClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider, Correntista origem, string idWorkspace = null)
+            : this(SantanderHttpGateway.BuildHttpClient(certificateSource), tokenProvider, clientId, BaseUrl, origem, idWorkspace)
         {
         }
 
         /// <summary>
         /// Construtor para testes: permite injetar um HttpClient/IAccessTokenProvider fake.
         /// </summary>
-        public PagamentoTedClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl, string idWorkspace = null)
-            : base(httpClient)
+        public PagamentoTedClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl, Correntista origem, string idWorkspace = null)
+            : base(httpClient, origem)
         {
             if (baseUrl == null) throw new ArgumentNullException(nameof(baseUrl));
 
@@ -67,7 +67,7 @@ namespace BancoBr.API.Santander.Pagamentos.Ted
         /// Inicia (POST) e, se o banco aceitou, efetiva (PATCH) a TED. <paramref name="idempotencyKey"/>
         /// vira o <c>id</c> do pagamento quando é um GUID — reenviar a mesma chave não duplica a TED.
         /// </summary>
-        internal override async Task<Movimento> PagarTedAsync(Movimento movimento, Correntista origem, string idempotencyKey, CancellationToken cancellationToken = default)
+        internal override async Task<Movimento> PagarTedAsync(Movimento movimento, string idempotencyKey, CancellationToken cancellationToken = default)
         {
             if (movimento == null) throw new ArgumentNullException(nameof(movimento));
 
@@ -75,7 +75,7 @@ namespace BancoBr.API.Santander.Pagamentos.Ted
             if (item == null)
                 throw new InvalidOperationException("PagarTedAsync espera um MovimentoItemTransferenciaTED em Movimento.MovimentoItem.");
 
-            var workspace = ResolverWorkspace(origem);
+            var workspace = ResolverWorkspace();
 
             var wireRequest = MontarRequisicao(movimento, item, workspace.Conta);
             if (Guid.TryParse(idempotencyKey, out var id))
@@ -96,7 +96,7 @@ namespace BancoBr.API.Santander.Pagamentos.Ted
             return AplicarResposta(movimento, item, dto);
         }
 
-        internal override async Task<Movimento> ConsultarTedAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default)
+        internal override async Task<Movimento> ConsultarTedAsync(Movimento movimento, CancellationToken cancellationToken = default)
         {
             if (movimento == null) throw new ArgumentNullException(nameof(movimento));
 
@@ -107,7 +107,7 @@ namespace BancoBr.API.Santander.Pagamentos.Ted
             if (item == null)
                 throw new InvalidOperationException("ConsultarTedAsync espera um MovimentoItemTransferenciaTED em Movimento.MovimentoItem.");
 
-            var workspace = ResolverWorkspace(origem);
+            var workspace = ResolverWorkspace();
             var url = $"{_baseUrl}workspaces/{workspace.WorkspaceId}/transfer/{movimento.NumeroDocumentoNoBanco}";
             var dto = await _gateway.SendAsync<RespostaTedSantander>(HttpMethod.Get, url, body: null, cancellationToken).ConfigureAwait(false);
 
@@ -125,8 +125,8 @@ namespace BancoBr.API.Santander.Pagamentos.Ted
         /// A workspace informada em <c>BancoApi.Conectar</c> (obtida por <c>ObterOuCriarWorkspaceAsync</c>)
         /// e a conta de débito da conta pagadora — sem consultar o banco.
         /// </summary>
-        private (string WorkspaceId, ContaDebito Conta) ResolverWorkspace(Correntista origem) =>
-            SantanderHttpGateway.UsarWorkspace(_idWorkspace, origem, "TED");
+        private (string WorkspaceId, ContaDebito Conta) ResolverWorkspace() =>
+            SantanderHttpGateway.UsarWorkspace(_idWorkspace, Origem, "TED");
 
         #endregion
 

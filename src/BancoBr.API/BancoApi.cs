@@ -61,6 +61,7 @@ namespace BancoBr.API
         public static BancoApi Conectar(ConfiguracaoAPI configuracao, Uri tokenEndpointOverride = null)
         {
             var banco = ObterBanco(configuracao);
+            var origem = configuracao.Correntista;
             var clientId = configuracao.ClientId;
             var certificateSource = configuracao.CertificadoDigital;
             var clientSecret = configuracao.ClientSecret;
@@ -71,21 +72,21 @@ namespace BancoBr.API
                 case BancoEnum.Sicoob:
                     return new BancoApi(
                         configuracao.Correntista,
-                        new PagamentoBoletoClient(clientId, clientSecret, certificateSource, tokenEndpointOverride),
-                        new PagamentoConvenioClient(clientId, clientSecret, certificateSource, tokenEndpointOverride),
-                        new PagamentoPixClient(clientId, clientSecret, certificateSource, tokenEndpointOverride),
-                        new TedClient(clientId, clientSecret, certificateSource, tokenEndpointOverride),
-                        new ExtratoClient(clientId, clientSecret, certificateSource, tokenEndpointOverride));
+                        new PagamentoBoletoClient(clientId, clientSecret, certificateSource, origem, tokenEndpointOverride),
+                        new PagamentoConvenioClient(clientId, clientSecret, certificateSource, origem, tokenEndpointOverride),
+                        new PagamentoPixClient(clientId, clientSecret, certificateSource, origem, tokenEndpointOverride),
+                        new TedClient(clientId, clientSecret, certificateSource, origem, tokenEndpointOverride),
+                        new ExtratoClient(clientId, clientSecret, certificateSource, origem, tokenEndpointOverride));
 
                 case BancoEnum.Santander:
                     return new BancoApi(
                         configuracao.Correntista,
-                        new SantanderPagamentoBoletoClient(clientId, clientSecret, certificateSource, tokenEndpointOverride, idWorkspace),
-                        new SantanderPagamentoConvenioClient(clientId, clientSecret, certificateSource, tokenEndpointOverride, idWorkspace),
-                        new SantanderPagamentoPixClient(clientId, clientSecret, certificateSource, tokenEndpointOverride, idWorkspace),
-                        new SantanderPagamentoTedClient(clientId, clientSecret, certificateSource, tokenEndpointOverride, idWorkspace),
-                        new SantanderExtratoClient(clientId, clientSecret, certificateSource, tokenEndpointOverride),
-                        new SantanderWorkspaceClient(clientId, clientSecret, certificateSource, tokenEndpointOverride));
+                        new SantanderPagamentoBoletoClient(clientId, clientSecret, certificateSource, origem, tokenEndpointOverride, idWorkspace),
+                        new SantanderPagamentoConvenioClient(clientId, clientSecret, certificateSource, origem, tokenEndpointOverride, idWorkspace),
+                        new SantanderPagamentoPixClient(clientId, clientSecret, certificateSource, origem, tokenEndpointOverride, idWorkspace),
+                        new SantanderPagamentoTedClient(clientId, clientSecret, certificateSource, origem, tokenEndpointOverride, idWorkspace),
+                        new SantanderExtratoClient(clientId, clientSecret, certificateSource, origem, tokenEndpointOverride),
+                        new SantanderWorkspaceClient(clientId, clientSecret, certificateSource, origem, tokenEndpointOverride));
 
                 default:
                     throw new Exception($"Banco não implementado: {configuracao.Correntista.Banco}!");
@@ -101,6 +102,7 @@ namespace BancoBr.API
         public static BancoApi Conectar(ConfiguracaoAPI configuracao, IAccessTokenProvider tokenProvider)
         {
             var banco = ObterBanco(configuracao);
+            var origem = configuracao.Correntista;
             var clientId = configuracao.ClientId;
             var certificateSource = configuracao.CertificadoDigital;
             var idWorkspace = configuracao.IdWorkspace;
@@ -110,21 +112,21 @@ namespace BancoBr.API
                 case BancoEnum.Sicoob:
                     return new BancoApi(
                         configuracao.Correntista,
-                        new PagamentoBoletoClient(clientId, certificateSource, tokenProvider),
-                        new PagamentoConvenioClient(clientId, certificateSource, tokenProvider),
-                        new PagamentoPixClient(clientId, certificateSource, tokenProvider),
-                        new TedClient(clientId, certificateSource, tokenProvider),
-                        new ExtratoClient(clientId, certificateSource, tokenProvider));
+                        new PagamentoBoletoClient(clientId, certificateSource, tokenProvider, origem),
+                        new PagamentoConvenioClient(clientId, certificateSource, tokenProvider, origem),
+                        new PagamentoPixClient(clientId, certificateSource, tokenProvider, origem),
+                        new TedClient(clientId, certificateSource, tokenProvider, origem),
+                        new ExtratoClient(clientId, certificateSource, tokenProvider, origem));
 
                 case BancoEnum.Santander:
                     return new BancoApi(
                         configuracao.Correntista,
-                        new SantanderPagamentoBoletoClient(clientId, certificateSource, tokenProvider, idWorkspace),
-                        new SantanderPagamentoConvenioClient(clientId, certificateSource, tokenProvider, idWorkspace),
-                        new SantanderPagamentoPixClient(clientId, certificateSource, tokenProvider, idWorkspace),
-                        new SantanderPagamentoTedClient(clientId, certificateSource, tokenProvider, idWorkspace),
-                        new SantanderExtratoClient(clientId, certificateSource, tokenProvider),
-                        new SantanderWorkspaceClient(clientId, certificateSource, tokenProvider));
+                        new SantanderPagamentoBoletoClient(clientId, certificateSource, tokenProvider, origem, idWorkspace),
+                        new SantanderPagamentoConvenioClient(clientId, certificateSource, tokenProvider, origem, idWorkspace),
+                        new SantanderPagamentoPixClient(clientId, certificateSource, tokenProvider, origem, idWorkspace),
+                        new SantanderPagamentoTedClient(clientId, certificateSource, tokenProvider, origem, idWorkspace),
+                        new SantanderExtratoClient(clientId, certificateSource, tokenProvider, origem),
+                        new SantanderWorkspaceClient(clientId, certificateSource, tokenProvider, origem));
 
                 default:
                     throw new Exception($"Banco não implementado: {configuracao.Correntista.Banco}!");
@@ -151,7 +153,7 @@ namespace BancoBr.API
         /// sem consultar o banco.
         /// </summary>
         public Task<string> ObterOuCriarWorkspaceAsync(CancellationToken cancellationToken = default)
-            => Requer(_workspace).ObterOuCriarWorkspaceAsync(_origem, cancellationToken);
+            => Requer(_workspace).ObterOuCriarWorkspaceAsync(cancellationToken);
 
         /// <summary>
         /// Envia o movimento — consulta prévia (quando o banco exige) + pagamento, na mesma
@@ -175,26 +177,26 @@ namespace BancoBr.API
                     if (!string.IsNullOrEmpty(itemBoleto.IdentificadorConsulta))
                     {
                         var chave = IdempotencyKey.New(_origem.NumeroAgencia, _origem.NumeroConta, ParseOuGerarGuid(idempotencyKey));
-                        return await Requer(_boleto).PagarBoletoAsync(movimento, _origem, chave, cancellationToken).ConfigureAwait(false);
+                        return await Requer(_boleto).PagarBoletoAsync(movimento, chave, cancellationToken).ConfigureAwait(false);
                     }
-                    return await Requer(_boleto).PagarBoletoComConsultaAsync(movimento, _origem, ParseOuGerarGuid(idempotencyKey), cancellationToken).ConfigureAwait(false);
+                    return await Requer(_boleto).PagarBoletoComConsultaAsync(movimento, ParseOuGerarGuid(idempotencyKey), cancellationToken).ConfigureAwait(false);
 
                 case MovimentoItemPagamentoConvenioCodigoBarra itemConvenio:
                     // Transacao (Sicoob) ou o id do pagamento em NumeroDocumentoNoBanco (Santander) indicam consulta prévia já feita.
                     if (itemConvenio.Transacao == null && string.IsNullOrEmpty(movimento.NumeroDocumentoNoBanco))
-                        await Requer(_convenio).ConsultarCodigoBarrasAsync(movimento, _origem, unidade: unidade, cancellationToken: cancellationToken).ConfigureAwait(false);
-                    return await Requer(_convenio).PagarConvenioAsync(movimento, _origem, unidade, cancellationToken).ConfigureAwait(false);
+                        await Requer(_convenio).ConsultarCodigoBarrasAsync(movimento, unidade: unidade, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    return await Requer(_convenio).PagarConvenioAsync(movimento, unidade, cancellationToken).ConfigureAwait(false);
 
                 case MovimentoItemTransferenciaTED _:
-                    return await Requer(_ted).PagarTedAsync(movimento, _origem, idempotencyKey ?? Guid.NewGuid().ToString(), cancellationToken).ConfigureAwait(false);
+                    return await Requer(_ted).PagarTedAsync(movimento, idempotencyKey ?? Guid.NewGuid().ToString(), cancellationToken).ConfigureAwait(false);
 
                 case MovimentoItemTransferenciaPIX _:
                     return string.IsNullOrEmpty(movimento.NumeroDocumentoNoBanco)
-                        ? await _pix.PagarComIniciacaoAsync(movimento, _origem, cancellationToken).ConfigureAwait(false)
-                        : await _pix.ConfirmarPagamentoAsync(movimento, _origem, cancellationToken).ConfigureAwait(false);
+                        ? await _pix.PagarComIniciacaoAsync(movimento, cancellationToken).ConfigureAwait(false)
+                        : await _pix.ConfirmarPagamentoAsync(movimento, cancellationToken).ConfigureAwait(false);
 
                 case MovimentoItemPagamentoTituloPIXQRCode _:
-                    return await _pix.PagarViaQrCodeAsync(_origem, movimento, cancellationToken).ConfigureAwait(false);
+                    return await _pix.PagarViaQrCodeAsync(movimento, cancellationToken).ConfigureAwait(false);
 
                 default:
                     throw OperacaoNaoSuportada("envio", movimento);
@@ -217,26 +219,26 @@ namespace BancoBr.API
             {
                 case MovimentoItemPagamentoTituloCodigoBarra _:
                     return jaEnviado
-                        ? Requer(_boleto).ConsultarComprovantePorIdAsync(movimento, _origem, cancellationToken)
-                        : Requer(_boleto).ConsultarBoletoAsync(movimento, _origem, cancellationToken);
+                        ? Requer(_boleto).ConsultarComprovantePorIdAsync(movimento, cancellationToken)
+                        : Requer(_boleto).ConsultarBoletoAsync(movimento, cancellationToken);
 
                 case MovimentoItemPagamentoConvenioCodigoBarra _:
                     return jaEnviado
-                        ? Requer(_convenio).ConsultarComprovantePorNsuAsync(movimento, _origem, cancellationToken)
-                        : Requer(_convenio).ConsultarCodigoBarrasAsync(movimento, _origem, unidade: unidade, cancellationToken: cancellationToken);
+                        ? Requer(_convenio).ConsultarComprovantePorNsuAsync(movimento, cancellationToken)
+                        : Requer(_convenio).ConsultarCodigoBarrasAsync(movimento, unidade: unidade, cancellationToken: cancellationToken);
 
                 case MovimentoItemTransferenciaTED _:
-                    return Requer(_ted).ConsultarTedAsync(movimento, _origem, cancellationToken);
+                    return Requer(_ted).ConsultarTedAsync(movimento, cancellationToken);
 
                 case MovimentoItemTransferenciaPIX _:
                     return jaEnviado
-                        ? _pix.ConsultarPagamentoAsync(movimento, _origem, cancellationToken)
-                        : _pix.IniciarPagamentoAsync(movimento, _origem, cancellationToken);
+                        ? _pix.ConsultarPagamentoAsync(movimento, cancellationToken)
+                        : _pix.IniciarPagamentoAsync(movimento, cancellationToken);
 
                 case MovimentoItemPagamentoTituloPIXQRCode _:
                     if (!jaEnviado)
                         throw new NotSupportedException("Pix Copia e Cola não tem consulta prévia — chame EnviarAgendamentoAsync diretamente; ConsultarAgendamentoAsync só se aplica depois do pagamento.");
-                    return _pix.ConsultarPagamentoAsync(movimento, _origem, cancellationToken);
+                    return _pix.ConsultarPagamentoAsync(movimento, cancellationToken);
 
                 default:
                     throw OperacaoNaoSuportada("consulta", movimento);
@@ -252,7 +254,7 @@ namespace BancoBr.API
             switch (ExtrairItem(movimento))
             {
                 case MovimentoItemPagamentoTituloCodigoBarra _:
-                    return Requer(_boleto).CancelarAgendamentoAsync(movimento, _origem, cancellationToken);
+                    return Requer(_boleto).CancelarAgendamentoAsync(movimento, cancellationToken);
 
                 case MovimentoItemTransferenciaTED _:
                     return Requer(_ted).CancelarAgendamentoAsync(movimento, idempotencyKey ?? Guid.NewGuid().ToString(), cancellationToken);
@@ -269,7 +271,7 @@ namespace BancoBr.API
         /// e só há filtro por vencimento (<see cref="TipoDataConsultaEnum.Vencimento"/>).
         /// </summary>
         public Task<IReadOnlyList<Movimento>> ConsultarDDAAsync(long numeroConta, DateTime dataInicial, DateTime dataFinal, SituacaoBoletoEnum situacao, TipoDataConsultaEnum tipoData, CancellationToken cancellationToken = default)
-            => Requer(_boleto).ConsultarBoletosDdaAsync(numeroConta, dataInicial, dataFinal, situacao, tipoData, _origem, cancellationToken);
+            => Requer(_boleto).ConsultarBoletosDdaAsync(numeroConta, dataInicial, dataFinal, situacao, tipoData, cancellationToken);
 
         /// <summary>
         /// Consulta o extrato da conta no mês/ano informado. No Sicoob, o primeiro item é o saldo
@@ -280,7 +282,7 @@ namespace BancoBr.API
         /// <paramref name="agruparCnab"/> só se aplica ao Sicoob.
         /// </summary>
         public Task<IReadOnlyList<Movimento>> ConsultarExtratoAsync(long numeroContaCorrente, int mes, int ano, int? diaInicial = null, int? diaFinal = null, bool agruparCnab = false, CancellationToken cancellationToken = default)
-            => Requer(_contaCorrente).ConsultarExtratoAsync(numeroContaCorrente, mes, ano, diaInicial, diaFinal, agruparCnab, cancellationToken, _origem);
+            => Requer(_contaCorrente).ConsultarExtratoAsync(numeroContaCorrente, mes, ano, diaInicial, diaFinal, agruparCnab, cancellationToken);
 
         /// <summary>O banco vem do código em <see cref="Correntista.Banco"/> (mesmos valores de <see cref="BancoEnum"/>).</summary>
         private static BancoEnum ObterBanco(ConfiguracaoAPI configuracao)

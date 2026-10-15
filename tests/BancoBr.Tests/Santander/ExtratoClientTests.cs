@@ -13,7 +13,7 @@ namespace BancoBr.Tests.Santander
         private static readonly Uri BaseUrl = new Uri("https://trust-open.api.santander.com.br/bank_account_information/v1");
 
         private static ExtratoClient Criar(HttpMessageHandler handler) =>
-            new ExtratoClient(new HttpClient(handler), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl);
+            new ExtratoClient(new HttpClient(handler), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, CriarOrigem());
 
         private static Correntista CriarOrigem() => new Correntista { NumeroAgencia = 1, NumeroConta = 1033160, DVConta = "7" };
 
@@ -32,11 +32,11 @@ namespace BancoBr.Tests.Santander
                 { ""creditDebitType"": ""DEBITO"", ""transactionName"": ""TARIFA"", ""amount"": -7.90, ""transactionDate"": ""2026-09-04"" }
             ] }"));
 
-            var resultado = await Criar(handler).ConsultarExtratoAsync(0, 9, 2026, null, null, false, default, CriarOrigem());
+            var resultado = await Criar(handler).ConsultarExtratoAsync(0, 9, 2026, null, null, false, default);
 
             var request = Assert.Single(handler.Requests);
             Assert.Equal(HttpMethod.Get, request.Method);
-            Assert.Equal($"{BaseUrl}/banks/90400888000142/statements/0001.000010331607?initialDate=2026-09-01&finalDate=2026-09-30&_limit=50&_offset=0", request.RequestUri!.ToString());
+            Assert.Equal($"{BaseUrl}/banks/0033/statements/0001.000010331607?initialDate=2026-09-01&finalDate=2026-09-30&_limit=50&_offset=0", request.RequestUri!.ToString());
             Assert.Equal("fake-client-id", request.Headers.GetValues("X-Application-Key").Single());
 
             Assert.Equal(2, resultado.Count);
@@ -57,7 +57,7 @@ namespace BancoBr.Tests.Santander
         {
             var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.OK, Pagina(50)), (HttpStatusCode.OK, Pagina(3)));
 
-            var resultado = await Criar(handler).ConsultarExtratoAsync(0, 2, 2026, 5, 10, false, default, CriarOrigem());
+            var resultado = await Criar(handler).ConsultarExtratoAsync(0, 2, 2026, 5, 10, false, default);
 
             Assert.Equal(53, resultado.Count);
             Assert.Equal(2, handler.Requests.Count);
@@ -68,7 +68,7 @@ namespace BancoBr.Tests.Santander
         [Fact]
         public async Task ConsultarExtratoAsync_SemOrigem_Lanca()
         {
-            await Assert.ThrowsAsync<ArgumentNullException>(() => Criar(new SequencedFakeHttpMessageHandler()).ConsultarExtratoAsync(0, 9, 2026, null, null, false));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => new ExtratoClient(new HttpClient(new SequencedFakeHttpMessageHandler()), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, null!).ConsultarExtratoAsync(0, 9, 2026, null, null, false));
         }
     }
 }

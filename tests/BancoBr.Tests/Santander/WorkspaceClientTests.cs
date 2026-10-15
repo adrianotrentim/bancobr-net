@@ -19,7 +19,7 @@ namespace BancoBr.Tests.Santander
         private static readonly Uri BaseUrl = new Uri("https://trust-open.api.santander.com.br/management_payments_partners/v1");
 
         private static WorkspaceClient CriarClient(HttpMessageHandler handler) =>
-            new WorkspaceClient(new HttpClient(handler), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl);
+            new WorkspaceClient(new HttpClient(handler), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, CriarOrigem());
 
         private static Correntista CriarOrigem(BancoEnum banco = BancoEnum.Santander) => new Correntista { Banco = (int)banco, NumeroAgencia = 1234, NumeroConta = 5678, DVConta = "9" };
 
@@ -39,7 +39,7 @@ namespace BancoBr.Tests.Santander
         {
             var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.OK, Lista(Workspace("ws-1", produtos: TodosAtivos))));
 
-            var id = await CriarClient(handler).ObterOuCriarWorkspaceAsync(CriarOrigem());
+            var id = await CriarClient(handler).ObterOuCriarWorkspaceAsync();
 
             Assert.Equal("ws-1", id);
             var get = Assert.Single(handler.Requests);
@@ -54,7 +54,7 @@ namespace BancoBr.Tests.Santander
                 extras: @", ""webhookURL"": ""https://erp.exemplo/dda"", ""tags"": [""a""], ""addicionalDebitAccounts"": [ { ""branch"": ""0001"", ""number"": ""00000000000A"" } ]");
             var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.OK, Lista(ws)), (HttpStatusCode.OK, @"{ ""id"": ""ws-1"" }"));
 
-            var id = await CriarClient(handler).ObterOuCriarWorkspaceAsync(CriarOrigem());
+            var id = await CriarClient(handler).ObterOuCriarWorkspaceAsync();
 
             Assert.Equal("ws-1", id);
             Assert.Equal(2, handler.Requests.Count);
@@ -82,7 +82,7 @@ namespace BancoBr.Tests.Santander
                 (HttpStatusCode.OK, @"{ ""_pageable"": { ""_totalElements"": 0 }, ""_content"": [] }"),
                 (HttpStatusCode.Created, @"{ ""id"": ""ws-nova"", ""status"": ""ACTIVE"", ""type"": ""PAYMENTS"" }"));
 
-            var id = await CriarClient(handler).ObterOuCriarWorkspaceAsync(CriarOrigem());
+            var id = await CriarClient(handler).ObterOuCriarWorkspaceAsync();
 
             Assert.Equal("ws-nova", id);
             var criacao = handler.Requests[1];
@@ -103,7 +103,7 @@ namespace BancoBr.Tests.Santander
                 Workspace("ws-inativa", status: "INACTIVE", produtos: TodosAtivos));
             var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.OK, lista), (HttpStatusCode.Created, @"{ ""id"": ""ws-nova"" }"));
 
-            var id = await CriarClient(handler).ObterOuCriarWorkspaceAsync(CriarOrigem());
+            var id = await CriarClient(handler).ObterOuCriarWorkspaceAsync();
 
             Assert.Equal("ws-nova", id);
         }
@@ -116,7 +116,7 @@ namespace BancoBr.Tests.Santander
                 ""additionalDebitAccounts"": [ { ""branch"": ""1234"", ""number"": ""56789"" } ] }";
             var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.OK, Lista(ws)));
 
-            var id = await CriarClient(handler).ObterOuCriarWorkspaceAsync(CriarOrigem());
+            var id = await CriarClient(handler).ObterOuCriarWorkspaceAsync();
 
             Assert.Equal("ws-1", id);
             Assert.Single(handler.Requests);
@@ -130,7 +130,7 @@ namespace BancoBr.Tests.Santander
                 Workspace("ws-completa", produtos: TodosAtivos));
             var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.OK, lista));
 
-            var id = await CriarClient(handler).ObterOuCriarWorkspaceAsync(CriarOrigem());
+            var id = await CriarClient(handler).ObterOuCriarWorkspaceAsync();
 
             Assert.Equal("ws-completa", id);
             Assert.Single(handler.Requests);
@@ -143,7 +143,7 @@ namespace BancoBr.Tests.Santander
                 (HttpStatusCode.OK, @"{ ""_pageable"": { ""_totalElements"": 2 }, ""_content"": [ " + Workspace("ws-outra", agencia: "0001", conta: "1", produtos: TodosAtivos) + " ] }"),
                 (HttpStatusCode.OK, Lista(Workspace("ws-1", produtos: TodosAtivos)).Replace(@"""_totalElements"": 1", @"""_totalElements"": 2")));
 
-            var id = await CriarClient(handler).ObterOuCriarWorkspaceAsync(CriarOrigem());
+            var id = await CriarClient(handler).ObterOuCriarWorkspaceAsync();
 
             Assert.Equal("ws-1", id);
             Assert.Contains("_offset=0", handler.Requests[0].RequestUri!.ToString());
@@ -155,7 +155,7 @@ namespace BancoBr.Tests.Santander
         {
             var handler = new SequencedFakeHttpMessageHandler();
 
-            await Assert.ThrowsAsync<ArgumentNullException>(() => CriarClient(handler).ObterOuCriarWorkspaceAsync(null!));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => new WorkspaceClient(new HttpClient(handler), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, null!).ObterOuCriarWorkspaceAsync());
             Assert.Empty(handler.Requests);
         }
 
@@ -164,7 +164,7 @@ namespace BancoBr.Tests.Santander
         {
             var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.Forbidden, @"{ ""_errorCode"": ""403"", ""_message"": ""Forbidden"", ""_details"": ""Sem permissão"" }"));
 
-            var ex = await Assert.ThrowsAsync<BancoApiException>(() => CriarClient(handler).ObterOuCriarWorkspaceAsync(CriarOrigem()));
+            var ex = await Assert.ThrowsAsync<BancoApiException>(() => CriarClient(handler).ObterOuCriarWorkspaceAsync());
 
             Assert.Equal(403, ex.HttpStatusCode);
         }

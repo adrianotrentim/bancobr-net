@@ -48,8 +48,8 @@ namespace BancoBr.API.Sicoob.Pagamentos.Convenios
         private readonly string _baseUrl;
         private static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings();
 
-        internal PagamentoConvenioClient(string clientId, string clientSecret, CertificateSource certificateSource, Uri tokenEndpoint = null)
-            : this(clientId, certificateSource, BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint ?? DefaultTokenEndpoint))
+        internal PagamentoConvenioClient(string clientId, string clientSecret, CertificateSource certificateSource, Correntista origem, Uri tokenEndpoint = null)
+            : this(clientId, certificateSource, BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint ?? DefaultTokenEndpoint), origem)
         {
         }
 
@@ -59,8 +59,8 @@ namespace BancoBr.API.Sicoob.Pagamentos.Convenios
         /// chamador — por exemplo, <see cref="StaticAccessTokenProvider"/> quando o ambiente de
         /// sandbox fornece um Access Token (Bearer) pronto em vez de expor um endpoint OAuth2.
         /// </summary>
-        internal PagamentoConvenioClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider)
-            : this(BuildHttpClient(certificateSource), tokenProvider, clientId, BaseUrl)
+        internal PagamentoConvenioClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider, Correntista origem)
+            : this(BuildHttpClient(certificateSource), tokenProvider, clientId, BaseUrl, origem)
         {
         }
 
@@ -68,8 +68,8 @@ namespace BancoBr.API.Sicoob.Pagamentos.Convenios
         /// Construtor para testes: permite injetar um HttpClient/IAccessTokenProvider fake,
         /// sem certificado real nem chamadas HTTP de fato.
         /// </summary>
-        public PagamentoConvenioClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl)
-            : base(httpClient)
+        public PagamentoConvenioClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl, Correntista origem)
+            : base(httpClient, origem)
         {
             if (baseUrl == null) throw new ArgumentNullException(nameof(baseUrl));
 
@@ -118,12 +118,12 @@ namespace BancoBr.API.Sicoob.Pagamentos.Convenios
         #region ::. Operações .::
 
         /// <summary>
-        /// <paramref name="origem"/> e <paramref name="unidade"/> não são enviados: o endpoint
+        /// <c>Origem</c> e <paramref name="unidade"/> não são enviados: o endpoint
         /// de consulta do Sicoob (GET /arrecadacao/codigo-barras/{codigoBarras}) só aceita
         /// dataPagamento e recebimentoViaCaixa. Ficam na assinatura por simetria com as demais
         /// operações da família (e porque outros bancos podem exigi-los).
         /// </summary>
-        internal override async Task<Movimento> ConsultarCodigoBarrasAsync(Movimento movimento, Correntista origem, bool? recebimentoViaCaixa = null, int unidade = 0, CancellationToken cancellationToken = default)
+        internal override async Task<Movimento> ConsultarCodigoBarrasAsync(Movimento movimento, bool? recebimentoViaCaixa = null, int unidade = 0, CancellationToken cancellationToken = default)
         {
             var item = ExtrairItem(movimento);
 
@@ -161,13 +161,13 @@ namespace BancoBr.API.Sicoob.Pagamentos.Convenios
             return movimento;
         }
 
-        internal override async Task<Movimento> PagarConvenioAsync(Movimento movimento, Correntista origem, int unidade = 0, CancellationToken cancellationToken = default)
+        internal override async Task<Movimento> PagarConvenioAsync(Movimento movimento, int unidade = 0, CancellationToken cancellationToken = default)
         {
             var item = ExtrairItem(movimento);
-            if (origem == null) throw new ArgumentNullException(nameof(origem));
+            if (Origem == null) throw new ArgumentNullException(nameof(Origem));
 
             var url = $"{_baseUrl}arrecadacao/codigo-barras/{item.CodigoBarra}/pagamentos";
-            var wireRequest = MontarRequisicaoPagamento(movimento, item, origem, unidade);
+            var wireRequest = MontarRequisicaoPagamento(movimento, item, unidade);
             var json = JsonConvert.SerializeObject(wireRequest, SerializerSettings);
 
             using (var response = await SendWithAuthAsync(() => BuildRequest(HttpMethod.Post, url, json), cancellationToken).ConfigureAwait(false))
@@ -270,14 +270,14 @@ namespace BancoBr.API.Sicoob.Pagamentos.Convenios
             return itens?.Select(dto => MapArrecadacaoParaMovimento(codigoBarras, dto)).ToList();
         }
 
-        internal override async Task<Movimento> ConsultarComprovantePorNsuAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default)
+        internal override async Task<Movimento> ConsultarComprovantePorNsuAsync(Movimento movimento, CancellationToken cancellationToken = default)
         {
             var item = ExtrairItem(movimento);
-            if (origem == null) throw new ArgumentNullException(nameof(origem));
+            if (Origem == null) throw new ArgumentNullException(nameof(Origem));
 
             var nsu = ObterNsu(movimento, item);
 
-            var url = $"{_baseUrl}arrecadacao/pagamentos/{nsu}/comprovante?instituicao={origem.NumeroAgencia}";
+            var url = $"{_baseUrl}arrecadacao/pagamentos/{nsu}/comprovante?instituicao={Origem.NumeroAgencia}";
             var dto = await SendAsync<ComprovanteArrecadacao>(HttpMethod.Get, url, body: null, cancellationToken)
                 .ConfigureAwait(false);
 
@@ -351,13 +351,13 @@ namespace BancoBr.API.Sicoob.Pagamentos.Convenios
             throw new InvalidOperationException("Para consultar o comprovante, o movimento precisa ter o NSU da arrecadação (MovimentoItem.Nsu ou NumeroDocumentoNoBanco).");
         }
 
-        private static ArrecadacaoPagamentoRequest MontarRequisicaoPagamento(Movimento movimento, MovimentoItemPagamentoConvenioCodigoBarra item, Correntista origem, int unidade) => new ArrecadacaoPagamentoRequest
+        private ArrecadacaoPagamentoRequest MontarRequisicaoPagamento(Movimento movimento, MovimentoItemPagamentoConvenioCodigoBarra item, int unidade) => new ArrecadacaoPagamentoRequest
         {
             Identificacao = new Identificacao
             {
                 // A "instituição" da arrecadação é a cooperativa/agência da conta pagadora,
                 // mesmo número usado como DebtorAccount.Issuer no pagamento de boletos.
-                Instituicao = origem.NumeroAgencia,
+                Instituicao = Origem.NumeroAgencia,
                 Unidade = unidade,
             },
             Pagamento = new PagamentoConvenio

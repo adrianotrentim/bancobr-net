@@ -19,12 +19,16 @@ namespace BancoBr.API.Base
     /// </summary>
     internal abstract class PagamentoTedApiBase
     {
-        protected PagamentoTedApiBase(HttpClient httpClient)
+        protected PagamentoTedApiBase(HttpClient httpClient, Correntista origem)
         {
             HttpClient = httpClient;
+            Origem = origem;
         }
 
         protected HttpClient HttpClient { get; }
+
+        /// <summary>Conta pagadora/titular informada em <c>ConfiguracaoAPI.Correntista</c>.</summary>
+        protected Correntista Origem { get; }
 
         /// <summary>
         /// Envia a TED. O identificador devolvido pelo banco (numeroControleIF) fica em
@@ -32,14 +36,14 @@ namespace BancoBr.API.Base
         /// <see cref="ConsultarTedAsync"/>; o idAgendamento (usado para cancelar) fica em
         /// <see cref="MovimentoItemTransferenciaTED.IdAgendamento"/>.
         /// </summary>
-        internal abstract Task<Movimento> PagarTedAsync(Movimento movimento, Correntista origem, string idempotencyKey, CancellationToken cancellationToken = default);
+        internal abstract Task<Movimento> PagarTedAsync(Movimento movimento, string idempotencyKey, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Consulta a TED identificada por <see cref="Movimento.NumeroDocumentoNoBanco"/>
-        /// (numeroControleIF, devolvido por <see cref="PagarTedAsync"/>). <paramref name="origem"/>
+        /// (numeroControleIF, devolvido por <see cref="PagarTedAsync"/>). <c>Origem</c>
         /// só é usada pelo Santander, como conta de débito na workspace.
         /// </summary>
-        internal abstract Task<Movimento> ConsultarTedAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default);
+        internal abstract Task<Movimento> ConsultarTedAsync(Movimento movimento, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Cancela o agendamento de uma TED ainda não liquidada, identificada por

@@ -21,29 +21,29 @@ namespace BancoBr.API.Santander.ContaCorrente
     /// </summary>
     internal class ExtratoClient : ContaCorrenteApiBase
     {
-        /// <summary>CNPJ do Santander — extrato de outras instituições exige consentimento (Open Finance).</summary>
-        private const string BancoId = "90400888000142";
+        /// <summary>Código do Santander (0033) — extrato de outras instituições exige consentimento (Open Finance).</summary>
+        private const string BancoId = "0033";
 
         private const int Limite = 50;
 
         private readonly SantanderHttpGateway _gateway;
         private readonly string _baseUrl;
 
-        internal ExtratoClient(string clientId, string clientSecret, CertificateSource certificateSource, Uri tokenEndpoint = null)
-            : this(clientId, certificateSource, SantanderHttpGateway.BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint))
+        internal ExtratoClient(string clientId, string clientSecret, CertificateSource certificateSource, Correntista origem, Uri tokenEndpoint = null)
+            : this(clientId, certificateSource, SantanderHttpGateway.BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint), origem)
         {
         }
 
-        internal ExtratoClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider)
-            : this(SantanderHttpGateway.BuildHttpClient(certificateSource), tokenProvider, clientId, SantanderHttpGateway.ContaCorrenteBaseUrl)
+        internal ExtratoClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider, Correntista origem)
+            : this(SantanderHttpGateway.BuildHttpClient(certificateSource), tokenProvider, clientId, SantanderHttpGateway.ContaCorrenteBaseUrl, origem)
         {
         }
 
         /// <summary>
         /// Construtor para testes: permite injetar um HttpClient/IAccessTokenProvider fake.
         /// </summary>
-        public ExtratoClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl)
-            : base(httpClient)
+        public ExtratoClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl, Correntista origem)
+            : base(httpClient, origem)
         {
             if (baseUrl == null) throw new ArgumentNullException(nameof(baseUrl));
 
@@ -55,19 +55,19 @@ namespace BancoBr.API.Santander.ContaCorrente
         /// <summary>
         /// Consulta o período <paramref name="mes"/>/<paramref name="ano"/> (recortado por
         /// <paramref name="diaInicial"/>/<paramref name="diaFinal"/>) da conta de
-        /// <paramref name="origem"/>. <paramref name="numeroContaCorrente"/> e
+        /// <c>Origem</c>. <paramref name="numeroContaCorrente"/> e
         /// <paramref name="agruparCnab"/> não são usados.
         /// </summary>
-        internal override async Task<IReadOnlyList<Movimento>> ConsultarExtratoAsync(long numeroContaCorrente, int mes, int ano, int? diaInicial, int? diaFinal, bool agruparCnab, CancellationToken cancellationToken = default, Correntista origem = null)
+        internal override async Task<IReadOnlyList<Movimento>> ConsultarExtratoAsync(long numeroContaCorrente, int mes, int ano, int? diaInicial, int? diaFinal, bool agruparCnab, CancellationToken cancellationToken = default)
         {
-            if (origem == null)
-                throw new ArgumentNullException(nameof(origem), "O Santander exige a conta (origem: agência/conta/DV) para consultar o extrato.");
+            if (Origem == null)
+                throw new ArgumentNullException(nameof(Origem), "O Santander exige a conta (Correntista: agência/conta/DV) para consultar o extrato.");
 
             var dataInicial = new DateTime(ano, mes, diaInicial ?? 1);
             var dataFinal = new DateTime(ano, mes, diaFinal ?? DateTime.DaysInMonth(ano, mes));
 
-            var conta = $"{origem.NumeroConta}{origem.DVConta}".ToUpperInvariant().PadLeft(12, '0');
-            var url = $"{_baseUrl}banks/{BancoId}/statements/{origem.NumeroAgencia:D4}.{conta}?initialDate={dataInicial:yyyy-MM-dd}&finalDate={dataFinal:yyyy-MM-dd}";
+            var conta = $"{Origem.NumeroConta}{Origem.DVConta}".ToUpperInvariant().PadLeft(12, '0');
+            var url = $"{_baseUrl}banks/{BancoId}/statements/{Origem.NumeroAgencia:D4}.{conta}?initialDate={dataInicial:yyyy-MM-dd}&finalDate={dataFinal:yyyy-MM-dd}";
 
             var movimentos = new List<Movimento>();
 

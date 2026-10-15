@@ -16,13 +16,13 @@ namespace BancoBr.Tests.Sicoob
         private static PagamentoConvenioClient CriarClient(FakeHttpMessageHandler handler)
         {
             var httpClient = new HttpClient(handler);
-            return new PagamentoConvenioClient(httpClient, new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl);
+            return new PagamentoConvenioClient(httpClient, new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, CriarOrigem());
         }
 
         private static PagamentoConvenioClient CriarClient(SequencedFakeHttpMessageHandler handler)
         {
             var httpClient = new HttpClient(handler);
-            return new PagamentoConvenioClient(httpClient, new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl);
+            return new PagamentoConvenioClient(httpClient, new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, CriarOrigem());
         }
 
         /// <summary>A "instituicao" da arrecadação vem do NumeroAgencia da conta pagadora.</summary>
@@ -71,7 +71,7 @@ namespace BancoBr.Tests.Sicoob
             var client = CriarClient(handler);
             var movimento = CriarMovimento();
 
-            var resultado = await client.ConsultarCodigoBarrasAsync(movimento, CriarOrigem());
+            var resultado = await client.ConsultarCodigoBarrasAsync(movimento);
 
             Assert.Same(movimento, resultado);
             Assert.Equal("SiG", Item(resultado).SiglaConvenio);
@@ -112,7 +112,7 @@ namespace BancoBr.Tests.Sicoob
             Item(movimento).ValorJuros = 1.71m;
             Item(movimento).ValorMulta = 17.23m;
 
-            var resultado = await client.PagarConvenioAsync(movimento, CriarOrigem());
+            var resultado = await client.PagarConvenioAsync(movimento);
 
             Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
             Assert.Equal("PCFbQ0RBVEFb", Item(resultado).ComprovanteBase64);
@@ -130,7 +130,7 @@ namespace BancoBr.Tests.Sicoob
             var client = CriarClient(handler);
             var movimento = CriarMovimento(transacao: 123456789);
 
-            var resultado = await client.PagarConvenioAsync(movimento, CriarOrigem());
+            var resultado = await client.PagarConvenioAsync(movimento);
 
             Assert.Equal(BancoBrSituacaoEnum.Agendado, resultado.SituacaoBancoBr);
             Assert.Contains("assinatura", resultado.DetalheRejeicaoBancoBr);
@@ -148,7 +148,7 @@ namespace BancoBr.Tests.Sicoob
             var client = CriarClient(handler);
 
             var ex = await Assert.ThrowsAsync<BancoApiException>(() =>
-                client.PagarConvenioAsync(CriarMovimento(transacao: 123456789), CriarOrigem()));
+                client.PagarConvenioAsync(CriarMovimento(transacao: 123456789)));
 
             Assert.Equal(400, ex.HttpStatusCode);
             Assert.Equal("20011", ex.Mensagens.Single().Codigo);
@@ -181,7 +181,7 @@ namespace BancoBr.Tests.Sicoob
             var client = CriarClient(handler);
             var movimento = CriarMovimento(transacao: 123456789);
 
-            var resultado = await client.PagarConvenioAsync(movimento, CriarOrigem());
+            var resultado = await client.PagarConvenioAsync(movimento);
 
             Assert.Equal(2, handler.Requests.Count);
             Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
@@ -206,7 +206,7 @@ namespace BancoBr.Tests.Sicoob
             var client = CriarClient(handler);
 
             var ex = await Assert.ThrowsAsync<BancoApiException>(() =>
-                client.PagarConvenioAsync(CriarMovimento(transacao: 123456789), CriarOrigem()));
+                client.PagarConvenioAsync(CriarMovimento(transacao: 123456789)));
 
             Assert.Equal("10272", ex.Mensagens.Single().Codigo);
         }
@@ -312,7 +312,7 @@ namespace BancoBr.Tests.Sicoob
             var movimento = CriarMovimento();
             Item(movimento).Nsu = 183390172928;
 
-            var resultado = await client.ConsultarComprovantePorNsuAsync(movimento, CriarOrigem());
+            var resultado = await client.ConsultarComprovantePorNsuAsync(movimento);
 
             Assert.Equal("PCFbQ0RBVEFb", Item(resultado).ComprovanteBase64);
             Assert.Equal("71205202-2DBB-46C7-BA31-0DFB8DC64EBE", Item(resultado).Autenticacao);
@@ -373,7 +373,7 @@ namespace BancoBr.Tests.Sicoob
                 (HttpStatusCode.OK, json));
             var client = CriarClient(handler);
 
-            var resultado = await client.ConsultarCodigoBarrasAsync(CriarMovimento(), CriarOrigem());
+            var resultado = await client.ConsultarCodigoBarrasAsync(CriarMovimento());
 
             Assert.Equal(2, handler.Requests.Count);
             Assert.Equal("SiG", Item(resultado).SiglaConvenio);

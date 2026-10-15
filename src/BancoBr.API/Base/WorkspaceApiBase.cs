@@ -12,17 +12,21 @@ namespace BancoBr.API.Base
     /// </summary>
     internal abstract class WorkspaceApiBase
     {
-        protected WorkspaceApiBase(HttpClient httpClient)
+        protected WorkspaceApiBase(HttpClient httpClient, Correntista origem)
         {
             HttpClient = httpClient;
+            Origem = origem;
         }
 
         protected HttpClient HttpClient { get; }
 
+        /// <summary>Conta pagadora/titular informada em <c>ConfiguracaoAPI.Correntista</c>.</summary>
+        protected Correntista Origem { get; }
+
         /// <summary>
-        /// Devolve o id da workspace da conta pagadora (<paramref name="origem"/>), criando-a ou
+        /// Devolve o id da workspace da conta pagadora (<c>Origem</c>), criando-a ou
         /// habilitando nela os produtos que faltam quando necessário.
         /// </summary>
-        internal abstract Task<string> ObterOuCriarWorkspaceAsync(Correntista origem, CancellationToken cancellationToken = default);
+        internal abstract Task<string> ObterOuCriarWorkspaceAsync(CancellationToken cancellationToken = default);
     }
 }

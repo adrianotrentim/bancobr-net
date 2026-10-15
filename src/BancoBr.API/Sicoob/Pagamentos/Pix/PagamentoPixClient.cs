@@ -64,8 +64,8 @@ namespace BancoBr.API.Sicoob.Pagamentos.Pix
         private readonly string _baseUrl;
         private static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings();
 
-        internal PagamentoPixClient(string clientId, string clientSecret, CertificateSource certificateSource, Uri tokenEndpoint = null)
-            : this(clientId, certificateSource, BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint ?? DefaultTokenEndpoint))
+        internal PagamentoPixClient(string clientId, string clientSecret, CertificateSource certificateSource, Correntista origem, Uri tokenEndpoint = null)
+            : this(clientId, certificateSource, BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint ?? DefaultTokenEndpoint), origem)
         {
         }
 
@@ -75,8 +75,8 @@ namespace BancoBr.API.Sicoob.Pagamentos.Pix
         /// chamador — por exemplo, <see cref="StaticAccessTokenProvider"/> quando o ambiente de
         /// sandbox fornece um Access Token (Bearer) pronto em vez de expor um endpoint OAuth2.
         /// </summary>
-        internal PagamentoPixClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider)
-            : this(BuildHttpClient(certificateSource), tokenProvider, clientId, BaseUrl)
+        internal PagamentoPixClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider, Correntista origem)
+            : this(BuildHttpClient(certificateSource), tokenProvider, clientId, BaseUrl, origem)
         {
         }
 
@@ -84,8 +84,8 @@ namespace BancoBr.API.Sicoob.Pagamentos.Pix
         /// Construtor para testes: permite injetar um HttpClient/IAccessTokenProvider fake,
         /// sem certificado real nem chamadas HTTP de fato.
         /// </summary>
-        public PagamentoPixClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl)
-            : base(httpClient)
+        public PagamentoPixClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl, Correntista origem)
+            : base(httpClient, origem)
         {
             if (baseUrl == null) throw new ArgumentNullException(nameof(baseUrl));
 
@@ -133,7 +133,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Pix
 
         #region ::. Operações .::
 
-        internal override async Task<Movimento> ConsultarPagamentoAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default)
+        internal override async Task<Movimento> ConsultarPagamentoAsync(Movimento movimento, CancellationToken cancellationToken = default)
         {
             if (movimento == null) throw new ArgumentNullException(nameof(movimento));
 
@@ -146,7 +146,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Pix
             return AplicarRetornoPagamento(movimento, dto);
         }
 
-        internal override async Task<Movimento> IniciarPagamentoAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default)
+        internal override async Task<Movimento> IniciarPagamentoAsync(Movimento movimento, CancellationToken cancellationToken = default)
         {
             if (movimento == null) throw new ArgumentNullException(nameof(movimento));
 
@@ -188,7 +188,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Pix
             return movimento;
         }
 
-        internal override async Task<Movimento> ConfirmarPagamentoAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default)
+        internal override async Task<Movimento> ConfirmarPagamentoAsync(Movimento movimento, CancellationToken cancellationToken = default)
         {
             if (movimento == null) throw new ArgumentNullException(nameof(movimento));
 
@@ -210,10 +210,10 @@ namespace BancoBr.API.Sicoob.Pagamentos.Pix
             return AplicarRetornoPagamento(movimento, dto);
         }
 
-        internal override async Task<Movimento> PagarViaQrCodeAsync(Correntista origem, Movimento movimento, CancellationToken cancellationToken = default)
+        internal override async Task<Movimento> PagarViaQrCodeAsync(Movimento movimento, CancellationToken cancellationToken = default)
         {
             if (movimento == null) throw new ArgumentNullException(nameof(movimento));
-            if (origem == null) throw new ArgumentNullException(nameof(origem));
+            if (Origem == null) throw new ArgumentNullException(nameof(Origem));
 
             var item = movimento.MovimentoItem as MovimentoItemPagamentoTituloPIXQRCode;
             if (item == null)
@@ -231,10 +231,10 @@ namespace BancoBr.API.Sicoob.Pagamentos.Pix
                 Origem = new DadosOrigemQrCode
                 {
                     Ispb = SicoobIspb,
-                    CpfCnpj = origem.CPF_CNPJ.RemoveMascaraCpfCnpj(),
-                    Nome = origem.Nome,
-                    Conta = $"{origem.NumeroConta}{origem.DVConta}",
-                    Agencia = origem.NumeroAgencia.ToString(),
+                    CpfCnpj = Origem.CPF_CNPJ.RemoveMascaraCpfCnpj(),
+                    Nome = Origem.Nome,
+                    Conta = $"{Origem.NumeroConta}{Origem.DVConta}",
+                    Agencia = Origem.NumeroAgencia.ToString(),
                     Tipo = TipoContaCorrenteQrCode,
                 },
                 Destino = movimento.Favorecido == null ? null : new DadosDestinatarioQrCode
@@ -261,11 +261,11 @@ namespace BancoBr.API.Sicoob.Pagamentos.Pix
             return movimento;
         }
 
-        internal override async Task<Movimento> PagarComIniciacaoAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default)
+        internal override async Task<Movimento> PagarComIniciacaoAsync(Movimento movimento, CancellationToken cancellationToken = default)
         {
-            await IniciarPagamentoAsync(movimento, origem, cancellationToken).ConfigureAwait(false);
+            await IniciarPagamentoAsync(movimento, cancellationToken).ConfigureAwait(false);
 
-            return await ConfirmarPagamentoAsync(movimento, origem, cancellationToken).ConfigureAwait(false);
+            return await ConfirmarPagamentoAsync(movimento, cancellationToken).ConfigureAwait(false);
         }
 
         #endregion

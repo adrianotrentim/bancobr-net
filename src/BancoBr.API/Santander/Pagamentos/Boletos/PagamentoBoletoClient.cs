@@ -39,21 +39,21 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
         private readonly string _baseUrl;
         private readonly string _idWorkspace;
 
-        internal PagamentoBoletoClient(string clientId, string clientSecret, CertificateSource certificateSource, Uri tokenEndpoint = null, string idWorkspace = null)
-            : this(clientId, certificateSource, SantanderHttpGateway.BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint), idWorkspace)
+        internal PagamentoBoletoClient(string clientId, string clientSecret, CertificateSource certificateSource, Correntista origem, Uri tokenEndpoint = null, string idWorkspace = null)
+            : this(clientId, certificateSource, SantanderHttpGateway.BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint), origem, idWorkspace)
         {
         }
 
-        internal PagamentoBoletoClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider, string idWorkspace = null)
-            : this(SantanderHttpGateway.BuildHttpClient(certificateSource), tokenProvider, clientId, SantanderHttpGateway.PagamentosBaseUrl, idWorkspace)
+        internal PagamentoBoletoClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider, Correntista origem, string idWorkspace = null)
+            : this(SantanderHttpGateway.BuildHttpClient(certificateSource), tokenProvider, clientId, SantanderHttpGateway.PagamentosBaseUrl, origem, idWorkspace)
         {
         }
 
         /// <summary>
         /// Construtor para testes: permite injetar um HttpClient/IAccessTokenProvider fake.
         /// </summary>
-        public PagamentoBoletoClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl, string idWorkspace = null)
-            : base(httpClient)
+        public PagamentoBoletoClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl, Correntista origem, string idWorkspace = null)
+            : base(httpClient, origem)
         {
             if (baseUrl == null) throw new ArgumentNullException(nameof(baseUrl));
 
@@ -70,7 +70,7 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
         /// beneficiário. Rejeições de negócio (boleto vencido, já pago...) chegam como erro do
         /// banco (<see cref="Core.Errors.BancoApiException"/>).
         /// </summary>
-        internal override async Task<Movimento> ConsultarBoletoAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default)
+        internal override async Task<Movimento> ConsultarBoletoAsync(Movimento movimento, CancellationToken cancellationToken = default)
         {
             var item = ExtrairItem(movimento);
 
@@ -78,7 +78,7 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
             if (string.IsNullOrWhiteSpace(codigo))
                 throw new InvalidOperationException("Informe o código de barras (CodigoBarras) ou a linha digitável (NumeroLinhaDigitavel) do boleto.");
 
-            var workspace = ResolverWorkspace(origem);
+            var workspace = ResolverWorkspace();
             var dto = await _gateway.IniciarPagamentoCodigoAsync(_baseUrl, Recurso, workspace.WorkspaceId, codigo.JustNumbers(), movimento.DataPagamento, cancellationToken).ConfigureAwait(false);
 
             return AplicarResposta(movimento, item, dto, iniciacao: true);
@@ -89,7 +89,7 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
         /// <see cref="MovimentoItemPagamentoTituloCodigoBarra.IdentificadorConsulta"/>. A
         /// <paramref name="idempotencyKey"/> não é usada: o Santander deduplica pelo id do pagamento.
         /// </summary>
-        internal override async Task<Movimento> PagarBoletoAsync(Movimento movimento, Correntista origem, string idempotencyKey, CancellationToken cancellationToken = default)
+        internal override async Task<Movimento> PagarBoletoAsync(Movimento movimento, string idempotencyKey, CancellationToken cancellationToken = default)
         {
             var item = ExtrairItem(movimento);
 
@@ -100,22 +100,22 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
             if (movimento.ValorPagamento <= 0)
                 throw new InvalidOperationException("Informe o valor do pagamento (Movimento.ValorPagamento).");
 
-            var workspace = ResolverWorkspace(origem);
-            var dto = await _gateway.EfetivarPagamentoCodigoAsync(_baseUrl, Recurso, workspace, id, movimento.ValorPagamento, origem, cancellationToken).ConfigureAwait(false);
+            var workspace = ResolverWorkspace();
+            var dto = await _gateway.EfetivarPagamentoCodigoAsync(_baseUrl, Recurso, workspace, id, movimento.ValorPagamento, Origem, cancellationToken).ConfigureAwait(false);
 
             return AplicarResposta(movimento, item, dto, iniciacao: false);
         }
 
-        internal override async Task<Movimento> PagarBoletoComConsultaAsync(Movimento movimento, Correntista origem, Guid idLancamento, CancellationToken cancellationToken = default)
+        internal override async Task<Movimento> PagarBoletoComConsultaAsync(Movimento movimento, Guid idLancamento, CancellationToken cancellationToken = default)
         {
-            await ConsultarBoletoAsync(movimento, origem, cancellationToken).ConfigureAwait(false);
+            await ConsultarBoletoAsync(movimento, cancellationToken).ConfigureAwait(false);
             if (movimento.SituacaoBancoBr == BancoBrSituacaoEnum.Rejeitado)
                 return movimento;
 
-            return await PagarBoletoAsync(movimento, origem, idempotencyKey: null, cancellationToken).ConfigureAwait(false);
+            return await PagarBoletoAsync(movimento, idempotencyKey: null, cancellationToken).ConfigureAwait(false);
         }
 
-        internal override async Task<IReadOnlyList<PagamentoBoletoLoteResultadoItem>> PagarLoteBoletosAsync(IEnumerable<(Movimento Movimento, Guid IdLancamento)> itens, Correntista origem, CancellationToken cancellationToken = default)
+        internal override async Task<IReadOnlyList<PagamentoBoletoLoteResultadoItem>> PagarLoteBoletosAsync(IEnumerable<(Movimento Movimento, Guid IdLancamento)> itens, CancellationToken cancellationToken = default)
         {
             if (itens == null) throw new ArgumentNullException(nameof(itens));
 
@@ -125,7 +125,7 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
             {
                 try
                 {
-                    var movimento = await PagarBoletoComConsultaAsync(item.Movimento, origem, item.IdLancamento, cancellationToken).ConfigureAwait(false);
+                    var movimento = await PagarBoletoComConsultaAsync(item.Movimento, item.IdLancamento, cancellationToken).ConfigureAwait(false);
 
                     resultados.Add(PagamentoBoletoLoteResultadoItem.ComSucesso(movimento, item.IdLancamento));
                 }
@@ -142,7 +142,7 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
             return resultados;
         }
 
-        internal override async Task<Movimento> ConsultarComprovantePorIdAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default)
+        internal override async Task<Movimento> ConsultarComprovantePorIdAsync(Movimento movimento, CancellationToken cancellationToken = default)
         {
             var item = ExtrairItem(movimento);
 
@@ -150,13 +150,13 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
             if (string.IsNullOrWhiteSpace(id))
                 throw new InvalidOperationException("Para consultar o pagamento, o movimento precisa ter o id do pagamento em NumeroDocumentoNoBanco.");
 
-            var workspace = ResolverWorkspace(origem);
+            var workspace = ResolverWorkspace();
             var dto = await _gateway.ConsultarPagamentoCodigoAsync(_baseUrl, Recurso, workspace.WorkspaceId, id, cancellationToken).ConfigureAwait(false);
 
             return AplicarResposta(movimento, item, dto, iniciacao: false);
         }
 
-        internal override Task<Movimento> CancelarAgendamentoAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default) =>
+        internal override Task<Movimento> CancelarAgendamentoAsync(Movimento movimento, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException("A API de boletos do Santander não tem cancelamento de agendamento.");
 
         internal override Task<Movimento> ConsultarComprovantePorIdempotencyAsync(string idempotencyKey, CancellationToken cancellationToken = default) =>
@@ -167,15 +167,15 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
         /// <c>Conectar</c>, paginando de 200 em 200. O Santander só filtra por
         /// vencimento, então <paramref name="dataInicial"/>/<paramref name="dataFinal"/> são o
         /// intervalo de vencimento e outros <paramref name="tipoData"/> não são suportados; o
-        /// <paramref name="numeroConta"/> não é usado — a conta vem de <paramref name="origem"/>.
+        /// <paramref name="numeroConta"/> não é usado — a conta vem de <c>Origem</c>.
         /// </summary>
-        internal override async Task<IReadOnlyList<Movimento>> ConsultarBoletosDdaAsync(long numeroConta, DateTime dataInicial, DateTime dataFinal, SituacaoBoletoEnum situacao, TipoDataConsultaEnum tipoData, Correntista origem = null, CancellationToken cancellationToken = default)
+        internal override async Task<IReadOnlyList<Movimento>> ConsultarBoletosDdaAsync(long numeroConta, DateTime dataInicial, DateTime dataFinal, SituacaoBoletoEnum situacao, TipoDataConsultaEnum tipoData, CancellationToken cancellationToken = default)
         {
             if (tipoData != TipoDataConsultaEnum.Vencimento)
                 throw new NotSupportedException("O DDA do Santander só filtra por data de vencimento (TipoDataConsultaEnum.Vencimento).");
 
             var titleSituation = MapSituacaoDda(situacao);
-            var workspace = ResolverWorkspace(origem);
+            var workspace = ResolverWorkspace();
 
             const int limite = 200;
             var movimentos = new List<Movimento>();
@@ -206,8 +206,8 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
         /// A workspace informada em <c>BancoApi.Conectar</c> (obtida por <c>ObterOuCriarWorkspaceAsync</c>)
         /// e a conta de débito da conta pagadora — sem consultar o banco.
         /// </summary>
-        private (string WorkspaceId, ContaDebito Conta) ResolverWorkspace(Correntista origem) =>
-            SantanderHttpGateway.UsarWorkspace(_idWorkspace, origem, "Boletos");
+        private (string WorkspaceId, ContaDebito Conta) ResolverWorkspace() =>
+            SantanderHttpGateway.UsarWorkspace(_idWorkspace, Origem, "Boletos");
 
         #endregion
 

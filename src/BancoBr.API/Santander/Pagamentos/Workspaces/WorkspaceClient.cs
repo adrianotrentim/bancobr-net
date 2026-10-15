@@ -23,21 +23,21 @@ namespace BancoBr.API.Santander.Pagamentos.Workspaces
         private readonly SantanderHttpGateway _gateway;
         private readonly string _baseUrl;
 
-        internal WorkspaceClient(string clientId, string clientSecret, CertificateSource certificateSource, Uri tokenEndpoint = null)
-            : this(clientId, certificateSource, SantanderHttpGateway.BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint))
+        internal WorkspaceClient(string clientId, string clientSecret, CertificateSource certificateSource, Correntista origem, Uri tokenEndpoint = null)
+            : this(clientId, certificateSource, SantanderHttpGateway.BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint), origem)
         {
         }
 
-        internal WorkspaceClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider)
-            : this(SantanderHttpGateway.BuildHttpClient(certificateSource), tokenProvider, clientId, SantanderHttpGateway.PagamentosBaseUrl)
+        internal WorkspaceClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider, Correntista origem)
+            : this(SantanderHttpGateway.BuildHttpClient(certificateSource), tokenProvider, clientId, SantanderHttpGateway.PagamentosBaseUrl, origem)
         {
         }
 
         /// <summary>
         /// Construtor para testes: permite injetar um HttpClient/IAccessTokenProvider fake.
         /// </summary>
-        public WorkspaceClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl)
-            : base(httpClient)
+        public WorkspaceClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl, Correntista origem)
+            : base(httpClient, origem)
         {
             if (baseUrl == null) throw new ArgumentNullException(nameof(baseUrl));
 
@@ -46,7 +46,7 @@ namespace BancoBr.API.Santander.Pagamentos.Workspaces
             _baseUrl = baseUrlText.EndsWith("/") ? baseUrlText : baseUrlText + "/";
         }
 
-        internal override Task<string> ObterOuCriarWorkspaceAsync(Correntista origem, CancellationToken cancellationToken = default) =>
-            _gateway.ObterOuCriarWorkspaceAsync(_baseUrl, origem, cancellationToken);
+        internal override Task<string> ObterOuCriarWorkspaceAsync(CancellationToken cancellationToken = default) =>
+            _gateway.ObterOuCriarWorkspaceAsync(_baseUrl, Origem, cancellationToken);
     }
 }

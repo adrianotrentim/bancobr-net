@@ -35,11 +35,11 @@ namespace BancoBr.Tests.Santander
             ""concessionary"": { ""code"": ""0123"", ""name"": ""Companhia de Energia"" }
         }";
 
-        private static PagamentoBoletoClient CriarBoleto(HttpMessageHandler handler) =>
-            new PagamentoBoletoClient(new HttpClient(handler), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, "ws-1");
+        private static PagamentoBoletoClient CriarBoleto(HttpMessageHandler handler, Correntista? origem = null) =>
+            new PagamentoBoletoClient(new HttpClient(handler), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, origem ?? CriarOrigem(), "ws-1");
 
         private static PagamentoConvenioClient CriarConvenio(HttpMessageHandler handler) =>
-            new PagamentoConvenioClient(new HttpClient(handler), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, "ws-1");
+            new PagamentoConvenioClient(new HttpClient(handler), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, CriarOrigem(), "ws-1");
 
         private static SequencedFakeHttpMessageHandler Sequencia(params (HttpStatusCode, string?)[] operacao) =>
             new SequencedFakeHttpMessageHandler(operacao);
@@ -68,7 +68,7 @@ namespace BancoBr.Tests.Santander
             var handler = Sequencia((HttpStatusCode.Created, BoletoReadyToPay));
             var movimento = CriarMovimentoBoleto();
 
-            var resultado = await CriarBoleto(handler).ConsultarBoletoAsync(movimento, CriarOrigem());
+            var resultado = await CriarBoleto(handler).ConsultarBoletoAsync(movimento);
 
             Assert.Same(movimento, resultado);
             Assert.Equal(1, handler.Requests.Count);
@@ -100,7 +100,7 @@ namespace BancoBr.Tests.Santander
             var movimento = CriarMovimentoBoleto(codigoBarras: null, linhaDigitavel: "03399.12345 67890.123456 78901.234567 8 90123456789");
             movimento.DataPagamento = DateTime.Today.AddDays(3);
 
-            await CriarBoleto(handler).ConsultarBoletoAsync(movimento, CriarOrigem());
+            await CriarBoleto(handler).ConsultarBoletoAsync(movimento);
 
             var body = handler.Bodies[0]!;
             Assert.Contains(@"""code"":""03399123456789012345678901234567890123456789""", body);
@@ -114,7 +114,7 @@ namespace BancoBr.Tests.Santander
             var movimento = CriarMovimentoBoleto();
             movimento.DataPagamento = DateTime.Today;
 
-            await CriarBoleto(handler).ConsultarBoletoAsync(movimento, CriarOrigem());
+            await CriarBoleto(handler).ConsultarBoletoAsync(movimento);
 
             Assert.DoesNotContain("paymentDate", handler.Bodies[0]!);
         }
@@ -125,7 +125,7 @@ namespace BancoBr.Tests.Santander
             var handler = Sequencia();
             var movimento = CriarMovimentoBoleto(codigoBarras: null);
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() => CriarBoleto(handler).ConsultarBoletoAsync(movimento, CriarOrigem()));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => CriarBoleto(handler).ConsultarBoletoAsync(movimento));
         }
 
         [Fact]
@@ -136,7 +136,7 @@ namespace BancoBr.Tests.Santander
             movimento.ValorPagamento = 147.50m;
             ((MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem).IdentificadorConsulta = PaymentId;
 
-            var resultado = await CriarBoleto(handler).PagarBoletoAsync(movimento, CriarOrigem(), idempotencyKey: "ignorada");
+            var resultado = await CriarBoleto(handler).PagarBoletoAsync(movimento, idempotencyKey: "ignorada");
 
             var patch = handler.Requests[0];
             Assert.Equal("PATCH", patch.Method.Method);
@@ -159,7 +159,7 @@ namespace BancoBr.Tests.Santander
             var movimento = CriarMovimentoBoleto();
             movimento.ValorPagamento = 10m;
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() => CriarBoleto(Sequencia()).PagarBoletoAsync(movimento, CriarOrigem(), idempotencyKey: null));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => CriarBoleto(Sequencia()).PagarBoletoAsync(movimento, idempotencyKey: null));
         }
 
         [Fact]
@@ -171,7 +171,7 @@ namespace BancoBr.Tests.Santander
             var origem = CriarOrigem();
             origem.Nome = null;
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() => CriarBoleto(Sequencia()).PagarBoletoAsync(movimento, origem, idempotencyKey: null));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => CriarBoleto(Sequencia(), origem).PagarBoletoAsync(movimento, idempotencyKey: null));
         }
 
         [Fact]
@@ -180,7 +180,7 @@ namespace BancoBr.Tests.Santander
             var handler = Sequencia((HttpStatusCode.Created, BoletoReadyToPay), (HttpStatusCode.OK, BoletoPago));
             var movimento = CriarMovimentoBoleto();
 
-            var resultado = await CriarBoleto(handler).PagarBoletoComConsultaAsync(movimento, CriarOrigem(), Guid.NewGuid());
+            var resultado = await CriarBoleto(handler).PagarBoletoComConsultaAsync(movimento, Guid.NewGuid());
 
             Assert.Equal(2, handler.Requests.Count);
             Assert.Equal(HttpMethod.Post, handler.Requests[0].Method);
@@ -196,7 +196,7 @@ namespace BancoBr.Tests.Santander
             var handler = Sequencia((HttpStatusCode.Created, @"{ ""id"": """ + PaymentId + @""", ""status"": ""REJECTED"", ""rejectReason"": ""Boleto vencido"" }"));
             var movimento = CriarMovimentoBoleto();
 
-            var resultado = await CriarBoleto(handler).PagarBoletoComConsultaAsync(movimento, CriarOrigem(), Guid.NewGuid());
+            var resultado = await CriarBoleto(handler).PagarBoletoComConsultaAsync(movimento, Guid.NewGuid());
 
             Assert.Equal(1, handler.Requests.Count);
             Assert.Equal(BancoBrSituacaoEnum.Rejeitado, resultado.SituacaoBancoBr);
@@ -210,7 +210,7 @@ namespace BancoBr.Tests.Santander
             var movimento = CriarMovimentoBoleto();
             movimento.NumeroDocumentoNoBanco = PaymentId;
 
-            var resultado = await CriarBoleto(handler).ConsultarComprovantePorIdAsync(movimento, CriarOrigem());
+            var resultado = await CriarBoleto(handler).ConsultarComprovantePorIdAsync(movimento);
 
             var get = handler.Requests[0];
             Assert.Equal(HttpMethod.Get, get.Method);
@@ -229,7 +229,7 @@ namespace BancoBr.Tests.Santander
             var movimento = CriarMovimentoBoleto();
             movimento.NumeroDocumentoNoBanco = PaymentId;
 
-            var resultado = await CriarBoleto(handler).ConsultarComprovantePorIdAsync(movimento, CriarOrigem());
+            var resultado = await CriarBoleto(handler).ConsultarComprovantePorIdAsync(movimento);
 
             Assert.Equal(esperado, resultado.SituacaoBancoBr);
         }
@@ -239,7 +239,7 @@ namespace BancoBr.Tests.Santander
         {
             var handler = Sequencia((HttpStatusCode.UnprocessableEntity, @"{ ""_errorCode"": ""422"", ""_message"": ""Boleto invalido"", ""_details"": ""Boleto ja pago"" }"));
 
-            var ex = await Assert.ThrowsAsync<BancoApiException>(() => CriarBoleto(handler).ConsultarBoletoAsync(CriarMovimentoBoleto(), CriarOrigem()));
+            var ex = await Assert.ThrowsAsync<BancoApiException>(() => CriarBoleto(handler).ConsultarBoletoAsync(CriarMovimentoBoleto()));
 
             Assert.Equal(422, ex.HttpStatusCode);
             Assert.Contains(ex.Mensagens, m => m.Mensagem == "Boleto ja pago");
@@ -248,9 +248,9 @@ namespace BancoBr.Tests.Santander
         [Fact]
         public async Task Boleto_SemIdWorkspace_Lanca()
         {
-            var client = new PagamentoBoletoClient(new HttpClient(Sequencia()), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl);
+            var client = new PagamentoBoletoClient(new HttpClient(Sequencia()), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, CriarOrigem());
 
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => client.ConsultarBoletoAsync(CriarMovimentoBoleto(), CriarOrigem()));
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => client.ConsultarBoletoAsync(CriarMovimentoBoleto()));
             Assert.Contains("idWorkspace", ex.Message);
         }
 
@@ -259,7 +259,7 @@ namespace BancoBr.Tests.Santander
         {
             var client = CriarBoleto(Sequencia());
 
-            await Assert.ThrowsAsync<NotSupportedException>(() => client.CancelarAgendamentoAsync(CriarMovimentoBoleto(), CriarOrigem()));
+            await Assert.ThrowsAsync<NotSupportedException>(() => client.CancelarAgendamentoAsync(CriarMovimentoBoleto()));
             await Assert.ThrowsAsync<NotSupportedException>(() => client.ConsultarComprovantePorIdempotencyAsync("chave"));
         }
 
@@ -278,7 +278,7 @@ namespace BancoBr.Tests.Santander
 
             var resultado = await CriarBoleto(handler).ConsultarBoletosDdaAsync(
                 56789, new DateTime(2026, 10, 1), new DateTime(2026, 10, 31),
-                BancoBr.API.Base.Models.SituacaoBoletoEnum.EmAberto, BancoBr.API.Base.Models.TipoDataConsultaEnum.Vencimento, CriarOrigem());
+                BancoBr.API.Base.Models.SituacaoBoletoEnum.EmAberto, BancoBr.API.Base.Models.TipoDataConsultaEnum.Vencimento);
 
             Assert.Equal(1, handler.Requests.Count);
             var get = handler.Requests[0];
@@ -308,7 +308,7 @@ namespace BancoBr.Tests.Santander
 
             var resultado = await CriarBoleto(handler).ConsultarBoletosDdaAsync(
                 56789, new DateTime(2026, 10, 1), new DateTime(2026, 10, 31),
-                BancoBr.API.Base.Models.SituacaoBoletoEnum.Liquidado, BancoBr.API.Base.Models.TipoDataConsultaEnum.Vencimento, CriarOrigem());
+                BancoBr.API.Base.Models.SituacaoBoletoEnum.Liquidado, BancoBr.API.Base.Models.TipoDataConsultaEnum.Vencimento);
 
             Assert.Equal(203, resultado.Count);
             Assert.Equal(2, handler.Requests.Count);
@@ -319,15 +319,15 @@ namespace BancoBr.Tests.Santander
         [Fact]
         public async Task Boleto_ConsultarBoletosDdaAsync_TipoDataDiferenteDeVencimento_Lanca()
         {
-            await Assert.ThrowsAsync<NotSupportedException>(() => CriarBoleto(Sequencia()).ConsultarBoletosDdaAsync(
+            await Assert.ThrowsAsync<NotSupportedException>(() => new PagamentoBoletoClient(new HttpClient(Sequencia()), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, null!, "ws-1").ConsultarBoletosDdaAsync(
                 56789, DateTime.Today, DateTime.Today,
-                BancoBr.API.Base.Models.SituacaoBoletoEnum.EmAberto, BancoBr.API.Base.Models.TipoDataConsultaEnum.Emissao, CriarOrigem()));
+                BancoBr.API.Base.Models.SituacaoBoletoEnum.EmAberto, BancoBr.API.Base.Models.TipoDataConsultaEnum.Emissao));
         }
 
         [Fact]
         public async Task Boleto_ConsultarBoletosDdaAsync_SemOrigem_Lanca()
         {
-            await Assert.ThrowsAsync<ArgumentNullException>(() => CriarBoleto(Sequencia()).ConsultarBoletosDdaAsync(
+            await Assert.ThrowsAsync<ArgumentNullException>(() => new PagamentoBoletoClient(new HttpClient(Sequencia()), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, null!, "ws-1").ConsultarBoletosDdaAsync(
                 56789, DateTime.Today, DateTime.Today,
                 BancoBr.API.Base.Models.SituacaoBoletoEnum.EmAberto, BancoBr.API.Base.Models.TipoDataConsultaEnum.Vencimento));
         }
@@ -342,7 +342,7 @@ namespace BancoBr.Tests.Santander
             var handler = Sequencia((HttpStatusCode.Created, ConvenioReadyToPay));
             var movimento = CriarMovimentoConvenio();
 
-            var resultado = await CriarConvenio(handler).ConsultarCodigoBarrasAsync(movimento, CriarOrigem());
+            var resultado = await CriarConvenio(handler).ConsultarCodigoBarrasAsync(movimento);
 
             var post = handler.Requests[0];
             Assert.Equal(HttpMethod.Post, post.Method);
@@ -365,7 +365,7 @@ namespace BancoBr.Tests.Santander
             movimento.NumeroDocumentoNoBanco = PaymentId;
             movimento.ValorPagamento = 89.90m;
 
-            var resultado = await CriarConvenio(handler).PagarConvenioAsync(movimento, CriarOrigem());
+            var resultado = await CriarConvenio(handler).PagarConvenioAsync(movimento);
 
             var patch = handler.Requests[0];
             Assert.Equal("PATCH", patch.Method.Method);
@@ -381,7 +381,7 @@ namespace BancoBr.Tests.Santander
             var movimento = CriarMovimentoConvenio();
             movimento.ValorPagamento = 10m;
 
-            await Assert.ThrowsAsync<InvalidOperationException>(() => CriarConvenio(Sequencia()).PagarConvenioAsync(movimento, CriarOrigem()));
+            await Assert.ThrowsAsync<InvalidOperationException>(() => CriarConvenio(Sequencia()).PagarConvenioAsync(movimento));
         }
 
         [Fact]
@@ -391,7 +391,7 @@ namespace BancoBr.Tests.Santander
             var movimento = CriarMovimentoConvenio();
             movimento.NumeroDocumentoNoBanco = PaymentId;
 
-            var resultado = await CriarConvenio(handler).ConsultarComprovantePorNsuAsync(movimento, CriarOrigem());
+            var resultado = await CriarConvenio(handler).ConsultarComprovantePorNsuAsync(movimento);
 
             Assert.Equal(HttpMethod.Get, handler.Requests[0].Method);
             Assert.Equal($"{BaseUrl}/workspaces/ws-1/barcode_payments/{PaymentId}", handler.Requests[0].RequestUri!.ToString());
@@ -401,9 +401,9 @@ namespace BancoBr.Tests.Santander
         [Fact]
         public async Task Convenio_SemIdWorkspace_Lanca()
         {
-            var client = new PagamentoConvenioClient(new HttpClient(Sequencia()), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl);
+            var client = new PagamentoConvenioClient(new HttpClient(Sequencia()), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, CriarOrigem());
 
-            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => client.ConsultarCodigoBarrasAsync(CriarMovimentoConvenio(), CriarOrigem()));
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => client.ConsultarCodigoBarrasAsync(CriarMovimentoConvenio()));
             Assert.Contains("idWorkspace", ex.Message);
         }
 

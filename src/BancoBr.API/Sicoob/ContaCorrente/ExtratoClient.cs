@@ -37,13 +37,13 @@ namespace BancoBr.API.Sicoob.ContaCorrente
         private readonly string _baseUrl;
         private static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings();
 
-        internal ExtratoClient(string clientId, string clientSecret, CertificateSource certificateSource, Uri tokenEndpoint = null)
-            : this(clientId, certificateSource, BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint ?? DefaultTokenEndpoint))
+        internal ExtratoClient(string clientId, string clientSecret, CertificateSource certificateSource, Correntista origem, Uri tokenEndpoint = null)
+            : this(clientId, certificateSource, BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint ?? DefaultTokenEndpoint), origem)
         {
         }
 
-        internal ExtratoClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider)
-            : this(BuildHttpClient(certificateSource), tokenProvider, clientId, BaseUrl)
+        internal ExtratoClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider, Correntista origem)
+            : this(BuildHttpClient(certificateSource), tokenProvider, clientId, BaseUrl, origem)
         {
         }
 
@@ -51,8 +51,8 @@ namespace BancoBr.API.Sicoob.ContaCorrente
         /// Construtor para testes: permite injetar um HttpClient/IAccessTokenProvider fake,
         /// sem certificado real nem chamadas HTTP de fato.
         /// </summary>
-        public ExtratoClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl)
-            : base(httpClient)
+        public ExtratoClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl, Correntista origem)
+            : base(httpClient, origem)
         {
             if (baseUrl == null) throw new ArgumentNullException(nameof(baseUrl));
 
@@ -100,7 +100,7 @@ namespace BancoBr.API.Sicoob.ContaCorrente
 
         #region ::. Operações .::
 
-        internal override async Task<IReadOnlyList<Movimento>> ConsultarExtratoAsync(long numeroContaCorrente, int mes, int ano, int? diaInicial, int? diaFinal, bool agruparCnab, CancellationToken cancellationToken = default, Correntista origem = null)
+        internal override async Task<IReadOnlyList<Movimento>> ConsultarExtratoAsync(long numeroContaCorrente, int mes, int ano, int? diaInicial, int? diaFinal, bool agruparCnab, CancellationToken cancellationToken = default)
         {
             var url = $"{_baseUrl}extrato/{mes}/{ano}?numeroContaCorrente={numeroContaCorrente}&agruparCNAB={(agruparCnab ? "true" : "false")}";
 

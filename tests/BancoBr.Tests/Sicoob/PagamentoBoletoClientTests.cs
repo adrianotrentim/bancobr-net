@@ -14,16 +14,16 @@ namespace BancoBr.Tests.Sicoob
 
         private const string CodigoBarras = "00000000000000000000000000000000000000000000";
 
-        private static PagamentoBoletoClient CriarClient(FakeHttpMessageHandler handler)
+        private static PagamentoBoletoClient CriarClient(FakeHttpMessageHandler handler, Correntista? origem = null)
         {
             var httpClient = new HttpClient(handler);
-            return new PagamentoBoletoClient(httpClient, new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl);
+            return new PagamentoBoletoClient(httpClient, new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, origem ?? CriarOrigem());
         }
 
-        private static PagamentoBoletoClient CriarClient(SequencedFakeHttpMessageHandler handler)
+        private static PagamentoBoletoClient CriarClient(SequencedFakeHttpMessageHandler handler, Correntista? origem = null)
         {
             var httpClient = new HttpClient(handler);
-            return new PagamentoBoletoClient(httpClient, new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl);
+            return new PagamentoBoletoClient(httpClient, new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl, origem ?? CriarOrigem());
         }
 
         /// <summary>Conta pagadora usada nos testes (equivale ao numeroConta/numeroAgencia dos antigos parâmetros soltos).</summary>
@@ -71,7 +71,7 @@ namespace BancoBr.Tests.Sicoob
             var client = CriarClient(handler);
             var movimento = CriarMovimento();
 
-            var resultado = await client.ConsultarBoletoAsync(movimento, CriarOrigem());
+            var resultado = await client.ConsultarBoletoAsync(movimento);
 
             Assert.Same(movimento, resultado);
             Assert.Equal("hash-123", Item(resultado).IdentificadorConsulta);
@@ -87,7 +87,7 @@ namespace BancoBr.Tests.Sicoob
             var client = CriarClient(handler);
             var movimento = CriarMovimento();
 
-            var resultado = await client.ConsultarBoletoAsync(movimento, CriarOrigem());
+            var resultado = await client.ConsultarBoletoAsync(movimento);
 
             Assert.Equal(BancoBrSituacaoEnum.Cancelado, resultado.SituacaoBancoBr);
             Assert.Equal("Boleto não encontrado.", resultado.DetalheRejeicaoBancoBr);
@@ -124,7 +124,7 @@ namespace BancoBr.Tests.Sicoob
             Item(movimento).ValorCodigoBarra = 100.36m;
             Item(movimento).AceitaValorDivergente = true;
 
-            var resultado = await client.PagarBoletoAsync(movimento, CriarOrigem(), IdempotencyKey.New(1234, 1234569, Guid.NewGuid()));
+            var resultado = await client.PagarBoletoAsync(movimento, IdempotencyKey.New(1234, 1234569, Guid.NewGuid()));
 
             Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
             Assert.Equal("1983450", resultado.NumeroDocumentoNoBanco);
@@ -144,7 +144,7 @@ namespace BancoBr.Tests.Sicoob
             var client = CriarClient(handler);
             var movimento = CriarMovimento();
 
-            var resultado = await client.PagarBoletoAsync(movimento, CriarOrigem(), IdempotencyKey.New(1234, 1234569, Guid.NewGuid()));
+            var resultado = await client.PagarBoletoAsync(movimento, IdempotencyKey.New(1234, 1234569, Guid.NewGuid()));
 
             Assert.Equal(BancoBrSituacaoEnum.Agendado, resultado.SituacaoBancoBr);
             Assert.Contains("assinatura", resultado.DetalheRejeicaoBancoBr);
@@ -158,7 +158,7 @@ namespace BancoBr.Tests.Sicoob
             var client = CriarClient(handler);
             var movimento = CriarMovimento();
 
-            var resultado = await client.PagarBoletoAsync(movimento, CriarOrigem(), IdempotencyKey.New(1234, 1234569, Guid.NewGuid()));
+            var resultado = await client.PagarBoletoAsync(movimento, IdempotencyKey.New(1234, 1234569, Guid.NewGuid()));
 
             Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
             Assert.Null(resultado.NumeroDocumentoNoBanco);
@@ -175,7 +175,7 @@ namespace BancoBr.Tests.Sicoob
             var client = CriarClient(handler);
 
             var ex = await Assert.ThrowsAsync<BancoApiException>(() =>
-                client.PagarBoletoAsync(CriarMovimento(), CriarOrigem(), IdempotencyKey.New(1234, 1234569, Guid.NewGuid())));
+                client.PagarBoletoAsync(CriarMovimento(), IdempotencyKey.New(1234, 1234569, Guid.NewGuid())));
 
             Assert.Equal(400, ex.HttpStatusCode);
             Assert.Equal("10013", ex.Mensagens.Single().Codigo);
@@ -196,7 +196,7 @@ namespace BancoBr.Tests.Sicoob
             var movimento = CriarMovimento();
             var idempotencyKey = IdempotencyKey.New(1234, 1234569, Guid.NewGuid());
 
-            var resultado = await client.PagarBoletoAsync(movimento, CriarOrigem(), idempotencyKey);
+            var resultado = await client.PagarBoletoAsync(movimento, idempotencyKey);
 
             Assert.Equal(2, handler.Requests.Count);
             Assert.Contains(idempotencyKey, handler.Requests[1].RequestUri!.ToString());
@@ -212,7 +212,7 @@ namespace BancoBr.Tests.Sicoob
             var movimento = CriarMovimento();
             movimento.NumeroDocumentoNoBanco = "1983450";
 
-            var resultado = await client.ConsultarComprovantePorIdAsync(movimento, CriarOrigem());
+            var resultado = await client.ConsultarComprovantePorIdAsync(movimento);
 
             Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
             Assert.Equal("1983450", resultado.NumeroDocumentoNoBanco);
@@ -233,7 +233,7 @@ namespace BancoBr.Tests.Sicoob
             var movimento = CriarMovimento();
             movimento.NumeroDocumentoNoBanco = "1983450";
 
-            var resultado = await client.ConsultarComprovantePorIdAsync(movimento, CriarOrigem());
+            var resultado = await client.ConsultarComprovantePorIdAsync(movimento);
 
             Assert.Equal(BancoBrSituacaoEnum.NaoIntegrado, resultado.SituacaoBancoBr);
         }
@@ -253,7 +253,7 @@ namespace BancoBr.Tests.Sicoob
             var movimento = CriarMovimento();
             movimento.NumeroDocumentoNoBanco = "1983450";
 
-            var resultado = await client.ConsultarComprovantePorIdAsync(movimento, CriarOrigem());
+            var resultado = await client.ConsultarComprovantePorIdAsync(movimento);
 
             Assert.Equal(BancoBrSituacaoEnum.Rejeitado, resultado.SituacaoBancoBr);
         }
@@ -280,7 +280,7 @@ namespace BancoBr.Tests.Sicoob
             var movimento = CriarMovimento();
             movimento.NumeroDocumentoNoBanco = "1983450";
 
-            var resultado = await client.CancelarAgendamentoAsync(movimento, CriarOrigem());
+            var resultado = await client.CancelarAgendamentoAsync(movimento);
 
             Assert.Equal(HttpMethod.Delete, handler.LastRequest!.Method);
             Assert.Equal(BancoBrSituacaoEnum.Cancelado, resultado.SituacaoBancoBr);
@@ -391,10 +391,10 @@ namespace BancoBr.Tests.Sicoob
             var handler = new SequencedFakeHttpMessageHandler(
                 (HttpStatusCode.OK, ConsultaJsonNaoBloqueado),
                 (HttpStatusCode.OK, ComprovanteJson));
-            var client = CriarClient(handler);
+            var client = CriarClient(handler, CriarOrigem(4342, 1234569));
             var movimento = CriarMovimento();
 
-            var resultado = await client.PagarBoletoComConsultaAsync(movimento, CriarOrigem(4342, 1234569), Guid.NewGuid());
+            var resultado = await client.PagarBoletoComConsultaAsync(movimento, Guid.NewGuid());
 
             Assert.Equal(2, handler.Requests.Count);
             Assert.Equal(HttpMethod.Get, handler.Requests[0].Method);
@@ -409,10 +409,10 @@ namespace BancoBr.Tests.Sicoob
         public async Task PagarBoletoComConsultaAsync_BoletoNaoEncontrado_NaoChamaPagamento()
         {
             var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.NoContent, null));
-            var client = CriarClient(handler);
+            var client = CriarClient(handler, CriarOrigem(4342, 1234569));
             var movimento = CriarMovimento();
 
-            var resultado = await client.PagarBoletoComConsultaAsync(movimento, CriarOrigem(4342, 1234569), Guid.NewGuid());
+            var resultado = await client.PagarBoletoComConsultaAsync(movimento, Guid.NewGuid());
 
             Assert.Single(handler.Requests);
             Assert.Equal(BancoBrSituacaoEnum.Cancelado, resultado.SituacaoBancoBr);
@@ -424,10 +424,10 @@ namespace BancoBr.Tests.Sicoob
         public async Task PagarBoletoComConsultaAsync_PagamentoBloqueado_NaoChamaPagamento()
         {
             var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.OK, ConsultaJsonBloqueado));
-            var client = CriarClient(handler);
+            var client = CriarClient(handler, CriarOrigem(4342, 1234569));
             var movimento = CriarMovimento();
 
-            var resultado = await client.PagarBoletoComConsultaAsync(movimento, CriarOrigem(4342, 1234569), Guid.NewGuid());
+            var resultado = await client.PagarBoletoComConsultaAsync(movimento, Guid.NewGuid());
 
             Assert.Single(handler.Requests);
             Assert.Equal(BancoBrSituacaoEnum.Cancelado, resultado.SituacaoBancoBr);
@@ -443,7 +443,7 @@ namespace BancoBr.Tests.Sicoob
                 (HttpStatusCode.OK, ConsultaJsonNaoBloqueado));
             var client = CriarClient(handler);
 
-            var resultado = await client.ConsultarBoletoAsync(CriarMovimento(), CriarOrigem());
+            var resultado = await client.ConsultarBoletoAsync(CriarMovimento());
 
             Assert.Equal(2, handler.Requests.Count);
             Assert.Equal("hash-123", Item(resultado).IdentificadorConsulta);
@@ -463,7 +463,7 @@ namespace BancoBr.Tests.Sicoob
                 (HttpStatusCode.OK, ConsultaJsonBloqueado),     // item 2: consulta (bloqueado, sem 2ª chamada)
                 (HttpStatusCode.BadRequest, erroJson));         // item 3: consulta falha
 
-            var client = CriarClient(handler);
+            var client = CriarClient(handler, CriarOrigem(4342, 1234569));
             var itens = new[]
             {
                 (Movimento: CriarMovimento("boleto-1"), IdLancamento: Guid.NewGuid()),
@@ -471,7 +471,7 @@ namespace BancoBr.Tests.Sicoob
                 (Movimento: CriarMovimento("boleto-3"), IdLancamento: Guid.NewGuid()),
             };
 
-            var resultados = await client.PagarLoteBoletosAsync(itens, CriarOrigem(4342, 1234569));
+            var resultados = await client.PagarLoteBoletosAsync(itens);
 
             Assert.Equal(3, resultados.Count);
 
