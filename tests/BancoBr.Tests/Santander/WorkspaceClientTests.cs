@@ -21,7 +21,7 @@ namespace BancoBr.Tests.Santander
         private static WorkspaceClient CriarClient(HttpMessageHandler handler) =>
             new WorkspaceClient(new HttpClient(handler), new FakeOAuthTokenProvider(), "fake-client-id", BaseUrl);
 
-        private static Correntista CriarOrigem() => new Correntista { NumeroAgencia = 1234, NumeroConta = 5678, DVConta = "9" };
+        private static Correntista CriarOrigem(BancoEnum banco = BancoEnum.Santander) => new Correntista { Banco = (int)banco, NumeroAgencia = 1234, NumeroConta = 5678, DVConta = "9" };
 
         private static string Workspace(string id, string status = "ACTIVE", string agencia = "1234", string conta = "000000056789", string produtos = "", string extras = "") => $@"{{
             ""workspace_id"": ""{id}"", ""status"": ""{status}"", ""type"": ""PAYMENTS"", ""description"": ""Minha workspace"",
@@ -184,16 +184,16 @@ namespace BancoBr.Tests.Santander
         {
             var cert = CriarCertificateSourceFake();
 
-            Assert.NotNull(BancoApi.Conectar(BancoEnum.Santander, new ConfiguracaoAPI { ClientId = "fake-client-id", CertificadoDigital = cert }, new FakeOAuthTokenProvider()));
-            Assert.NotNull(BancoApi.Conectar(BancoEnum.Santander, new ConfiguracaoAPI { ClientId = "fake-client-id", CertificadoDigital = cert, IdWorkspace = "ws-1" }, new FakeOAuthTokenProvider()));
+            Assert.NotNull(BancoApi.Conectar(new ConfiguracaoAPI { ClientId = "fake-client-id", CertificadoDigital = cert, Correntista = CriarOrigem(BancoEnum.Santander) }, new FakeOAuthTokenProvider()));
+            Assert.NotNull(BancoApi.Conectar(new ConfiguracaoAPI { ClientId = "fake-client-id", CertificadoDigital = cert, Correntista = CriarOrigem(BancoEnum.Santander), IdWorkspace = "ws-1" }, new FakeOAuthTokenProvider()));
         }
 
         [Fact]
         public async Task ObterOuCriarWorkspaceAsync_Sicoob_NaoSuportado()
         {
-            var banco = BancoApi.Conectar(BancoEnum.Sicoob, new ConfiguracaoAPI { ClientId = "fake-client-id", CertificadoDigital = CriarCertificateSourceFake() }, new FakeOAuthTokenProvider());
+            var banco = BancoApi.Conectar(new ConfiguracaoAPI { ClientId = "fake-client-id", CertificadoDigital = CriarCertificateSourceFake(), Correntista = CriarOrigem(BancoEnum.Sicoob) }, new FakeOAuthTokenProvider());
 
-            await Assert.ThrowsAsync<NotSupportedException>(() => banco.ObterOuCriarWorkspaceAsync(CriarOrigem()));
+            await Assert.ThrowsAsync<NotSupportedException>(() => banco.ObterOuCriarWorkspaceAsync());
         }
 
         #endregion
