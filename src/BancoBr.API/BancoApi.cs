@@ -24,7 +24,7 @@ using SantanderWorkspaceClient = BancoBr.API.Santander.Pagamentos.Workspaces.Wor
 namespace BancoBr.API
 {
     /// <summary>
-    /// Ponto de entrada único da BancoBr.API: <see cref="Conectar(BancoEnum, string, string, CertificateSource, Uri)"/>
+    /// Ponto de entrada único da BancoBr.API: <see cref="Conectar(BancoEnum, ConfiguracaoAPI, Uri)"/>
     /// devolve, numa chamada por banco/credenciais, um cliente já pronto para todas as operações
     /// (Pix, Boleto, Convênio, TED, Conta Corrente) — sem o chamador precisar escolher, por tipo,
     /// qual cliente instanciar. Os clientes internos (Pix, Boleto, Convênio, TED, Conta Corrente)
@@ -46,18 +46,25 @@ namespace BancoBr.API
         /// Fluxo padrão: autenticação OAuth2 client_credentials, renovada automaticamente por
         /// cada cliente interno (cada API do banco tem seus próprios scopes).
         /// </summary>
+        /// <param name="configuracao">
+        /// Credenciais e certificado digital (mTLS) da API. <see cref="ConfiguracaoAPI.IdWorkspace"/> só se aplica ao
+        /// Santander: id da workspace do Hub de Pagamentos usada em Pix, Boleto, Convênio, TED e
+        /// DDA. Obtenha-o uma vez com <see cref="ObterOuCriarWorkspaceAsync"/> e guarde-o — assim
+        /// as próximas conexões não consultam as workspaces do banco. Pode ser omitido na própria
+        /// conexão usada para obter o id.
+        /// </param>
         /// <param name="tokenEndpointOverride">
         /// Só necessário em ambientes fora do padrão (ex.: sandbox com realm próprio); cada banco
         /// já tem um endpoint OAuth2 padrão embutido.
         /// </param>
-        /// <param name="idWorkspace">
-        /// Só se aplica ao Santander: id da workspace do Hub de Pagamentos usada em Pix, Boleto,
-        /// Convênio, TED e DDA. Obtenha-o uma vez com <see cref="ObterOuCriarWorkspaceAsync"/> e
-        /// guarde-o — assim as próximas conexões não consultam as workspaces do banco. Pode ser
-        /// omitido na própria conexão usada para obter o id.
-        /// </param>
-        public static BancoApi Conectar(BancoEnum banco, string clientId, string clientSecret, CertificateSource certificateSource, Uri tokenEndpointOverride = null, string idWorkspace = null)
+        public static BancoApi Conectar(BancoEnum banco, ConfiguracaoAPI configuracao, Uri tokenEndpointOverride = null)
         {
+            if (configuracao == null) throw new ArgumentNullException(nameof(configuracao));
+            var clientId = configuracao.ClientId;
+            var certificateSource = configuracao.CertificadoDigital;
+            var clientSecret = configuracao.ClientSecret;
+            var idWorkspace = configuracao.IdWorkspace;
+
             switch (banco)
             {
                 case BancoEnum.Sicoob:
@@ -85,10 +92,16 @@ namespace BancoBr.API
         /// <summary>
         /// Fluxo com token já emitido (ex.: portal de sandbox), pulando o fluxo OAuth2
         /// client_credentials — o mesmo token é reaproveitado pelos clientes internos.
-        /// <paramref name="idWorkspace"/> funciona como na outra sobrecarga (só Santander).
+        /// Só <see cref="ConfiguracaoAPI.ClientId"/>, <see cref="ConfiguracaoAPI.CertificadoDigital"/>
+        /// e <see cref="ConfiguracaoAPI.IdWorkspace"/> (este só no Santander) são usados; <see cref="ConfiguracaoAPI.ClientSecret"/> é ignorado.
         /// </summary>
-        public static BancoApi Conectar(BancoEnum banco, string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider, string idWorkspace = null)
+        public static BancoApi Conectar(BancoEnum banco, ConfiguracaoAPI configuracao, IAccessTokenProvider tokenProvider)
         {
+            if (configuracao == null) throw new ArgumentNullException(nameof(configuracao));
+            var clientId = configuracao.ClientId;
+            var certificateSource = configuracao.CertificadoDigital;
+            var idWorkspace = configuracao.IdWorkspace;
+
             switch (banco)
             {
                 case BancoEnum.Sicoob:
@@ -127,7 +140,7 @@ namespace BancoBr.API
         /// Só Santander. Consulta as workspaces do Hub de Pagamentos e devolve o id da workspace
         /// ativa que contém a conta pagadora (<paramref name="origem"/>); se não existir, cria
         /// uma, e se existir com algum produto (Pix, boleto, DDA, convênio, TED) desligado,
-        /// liga. Chame uma vez, guarde o id e informe-o em <see cref="Conectar(BancoEnum, string, string, CertificateSource, Uri, string)"/>
+        /// liga. Chame uma vez, guarde o id e informe-o em <see cref="Conectar(BancoEnum, ConfiguracaoAPI, Uri)"/>
         /// nas próximas conexões — as operações de pagamento, efetivação e consulta usam esse id
         /// sem consultar o banco.
         /// </summary>

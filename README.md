@@ -200,24 +200,25 @@ dotnet add package BancoBr.API
 
 ```csharp
 using BancoBr.API;
+using BancoBr.API.Base.Models;
 using BancoBr.API.Core.Http;
 using BancoBr.Common.Enums;
 
-var certificateSource = CertificateSource.FromPfxFile("caminho/para/certificado.pfx", "senhaDoCertificado");
+var certificado = CertificateSource.FromPfxFile("caminho/para/certificado.pfx", "senhaDoCertificado");
 
 // Fluxo padrão: OAuth2 client_credentials, renovado automaticamente por baixo.
-var banco = BancoApi.Conectar(BancoEnum.Sicoob, clientId: "seu-client-id", clientSecret: "seu-client-secret", certificateSource);
+var banco = BancoApi.Conectar(BancoEnum.Sicoob, new ConfiguracaoAPI { ClientId = "seu-client-id", ClientSecret = "seu-client-secret", CertificadoDigital = certificado });
 
 // Alternativa: token já emitido (ex.: portal de sandbox do Sicoob), pulando o fluxo OAuth2.
-// var banco = BancoApi.Conectar(BancoEnum.Sicoob, clientId: "seu-client-id", certificateSource, new StaticAccessTokenProvider("token-bearer"));
+// var banco = BancoApi.Conectar(BancoEnum.Sicoob, new ConfiguracaoAPI { ClientId = "seu-client-id", CertificadoDigital = certificado }, new StaticAccessTokenProvider("token-bearer"));
 
 // Santander (Pix, pagamento de boletos e convênios, TED, DDA): mesmo fluxo, com certificado mTLS + OAuth2. As chamadas do Hub de Pagamentos
 // acontecem dentro de uma "workspace". Ela é obtida uma única vez, num endpoint separado, que acha a workspace ativa que contém a conta
-// pagadora (ou cria uma) e liga nela Pix, boleto, DDA, convênio e TED. Guarde o id e informe-o em Conectar (idWorkspace, opcional): as
+// pagadora (ou cria uma) e liga nela Pix, boleto, DDA, convênio e TED. Guarde o id e informe-o em Conectar (ConfiguracaoAPI.IdWorkspace, opcional): as
 // operações de pagamento, efetivação e consulta o usam direto, sem consultar as workspaces do banco a cada instância da API.
-// var banco = BancoApi.Conectar(BancoEnum.Santander, clientId: "seu-client-id", clientSecret: "seu-client-secret", certificateSource);
+// var banco = BancoApi.Conectar(BancoEnum.Santander, new ConfiguracaoAPI { ClientId = "seu-client-id", ClientSecret = "seu-client-secret", CertificadoDigital = certificado });
 // var idWorkspace = await banco.ObterOuCriarWorkspaceAsync(origem); // guarde este id
-// var bancoComWorkspace = BancoApi.Conectar(BancoEnum.Santander, "seu-client-id", "seu-client-secret", certificateSource, idWorkspace: idWorkspace);
+// var bancoComWorkspace = BancoApi.Conectar(BancoEnum.Santander, new ConfiguracaoAPI { ClientId = "seu-client-id", ClientSecret = "seu-client-secret", CertificadoDigital = certificado, IdWorkspace = idWorkspace });
 ```
 
 ###### Pagando um boleto (consulta prévia + pagamento)

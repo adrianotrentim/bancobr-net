@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using BancoBr.API;
+using BancoBr.API.Base.Models;
 using BancoBr.API.Core.Http;
 using BancoBr.Common.Enums;
 using Xunit;
@@ -21,7 +22,7 @@ namespace BancoBr.Tests.Sicoob
         [Fact]
         public void Conectar_BancoSicoob_RetornaBancoApi()
         {
-            var resultado = BancoApi.Conectar(BancoEnum.Sicoob, "fake-client-id", CriarCertificateSourceFake(), new FakeOAuthTokenProvider());
+            var resultado = BancoApi.Conectar(BancoEnum.Sicoob, new ConfiguracaoAPI { ClientId = "fake-client-id", CertificadoDigital = CriarCertificateSourceFake() }, new FakeOAuthTokenProvider());
 
             Assert.NotNull(resultado);
         }
@@ -29,7 +30,7 @@ namespace BancoBr.Tests.Sicoob
         [Fact]
         public void Conectar_BancoNaoImplementado_LancaException()
         {
-            Assert.Throws<System.Exception>(() => BancoApi.Conectar(BancoEnum.BradescoSA, "fake-client-id", CriarCertificateSourceFake(), new FakeOAuthTokenProvider()));
+            Assert.Throws<System.Exception>(() => BancoApi.Conectar(BancoEnum.BradescoSA, new ConfiguracaoAPI { ClientId = "fake-client-id", CertificadoDigital = CriarCertificateSourceFake() }, new FakeOAuthTokenProvider()));
         }
     }
 }

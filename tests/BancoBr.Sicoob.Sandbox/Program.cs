@@ -4,6 +4,7 @@ using BancoBr.API.Core.Errors;
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
 using BancoBr.API;
+using BancoBr.API.Base.Models;
 
 // Console standalone para validar a integração Sicoob (PagamentoBoletoClient) contra um
 // ambiente real (sandbox/homologação), sem depender de um ERP. Nenhuma credencial é lida
@@ -58,8 +59,8 @@ var certificateSource = CertificateSource.FromPfxFile(certPfxPath!, certPassword
 var tokenEndpointOverride = string.IsNullOrWhiteSpace(tokenEndpoint) ? null : new Uri(tokenEndpoint);
 
 var banco = usarTokenFixo
-    ? BancoApi.Conectar(BancoEnum.Sicoob, clientId!, certificateSource, new StaticAccessTokenProvider(accessToken!))
-    : BancoApi.Conectar(BancoEnum.Sicoob, clientId!, clientSecret: null, certificateSource, tokenEndpointOverride);
+    ? BancoApi.Conectar(BancoEnum.Sicoob, new ConfiguracaoAPI { ClientId = clientId!, CertificadoDigital = certificateSource }, new StaticAccessTokenProvider(accessToken!))
+    : BancoApi.Conectar(BancoEnum.Sicoob, new ConfiguracaoAPI { ClientId = clientId!, CertificadoDigital = certificateSource }, tokenEndpointOverride);
 
 // A conta pagadora é passada como Correntista, do mesmo jeito que ArquivoCNAB recebe a
 // empresa separada da lista de movimentos.

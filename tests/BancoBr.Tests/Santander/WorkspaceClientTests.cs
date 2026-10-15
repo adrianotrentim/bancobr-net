@@ -2,6 +2,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using BancoBr.API;
+using BancoBr.API.Base.Models;
 using BancoBr.API.Core.Errors;
 using BancoBr.API.Core.Http;
 using BancoBr.API.Santander.Pagamentos.Workspaces;
@@ -183,14 +184,14 @@ namespace BancoBr.Tests.Santander
         {
             var cert = CriarCertificateSourceFake();
 
-            Assert.NotNull(BancoApi.Conectar(BancoEnum.Santander, "fake-client-id", cert, new FakeOAuthTokenProvider()));
-            Assert.NotNull(BancoApi.Conectar(BancoEnum.Santander, "fake-client-id", cert, new FakeOAuthTokenProvider(), idWorkspace: "ws-1"));
+            Assert.NotNull(BancoApi.Conectar(BancoEnum.Santander, new ConfiguracaoAPI { ClientId = "fake-client-id", CertificadoDigital = cert }, new FakeOAuthTokenProvider()));
+            Assert.NotNull(BancoApi.Conectar(BancoEnum.Santander, new ConfiguracaoAPI { ClientId = "fake-client-id", CertificadoDigital = cert, IdWorkspace = "ws-1" }, new FakeOAuthTokenProvider()));
         }
 
         [Fact]
         public async Task ObterOuCriarWorkspaceAsync_Sicoob_NaoSuportado()
         {
-            var banco = BancoApi.Conectar(BancoEnum.Sicoob, "fake-client-id", CriarCertificateSourceFake(), new FakeOAuthTokenProvider());
+            var banco = BancoApi.Conectar(BancoEnum.Sicoob, new ConfiguracaoAPI { ClientId = "fake-client-id", CertificadoDigital = CriarCertificateSourceFake() }, new FakeOAuthTokenProvider());
 
             await Assert.ThrowsAsync<NotSupportedException>(() => banco.ObterOuCriarWorkspaceAsync(CriarOrigem()));
         }
