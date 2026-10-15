@@ -61,8 +61,8 @@ namespace BancoBr.API.Sicoob.Pagamentos.Ted
         private readonly string _baseUrl;
         private static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings();
 
-        internal TedClient(string clientId, string clientSecret, CertificateSource certificateSource, Uri tokenEndpoint = null)
-            : this(clientId, certificateSource, BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint ?? DefaultTokenEndpoint))
+        internal TedClient(string clientId, string clientSecret, CertificateSource certificateSource, Correntista origem, Uri tokenEndpoint = null)
+            : this(clientId, certificateSource, BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint ?? DefaultTokenEndpoint), origem)
         {
         }
 
@@ -72,8 +72,8 @@ namespace BancoBr.API.Sicoob.Pagamentos.Ted
         /// chamador — por exemplo, <see cref="StaticAccessTokenProvider"/> quando o ambiente de
         /// sandbox fornece um Access Token (Bearer) pronto em vez de expor um endpoint OAuth2.
         /// </summary>
-        internal TedClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider)
-            : this(BuildHttpClient(certificateSource), tokenProvider, clientId, BaseUrl)
+        internal TedClient(string clientId, CertificateSource certificateSource, IAccessTokenProvider tokenProvider, Correntista origem)
+            : this(BuildHttpClient(certificateSource), tokenProvider, clientId, BaseUrl, origem)
         {
         }
 
@@ -81,8 +81,8 @@ namespace BancoBr.API.Sicoob.Pagamentos.Ted
         /// Construtor para testes: permite injetar um HttpClient/IAccessTokenProvider fake,
         /// sem certificado real nem chamadas HTTP de fato.
         /// </summary>
-        public TedClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl)
-            : base(httpClient)
+        public TedClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl, Correntista origem)
+            : base(httpClient, origem)
         {
             if (baseUrl == null) throw new ArgumentNullException(nameof(baseUrl));
 
@@ -130,17 +130,17 @@ namespace BancoBr.API.Sicoob.Pagamentos.Ted
 
         #region ::. Operações .::
 
-        internal override async Task<Movimento> PagarTedAsync(Movimento movimento, Correntista origem, string idempotencyKey, CancellationToken cancellationToken = default)
+        internal override async Task<Movimento> PagarTedAsync(Movimento movimento, string idempotencyKey, CancellationToken cancellationToken = default)
         {
             if (movimento == null) throw new ArgumentNullException(nameof(movimento));
-            if (origem == null) throw new ArgumentNullException(nameof(origem));
+            if (Origem == null) throw new ArgumentNullException(nameof(Origem));
 
             var item = movimento.MovimentoItem as MovimentoItemTransferenciaTED;
             if (item == null)
                 throw new InvalidOperationException("PagarTedAsync espera um MovimentoItemTransferenciaTED em Movimento.MovimentoItem.");
 
             var url = $"{_baseUrl}transferencias";
-            var wireRequest = MontarRequisicao(movimento, item, origem);
+            var wireRequest = MontarRequisicao(movimento, item);
             var json = JsonConvert.SerializeObject(wireRequest, SerializerSettings);
 
             using (var response = await SendWithAuthAsync(() => BuildRequest(HttpMethod.Post, url, json, idempotencyKey), cancellationToken).ConfigureAwait(false))
@@ -208,7 +208,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Ted
 
         #region ::. Mapeamento Movimento <-> Sicoob .::
 
-        private static RequisicaoTed MontarRequisicao(Movimento movimento, MovimentoItemTransferenciaTED item, Correntista origem)
+        private RequisicaoTed MontarRequisicao(Movimento movimento, MovimentoItemTransferenciaTED item)
         {
             if (movimento.Favorecido == null)
                 throw new InvalidOperationException("A TED exige o Favorecido (nome e CPF/CNPJ) preenchido no movimento.");
@@ -221,12 +221,12 @@ namespace BancoBr.API.Sicoob.Pagamentos.Ted
                 {
                     // A API exige a agência com 4 dígitos, zero à esquerda
                     // (ERRO_TAMANHO_NUMEROAGENCIA quando enviada sem padding).
-                    Issuer = origem.NumeroAgencia.ToString("D4"),
-                    Number = $"{origem.NumeroConta}{origem.DVConta}",
+                    Issuer = Origem.NumeroAgencia.ToString("D4"),
+                    Number = $"{Origem.NumeroConta}{Origem.DVConta}",
                     // A conta de origem é sempre corrente — única modalidade habilitada para
                     // pagamento via API (mesma premissa já usada por Boleto/Pix nesta lib).
                     AccountType = ContaWire(TipoContaEnum.ContaCorrente),
-                    PersonType = PessoaWire(origem.TipoPessoa),
+                    PersonType = PessoaWire(Origem.TipoPessoa),
                     Ispb = SicoobIspb,
                 },
                 CreditorAccount = new CreditorAccount

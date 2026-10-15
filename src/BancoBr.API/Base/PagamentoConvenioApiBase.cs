@@ -20,12 +20,16 @@ namespace BancoBr.API.Base
     /// </summary>
     internal abstract class PagamentoConvenioApiBase
     {
-        protected PagamentoConvenioApiBase(HttpClient httpClient)
+        protected PagamentoConvenioApiBase(HttpClient httpClient, Correntista origem)
         {
             HttpClient = httpClient;
+            Origem = origem;
         }
 
         protected HttpClient HttpClient { get; }
+
+        /// <summary>Conta pagadora/titular informada em <c>ConfiguracaoAPI.Correntista</c>.</summary>
+        protected Correntista Origem { get; }
 
         /// <summary>
         /// Consulta os dados de arrecadação do código de barras informado em
@@ -33,21 +37,21 @@ namespace BancoBr.API.Base
         /// valores, convênio e — importante para o pagamento seguinte — a
         /// <see cref="MovimentoItemPagamentoConvenioCodigoBarra.Transacao"/>.
         /// </summary>
-        internal abstract Task<Movimento> ConsultarCodigoBarrasAsync(Movimento movimento, Correntista origem, bool? recebimentoViaCaixa = null, int unidade = 0, CancellationToken cancellationToken = default);
+        internal abstract Task<Movimento> ConsultarCodigoBarrasAsync(Movimento movimento, bool? recebimentoViaCaixa = null, int unidade = 0, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Efetiva o pagamento do convênio. Reenvia a
         /// <see cref="MovimentoItemPagamentoConvenioCodigoBarra.Transacao"/> obtida na consulta,
         /// que é o que permite ao banco deduplicar reenvios.
         /// </summary>
-        internal abstract Task<Movimento> PagarConvenioAsync(Movimento movimento, Correntista origem, int unidade = 0, CancellationToken cancellationToken = default);
+        internal abstract Task<Movimento> PagarConvenioAsync(Movimento movimento, int unidade = 0, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Recupera a segunda via do comprovante do pagamento cujo NSU está em
         /// <see cref="MovimentoItemPagamentoConvenioCodigoBarra.Nsu"/> (ou em
         /// <see cref="Movimento.NumeroDocumentoNoBanco"/>).
         /// </summary>
-        internal abstract Task<Movimento> ConsultarComprovantePorNsuAsync(Movimento movimento, Correntista origem, CancellationToken cancellationToken = default);
+        internal abstract Task<Movimento> ConsultarComprovantePorNsuAsync(Movimento movimento, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Consulta de lista (pagamentos já realizados para um código de barras numa data) — não

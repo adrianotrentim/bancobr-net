@@ -1,8 +1,10 @@
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using BancoBr.API;
+using BancoBr.API.Base.Models;
 using BancoBr.API.Core.Http;
 using BancoBr.Common.Enums;
+using BancoBr.Common.Instances;
 using Xunit;
 
 namespace BancoBr.Tests.Sicoob
@@ -21,15 +23,21 @@ namespace BancoBr.Tests.Sicoob
         [Fact]
         public void Conectar_BancoSicoob_RetornaBancoApi()
         {
-            var resultado = BancoApi.Conectar(BancoEnum.Sicoob, "fake-client-id", CriarCertificateSourceFake(), new FakeOAuthTokenProvider());
+            var resultado = BancoApi.Conectar(new ConfiguracaoAPI { ClientId = "fake-client-id", CertificadoDigital = CriarCertificateSourceFake(), Correntista = new Correntista { Banco = (int)BancoEnum.Sicoob } }, new FakeOAuthTokenProvider());
 
             Assert.NotNull(resultado);
         }
 
         [Fact]
+        public void Conectar_SemCorrentista_LancaArgumentException()
+        {
+            Assert.Throws<System.ArgumentException>(() => BancoApi.Conectar(new ConfiguracaoAPI { ClientId = "fake-client-id", CertificadoDigital = CriarCertificateSourceFake() }, new FakeOAuthTokenProvider()));
+        }
+
+        [Fact]
         public void Conectar_BancoNaoImplementado_LancaException()
         {
-            Assert.Throws<System.Exception>(() => BancoApi.Conectar(BancoEnum.BradescoSA, "fake-client-id", CriarCertificateSourceFake(), new FakeOAuthTokenProvider()));
+            Assert.Throws<System.Exception>(() => BancoApi.Conectar(new ConfiguracaoAPI { ClientId = "fake-client-id", CertificadoDigital = CriarCertificateSourceFake(), Correntista = new Correntista { Banco = (int)BancoEnum.BradescoSA } }, new FakeOAuthTokenProvider()));
         }
     }
 }

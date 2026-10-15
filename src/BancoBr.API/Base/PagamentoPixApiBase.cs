@@ -15,15 +15,23 @@ namespace BancoBr.API.Base
     /// pelo BancoBr.CNAB: cada método recebe o movimento, mapeia para o formato da API do
     /// banco, e aplica a resposta de volta no mesmo objeto — que é então devolvido (mesma
     /// instância, mutada in-place).
+    ///
+    /// <c>Origem</c> (<c>ConfiguracaoAPI.Correntista</c>) é a conta pagadora: o Sicoob não precisa dela nestas operações (a conta
+    /// vem das credenciais), mas o Santander a usa como conta de débito na workspace do Hub de
+    /// Pagamentos.
     /// </summary>
     internal abstract class PagamentoPixApiBase
     {
-        protected PagamentoPixApiBase(HttpClient httpClient)
+        protected PagamentoPixApiBase(HttpClient httpClient, Correntista origem)
         {
             HttpClient = httpClient;
+            Origem = origem;
         }
 
         protected HttpClient HttpClient { get; }
+
+        /// <summary>Conta pagadora/titular informada em <c>ConfiguracaoAPI.Correntista</c>.</summary>
+        protected Correntista Origem { get; }
 
         /// <summary>
         /// Consulta a situação de um pagamento já iniciado. O identificador do pagamento no
@@ -60,6 +68,6 @@ namespace BancoBr.API.Base
         /// Espera um <see cref="MovimentoItemPagamentoTituloPIXQRCode"/> como
         /// <see cref="Movimento.MovimentoItem"/>.
         /// </summary>
-        internal abstract Task<Movimento> PagarViaQrCodeAsync(Correntista origem, Movimento movimento, CancellationToken cancellationToken = default);
+        internal abstract Task<Movimento> PagarViaQrCodeAsync(Movimento movimento, CancellationToken cancellationToken = default);
     }
 }

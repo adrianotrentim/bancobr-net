@@ -4,6 +4,7 @@ using BancoBr.API.Core.Errors;
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
 using BancoBr.API;
+using BancoBr.API.Base.Models;
 
 // Console standalone para validar a integração Sicoob (PagamentoBoletoClient) contra um
 // ambiente real (sandbox/homologação), sem depender de um ERP. Nenhuma credencial é lida
@@ -57,18 +58,20 @@ var numeroConta = long.Parse(numeroContaText!);
 var certificateSource = CertificateSource.FromPfxFile(certPfxPath!, certPassword!);
 var tokenEndpointOverride = string.IsNullOrWhiteSpace(tokenEndpoint) ? null : new Uri(tokenEndpoint);
 
-var banco = usarTokenFixo
-    ? BancoApi.Conectar(BancoEnum.Sicoob, clientId!, certificateSource, new StaticAccessTokenProvider(accessToken!))
-    : BancoApi.Conectar(BancoEnum.Sicoob, clientId!, clientSecret: null, certificateSource, tokenEndpointOverride);
-
-// A conta pagadora é passada como Correntista, do mesmo jeito que ArquivoCNAB recebe a
-// empresa separada da lista de movimentos.
+// A conta pagadora é passada como Correntista na ConfiguracaoAPI e usada em todas as operações.
 var origem = new Correntista
 {
+    Banco = (int)BancoEnum.Sicoob,
     NumeroAgencia = numeroAgencia,
     NumeroConta = (int)numeroConta,
     TipoPessoa = TipoInscricaoCPFCNPJEnum.CNPJ,
 };
+
+var configuracao = new ConfiguracaoAPI { ClientId = clientId!, CertificadoDigital = certificateSource, Correntista = origem };
+
+var banco = usarTokenFixo
+    ? BancoApi.Conectar(configuracao, new StaticAccessTokenProvider(accessToken!))
+    : BancoApi.Conectar(configuracao, tokenEndpointOverride);
 
 // O contrato público de BancoBr.API é o mesmo Movimento/MovimentoItem usado pelo CNAB.
 var movimento = new Movimento
@@ -80,7 +83,7 @@ var movimento = new Movimento
 try
 {
     Console.WriteLine($"Consultando boleto {codigoBarras} na conta {numeroConta}...");
-    await banco.ConsultarAgendamentoAsync(movimento, origem);
+    await banco.ConsultarAgendamentoAsync(movimento);
 
     var item = (MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem;
 
@@ -113,7 +116,7 @@ try
     Console.WriteLine();
     Console.WriteLine("SICOOB_CONFIRMAR_PAGAMENTO=true: chamando EnviarAgendamentoAsync...");
 
-    // O portador enviado ao banco vem do Correntista; aqui reaproveitamos o que o próprio
+    // O portador enviado ao banco vem do Correntista da ConfiguracaoAPI (mesma instância de origem); aqui reaproveitamos o que o próprio
     // boleto devolveu como pagador, para o sandbox não exigir mais variáveis de ambiente.
     origem.Nome = item.PagadorConfirmadoNome;
     origem.CPF_CNPJ = item.PagadorConfirmadoDocumento;
@@ -121,7 +124,7 @@ try
     // ConsultarAgendamentoAsync já deixou IdentificadorConsulta preenchido no movimento, então
     // EnviarAgendamentoAsync paga direto com esses dados (sem consultar de novo) — só precisa do
     // idLancamento como idempotencyKey; a chave composta do Sicoob é montada por baixo.
-    await banco.EnviarAgendamentoAsync(movimento, origem, idLancamento.ToString());
+    await banco.EnviarAgendamentoAsync(movimento, idLancamento.ToString());
 
     Console.WriteLine($"Pagamento processado. Situação={movimento.SituacaoBancoBr}, IdPagamento={movimento.NumeroDocumentoNoBanco}, Detalhe={movimento.DetalheRejeicaoBancoBr}");
 

@@ -12,6 +12,7 @@ Biblioteca para integração bancária para pagamentos de contas, transferência
 - [x] Leitura de retorno padrão CNAB 240
 - [ ] Integração via API
   - [x] Sicoob
+  - [ ] Santander (Pix por chave DICT e QR Code, pagamento de boletos e convênios, TED)
   - [ ] Demais instituições
 
 ## Segmentos
@@ -199,16 +200,37 @@ dotnet add package BancoBr.API
 
 ```csharp
 using BancoBr.API;
+using BancoBr.API.Base.Models;
 using BancoBr.API.Core.Http;
 using BancoBr.Common.Enums;
+using BancoBr.Common.Instances;
 
-var certificateSource = CertificateSource.FromPfxFile("caminho/para/certificado.pfx", "senhaDoCertificado");
+var certificado = CertificateSource.FromPfxFile("caminho/para/certificado.pfx", "senhaDoCertificado");
+
+// A conta pagadora (Correntista) é informada uma única vez na ConfiguracaoAPI e usada como origem
+// em todas as operações (pagamento, consulta, cancelamento, DDA, extrato, workspace).
+var origem = new Correntista
+{
+    Banco = (int)BancoEnum.Sicoob, // código do banco: define qual banco é conectado (Santander = 33)
+    NumeroAgencia = 4321,
+    NumeroConta = 12345,
+    TipoPessoa = TipoInscricaoCPFCNPJEnum.CNPJ,
+    CPF_CNPJ = "12.345.678/0001-00"
+};
 
 // Fluxo padrão: OAuth2 client_credentials, renovado automaticamente por baixo.
-var banco = BancoApi.Conectar(BancoEnum.Sicoob, clientId: "seu-client-id", clientSecret: "seu-client-secret", certificateSource);
+var banco = BancoApi.Conectar(new ConfiguracaoAPI { ClientId = "seu-client-id", ClientSecret = "seu-client-secret", CertificadoDigital = certificado, Correntista = origem });
 
 // Alternativa: token já emitido (ex.: portal de sandbox do Sicoob), pulando o fluxo OAuth2.
-// var banco = BancoApi.Conectar(BancoEnum.Sicoob, clientId: "seu-client-id", certificateSource, new StaticAccessTokenProvider("token-bearer"));
+// var banco = BancoApi.Conectar(new ConfiguracaoAPI { ClientId = "seu-client-id", CertificadoDigital = certificado, Correntista = origem }, new StaticAccessTokenProvider("token-bearer"));
+
+// Santander (Pix, pagamento de boletos e convênios, TED, DDA): mesmo fluxo, com certificado mTLS + OAuth2. As chamadas do Hub de Pagamentos
+// acontecem dentro de uma "workspace". Ela é obtida uma única vez, num endpoint separado, que acha a workspace ativa que contém a conta
+// pagadora (ou cria uma) e liga nela Pix, boleto, DDA, convênio e TED. Guarde o id e informe-o em Conectar (ConfiguracaoAPI.IdWorkspace, opcional): as
+// operações de pagamento, efetivação e consulta o usam direto, sem consultar as workspaces do banco a cada instância da API.
+// var banco = BancoApi.Conectar(new ConfiguracaoAPI { ClientId = "seu-client-id", ClientSecret = "seu-client-secret", CertificadoDigital = certificado, Correntista = origem });
+// var idWorkspace = await banco.ObterOuCriarWorkspaceAsync(); // guarde este id
+// var bancoComWorkspace = BancoApi.Conectar(new ConfiguracaoAPI { ClientId = "seu-client-id", ClientSecret = "seu-client-secret", CertificadoDigital = certificado, Correntista = origem, IdWorkspace = idWorkspace });
 ```
 
 ###### Pagando um boleto (consulta prévia + pagamento)
@@ -217,14 +239,6 @@ var banco = BancoApi.Conectar(BancoEnum.Sicoob, clientId: "seu-client-id", clien
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
 
-var origem = new Correntista
-{
-    NumeroAgencia = 4321,
-    NumeroConta = 12345,
-    TipoPessoa = TipoInscricaoCPFCNPJEnum.CNPJ,
-    CPF_CNPJ = "12.345.678/0001-00"
-};
-
 var movimento = new Movimento
 {
     TipoLancamento = TipoLancamentoEnum.PagamentoTituloOutroBanco,
@@ -232,14 +246,14 @@ var movimento = new Movimento
 };
 
 // Consulta prévia: preenche o boleto (valor, vencimento, beneficiário) e o IdentificadorConsulta.
-await banco.ConsultarAgendamentoAsync(movimento, origem);
+await banco.ConsultarAgendamentoAsync(movimento);
 
 var item = (MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem;
 Console.WriteLine($"Beneficiário: {movimento.Favorecido?.Nome}, Valor: {item.ValorCodigoBarra:C}");
 
 // Envio: como a consulta prévia já deixou IdentificadorConsulta preenchido, paga direto com esses
 // dados (sem consultar de novo).
-await banco.EnviarAgendamentoAsync(movimento, origem, idempotencyKey: Guid.NewGuid().ToString());
+await banco.EnviarAgendamentoAsync(movimento, idempotencyKey: Guid.NewGuid().ToString());
 
 Console.WriteLine($"Situação={movimento.SituacaoBancoBr}, IdPagamento={movimento.NumeroDocumentoNoBanco}");
 ```
@@ -259,7 +273,7 @@ var movimentoPix = new Movimento
 };
 
 // EnviarAgendamentoAsync já inicia e confirma o pagamento numa única chamada.
-await banco.EnviarAgendamentoAsync(movimentoPix, origem);
+await banco.EnviarAgendamentoAsync(movimentoPix);
 
 Console.WriteLine($"Situação={movimentoPix.SituacaoBancoBr}, EndToEndId={movimentoPix.NumeroDocumentoNoBanco}");
 ```
@@ -288,9 +302,9 @@ var movimentoTed = new Movimento
     }
 };
 
-await banco.EnviarAgendamentoAsync(movimentoTed, origem);
-await banco.ConsultarAgendamentoAsync(movimentoTed, origem); // situação/comprovante
-// await banco.CancelarAgendamentoAsync(movimentoTed, origem); // enquanto agendada
+await banco.EnviarAgendamentoAsync(movimentoTed);
+await banco.ConsultarAgendamentoAsync(movimentoTed); // situação/comprovante
+// await banco.CancelarAgendamentoAsync(movimentoTed); // enquanto agendada (só Sicoob; o Santander não tem cancelamento de TED)
 ```
 
 ###### Consultando o DDA (boletos a pagar)
@@ -301,7 +315,7 @@ var boletosDda = await banco.ConsultarDDAAsync(
     dataInicial: DateTime.Today,
     dataFinal: DateTime.Today.AddDays(30),
     situacao: SituacaoBoletoEnum.EmAberto,
-    tipoData: TipoDataConsultaEnum.Vencimento);
+    tipoData: TipoDataConsultaEnum.Vencimento); // no Santander usa o Correntista da ConfiguracaoAPI (agência/conta/DV); ignorado no Sicoob
 
 foreach (var movimento in boletosDda)
 {
@@ -313,15 +327,18 @@ foreach (var movimento in boletosDda)
 ###### Consultando o extrato da conta corrente
 
 ```csharp
-var extrato = await banco.ConsultarExtratoAsync(numeroContaCorrente: 12345, mes: 9, ano: 2026);
+var extrato = await banco.ConsultarExtratoAsync(
+    numeroContaCorrente: 12345,
+    mes: 9,
+    ano: 2026); // no Santander usa o Correntista da ConfiguracaoAPI (agência/conta/DV); ignorado no Sicoob
 
-// O primeiro item é sempre o saldo do período.
-var saldo = (MovimentoItemExtratoSaldo)extrato[0].MovimentoItem;
-Console.WriteLine($"Saldo atual: {saldo.SaldoAtual:C}");
+// No Sicoob, o primeiro item é o saldo do período (o Santander não devolve saldo).
+var saldo = extrato.Select(m => m.MovimentoItem).OfType<MovimentoItemExtratoSaldo>().FirstOrDefault();
+if (saldo != null)
+    Console.WriteLine($"Saldo atual: {saldo.SaldoAtual:C}");
 
-foreach (var movimento in extrato.Skip(1))
+foreach (var transacao in extrato.Select(m => m.MovimentoItem).OfType<MovimentoItemExtratoTransacao>())
 {
-    var transacao = (MovimentoItemExtratoTransacao)movimento.MovimentoItem;
     Console.WriteLine($"{transacao.Data:d} [{transacao.Tipo}] {transacao.Descricao}: {transacao.Valor:C}");
 }
 ```
