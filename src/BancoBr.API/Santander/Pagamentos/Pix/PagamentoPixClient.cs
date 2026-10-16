@@ -29,6 +29,9 @@ namespace BancoBr.API.Santander.Pagamentos.Pix
     /// (<c>Pix.Models.*</c>). O identificador do pagamento no banco (UUID do POST) é guardado
     /// em <see cref="Movimento.NumeroDocumentoNoBanco"/> — o EndToEndId só existe depois da
     /// efetivação e não é exposto.
+    ///
+    /// O comprovante (PDF) vem de outra API do Santander (consult_payment_receipts v2), chamada
+    /// com o <c>transaction.code</c> do pagamento — veja <see cref="ConsultarComprovanteAsync"/>.
     /// </summary>
     internal class PagamentoPixClient : PagamentoPixApiBase
     {
@@ -37,6 +40,11 @@ namespace BancoBr.API.Santander.Pagamentos.Pix
         private readonly SantanderHttpGateway _gateway;
         private readonly string _baseUrl;
         private readonly string _idWorkspace;
+        private readonly string _comprovantesBaseUrl;
+        private readonly TimeSpan _intervaloComprovante;
+
+        /// <summary>Quantas vezes o link do comprovante é consultado antes de devolver o movimento sem ele.</summary>
+        private const int TentativasComprovante = 5;
 
         internal PagamentoPixClient(string clientId, string clientSecret, CertificateSource certificateSource, Correntista origem, Uri tokenEndpoint = null, string idWorkspace = null)
             : this(clientId, certificateSource, SantanderHttpGateway.BuildTokenProvider(clientId, clientSecret, certificateSource, tokenEndpoint), origem, idWorkspace)
@@ -51,20 +59,59 @@ namespace BancoBr.API.Santander.Pagamentos.Pix
         /// <summary>
         /// Construtor para testes: permite injetar um HttpClient/IAccessTokenProvider fake.
         /// </summary>
-        public PagamentoPixClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl, Correntista origem, string idWorkspace = null)
+        public PagamentoPixClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string clientId, Uri baseUrl, Correntista origem, string idWorkspace = null, Uri comprovantesBaseUrl = null, TimeSpan? intervaloComprovante = null)
             : base(httpClient, origem)
         {
             if (baseUrl == null) throw new ArgumentNullException(nameof(baseUrl));
 
             _gateway = new SantanderHttpGateway(httpClient, tokenProvider, clientId);
-            var baseUrlText = baseUrl.ToString();
-            _baseUrl = baseUrlText.EndsWith("/") ? baseUrlText : baseUrlText + "/";
+            _baseUrl = ComBarraFinal(baseUrl);
             _idWorkspace = idWorkspace;
+            _comprovantesBaseUrl = ComBarraFinal(comprovantesBaseUrl ?? SantanderHttpGateway.ComprovantesBaseUrl);
+            _intervaloComprovante = intervaloComprovante ?? TimeSpan.FromSeconds(2);
+        }
+
+        private static string ComBarraFinal(Uri uri)
+        {
+            var texto = uri.ToString();
+            return texto.EndsWith("/") ? texto : texto + "/";
         }
 
         #region ::. Operações .::
 
         internal override async Task<Movimento> ConsultarPagamentoAsync(Movimento movimento, CancellationToken cancellationToken = default)
+        {
+            var dto = await ObterPagamentoAsync(movimento, cancellationToken).ConfigureAwait(false);
+
+            return AplicarResposta(movimento, dto);
+        }
+
+        /// <summary>
+        /// Consulta o pagamento (para obter o <c>transaction.code</c>) e, com ele, o link do
+        /// comprovante. O link é aplicado em <see cref="Movimento.LinkComprovanteBancoBr"/>; se o
+        /// arquivo ainda não ficou pronto o link fica como estava — basta chamar de novo, que a
+        /// solicitação já feita é reaproveitada.
+        /// </summary>
+        internal override async Task<Movimento> ConsultarComprovanteAsync(Movimento movimento, CancellationToken cancellationToken = default)
+        {
+            var dto = await ObterPagamentoAsync(movimento, cancellationToken).ConfigureAwait(false);
+            AplicarResposta(movimento, dto);
+
+            var codigoTransacao = dto?.Transaction?.Code;
+            if (string.IsNullOrWhiteSpace(codigoTransacao))
+                throw new InvalidOperationException($"O pagamento Pix ainda não tem código de transação (situação: {dto?.Status}) — o comprovante só existe depois que o pagamento é efetivado.");
+
+            var comprovante = await _gateway.ObterComprovanteAsync(_comprovantesBaseUrl, codigoTransacao, TentativasComprovante, _intervaloComprovante, cancellationToken).ConfigureAwait(false);
+            if (comprovante != null)
+            {
+                movimento.LinkComprovanteBancoBr = comprovante.File.FileRepository.Location;
+                movimento.ValidadeLinkComprovanteBancoBr = comprovante.File.ExpirationDate;
+            }
+
+            return movimento;
+        }
+
+        private async Task<PagamentoPixResponse> ObterPagamentoAsync(Movimento movimento, CancellationToken cancellationToken)
         {
             if (movimento == null) throw new ArgumentNullException(nameof(movimento));
 
@@ -73,9 +120,8 @@ namespace BancoBr.API.Santander.Pagamentos.Pix
 
             var workspace = ResolverWorkspace();
             var url = $"{_baseUrl}workspaces/{workspace.WorkspaceId}/pix_payments/{movimento.NumeroDocumentoNoBanco}";
-            var dto = await _gateway.SendAsync<PagamentoPixResponse>(HttpMethod.Get, url, body: null, cancellationToken).ConfigureAwait(false);
 
-            return AplicarResposta(movimento, dto);
+            return await _gateway.SendAsync<PagamentoPixResponse>(HttpMethod.Get, url, body: null, cancellationToken).ConfigureAwait(false);
         }
 
         internal override async Task<Movimento> IniciarPagamentoAsync(Movimento movimento, CancellationToken cancellationToken = default)

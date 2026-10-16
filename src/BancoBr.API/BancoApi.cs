@@ -246,6 +246,27 @@ namespace BancoBr.API
         }
 
         /// <summary>
+        /// Só Santander, e só Pix (chave ou Copia e Cola). Obtém o link do comprovante (PDF) de um
+        /// pagamento já efetivado — o id do pagamento vem de <see cref="Movimento.NumeroDocumentoNoBanco"/> —
+        /// e o devolve em <see cref="Movimento.LinkComprovanteBancoBr"/> (com a validade em
+        /// <see cref="Movimento.ValidadeLinkComprovanteBancoBr"/>), junto da situação atualizada do pagamento.
+        /// O banco pode demorar a gerar o arquivo: se ele não ficar pronto durante a chamada, o link
+        /// volta vazio e basta chamar de novo mais tarde — a solicitação já feita é reaproveitada.
+        /// </summary>
+        public Task<Movimento> ConsultarComprovanteAsync(Movimento movimento, CancellationToken cancellationToken = default)
+        {
+            switch (ExtrairItem(movimento))
+            {
+                case MovimentoItemTransferenciaPIX _:
+                case MovimentoItemPagamentoTituloPIXQRCode _:
+                    return Requer(_pix).ConsultarComprovanteAsync(movimento, cancellationToken);
+
+                default:
+                    throw OperacaoNaoSuportada("consulta de comprovante", movimento);
+            }
+        }
+
+        /// <summary>
         /// Cancela o agendamento do movimento. Só Boleto e TED têm cancelamento na API do
         /// Sicoob — para Pix e Convênio, lança <see cref="NotSupportedException"/>.
         /// </summary>

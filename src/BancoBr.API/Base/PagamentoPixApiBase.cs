@@ -69,5 +69,14 @@ namespace BancoBr.API.Base
         /// <see cref="Movimento.MovimentoItem"/>.
         /// </summary>
         internal abstract Task<Movimento> PagarViaQrCodeAsync(Movimento movimento, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtém o link do comprovante do pagamento já efetivado (id do pagamento em
+        /// <see cref="Movimento.NumeroDocumentoNoBanco"/>) e o aplica em
+        /// <see cref="Movimento.LinkComprovanteBancoBr"/>. Nem todo banco tem esse endpoint na API
+        /// (o Sicoob não tem), por isso o padrão é não suportar.
+        /// </summary>
+        internal virtual Task<Movimento> ConsultarComprovanteAsync(Movimento movimento, CancellationToken cancellationToken = default) =>
+            throw new System.NotSupportedException("Este banco não disponibiliza a consulta de comprovante pela API.");
     }
 }
