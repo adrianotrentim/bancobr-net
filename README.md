@@ -10,10 +10,13 @@ Biblioteca para integração bancária para pagamentos de contas, transferência
 
 - [x] Geração de remessa padrão CNAB 240
 - [x] Leitura de retorno padrão CNAB 240
-- [ ] Integração via API
+- [X] Integração via API
   - [x] Sicoob
-  - [ ] Santander (Pix por chave DICT e QR Code, pagamento de boletos e convênios, TED)
-  - [ ] Demais instituições
+  - [X] Santander (Pix por chave DICT e QR Code, pagamento de boletos e convênios, TED)
+  - [ ] Itaú
+  - [ ] Bradesco
+  - [ ] CEF
+  - [ ] Banco do Brasil
 
 ## Segmentos
 
@@ -182,7 +185,7 @@ foreach (var movimento in cnab.Movimentos) {
 
 ```
 
-## Integração via API (Sicoob)
+## Integração via API
 
 Além da geração/leitura de arquivos CNAB, a `BancoBr.API` consome diretamente a API do Sicoob
 (Pix, Boleto, Convênio, TED e Conta Corrente), usando o mesmo contrato `Movimento`/`MovimentoItem`
@@ -209,9 +212,9 @@ var certificado = CertificateSource.FromPfxFile("caminho/para/certificado.pfx", 
 
 // A conta pagadora (Correntista) é informada uma única vez na ConfiguracaoAPI e usada como origem
 // em todas as operações (pagamento, consulta, cancelamento, DDA, extrato, workspace).
-var origem = new Correntista
+var correntista = new Correntista
 {
-    Banco = (int)BancoEnum.Sicoob, // código do banco: define qual banco é conectado (Santander = 33)
+    Banco = (int)BancoEnum.Sicoob,
     NumeroAgencia = 4321,
     NumeroConta = 12345,
     TipoPessoa = TipoInscricaoCPFCNPJEnum.CNPJ,
@@ -219,7 +222,7 @@ var origem = new Correntista
 };
 
 // Fluxo padrão: OAuth2 client_credentials, renovado automaticamente por baixo.
-var banco = BancoApi.Conectar(new ConfiguracaoAPI { ClientId = "seu-client-id", ClientSecret = "seu-client-secret", CertificadoDigital = certificado, Correntista = origem });
+var banco = BancoApi.Conectar(new ConfiguracaoAPI { ClientId = "seu-client-id", ClientSecret = "seu-client-secret", CertificadoDigital = certificado, Correntista = correntista });
 
 // Alternativa: token já emitido (ex.: portal de sandbox do Sicoob), pulando o fluxo OAuth2.
 // var banco = BancoApi.Conectar(new ConfiguracaoAPI { ClientId = "seu-client-id", CertificadoDigital = certificado, Correntista = origem }, new StaticAccessTokenProvider("token-bearer"));
