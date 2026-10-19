@@ -2,21 +2,14 @@
 
 Biblioteca para integração bancária para pagamentos de contas, transferências e PIX.
 
-## Estatísticas do Projeto
+# Estatísticas do Projeto
 
 ![Alt](https://repobeats.axiom.co/api/embed/0a24518c7999f1499a1c8ffa0ae20835db99ba22.svg "Situação do Projeto")
 
-## TODO
+## Integração via Arquivos CNAB 240
 
 - [x] Geração de remessa padrão CNAB 240
 - [x] Leitura de retorno padrão CNAB 240
-- [X] Integração via API
-  - [x] Sicoob
-  - [X] Santander (Pix por chave DICT e QR Code, pagamento de boletos e convênios, TED)
-  - [ ] Itaú
-  - [ ] Bradesco
-  - [ ] CEF
-  - [ ] Banco do Brasil
 
 ## Segmentos
 
@@ -53,11 +46,23 @@ Biblioteca para integração bancária para pagamentos de contas, transferência
 - [x] 104 - Caixa Econômica
 - [x] 077 - Inter
 
-## Dúvidas?
+# Integração via API
+
+## Instituições
+
+- [x] Sicoob
+- [X] Santander (Pix por chave DICT e QR Code, pagamento de boletos e convênios, TED)
+- [ ] Itaú
+- [ ] Bradesco
+- [ ] CEF
+- [ ] Banco do Brasil
+
+
+# Dúvidas?
 
 Abra um issue na página do projeto no GitHub ou [clique aqui](https://github.com/adrianotentim/bancobr-net/issues).
 
-## Exemplos
+# Exemplos
 
 ###### Criando uma remessa
 
