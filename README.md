@@ -187,18 +187,6 @@ foreach (var movimento in cnab.Movimentos) {
 
 ## Exemplos API
 
-Além da geração/leitura de arquivos CNAB, a `BancoBr.API` consome diretamente a API do Sicoob
-(Pix, Boleto, Convênio, TED e Conta Corrente), usando o mesmo contrato `Movimento`/`MovimentoItem`
-já usado pelo CNAB. O ponto de entrada único é `BancoApi.Conectar`, que devolve um cliente pronto
-para todas as operações — sem o chamador precisar escolher qual cliente interno instanciar.
-
-A autenticação do Sicoob exige certificado digital ICP-Brasil A1 (mTLS) além do OAuth2. Instale o
-pacote `BancoBr.API` e forneça o certificado via `CertificateSource`:
-
-```
-dotnet add package BancoBr.API
-```
-
 ###### Conectando
 
 ```csharp
