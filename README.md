@@ -6,7 +6,7 @@ Biblioteca para integração bancária para pagamentos de contas, transferência
 
 ![Alt](https://repobeats.axiom.co/api/embed/0a24518c7999f1499a1c8ffa0ae20835db99ba22.svg "Situação do Projeto")
 
-## Integração via Arquivos CNAB 240
+# Integração via Arquivos CNAB 240
 
 - [x] Geração de remessa padrão CNAB 240
 - [x] Leitura de retorno padrão CNAB 240
@@ -46,23 +46,7 @@ Biblioteca para integração bancária para pagamentos de contas, transferência
 - [x] 104 - Caixa Econômica
 - [x] 077 - Inter
 
-# Integração via API
-
-## Instituições
-
-- [x] Sicoob
-- [X] Santander (Pix por chave DICT e QR Code, pagamento de boletos e convênios, TED)
-- [ ] Itaú
-- [ ] Bradesco
-- [ ] CEF
-- [ ] Banco do Brasil
-
-
-# Dúvidas?
-
-Abra um issue na página do projeto no GitHub ou [clique aqui](https://github.com/adrianotentim/bancobr-net/issues).
-
-# Exemplos
+## Exemplos CNAB 240
 
 ###### Criando uma remessa
 
@@ -190,7 +174,18 @@ foreach (var movimento in cnab.Movimentos) {
 
 ```
 
-## Integração via API
+# Integração via API
+
+## Instituições
+
+- [x] Sicoob
+- [X] Santander
+- [ ] Itaú
+- [ ] Bradesco
+- [ ] CEF
+- [ ] Banco do Brasil
+
+## Exemplos API
 
 Além da geração/leitura de arquivos CNAB, a `BancoBr.API` consome diretamente a API do Sicoob
 (Pix, Boleto, Convênio, TED e Conta Corrente), usando o mesmo contrato `Movimento`/`MovimentoItem`
@@ -350,3 +345,7 @@ foreach (var transacao in extrato.Select(m => m.MovimentoItem).OfType<MovimentoI
     Console.WriteLine($"{transacao.Data:d} [{transacao.Tipo}] {transacao.Descricao}: {transacao.Valor:C}");
 }
 ```
+
+# Dúvidas?
+
+Abra um issue na página do projeto no GitHub ou [clique aqui](https://github.com/adrianotentim/bancobr-net/issues).
