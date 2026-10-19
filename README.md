@@ -4,7 +4,7 @@ Biblioteca para integração bancária para pagamentos de contas, transferência
 
 # Estatísticas do Projeto
 
-![Alt](https://repobeats.axiom.co/api/embed/0a24518c7999f1499a1c8ffa0ae20835db99ba22.svg "Situação do Projeto")
+![Alt](https://repobeats.axiom.co/api/embed/6c51756eadb6fa452754f59650cbd1b9e38a015d.svg "Situação do Projeto")
 
 # Integração via Arquivos CNAB 240
 
