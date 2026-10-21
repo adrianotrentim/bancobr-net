@@ -224,6 +224,7 @@ namespace BancoBr.Tests.Santander
             Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
         }
 
+
         [Fact]
         public async Task PagarViaQrCodeAsync_PostEPatch_MapeiaQrCode()
         {

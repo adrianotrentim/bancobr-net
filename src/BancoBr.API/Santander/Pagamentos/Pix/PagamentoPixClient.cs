@@ -57,14 +57,26 @@ namespace BancoBr.API.Santander.Pagamentos.Pix
             if (baseUrl == null) throw new ArgumentNullException(nameof(baseUrl));
 
             _gateway = new SantanderHttpGateway(httpClient, tokenProvider, clientId);
-            var baseUrlText = baseUrl.ToString();
-            _baseUrl = baseUrlText.EndsWith("/") ? baseUrlText : baseUrlText + "/";
+            _baseUrl = ComBarraFinal(baseUrl);
             _idWorkspace = idWorkspace;
+        }
+
+        private static string ComBarraFinal(Uri uri)
+        {
+            var texto = uri.ToString();
+            return texto.EndsWith("/") ? texto : texto + "/";
         }
 
         #region ::. Operações .::
 
         internal override async Task<Movimento> ConsultarPagamentoAsync(Movimento movimento, CancellationToken cancellationToken = default)
+        {
+            var dto = await ObterPagamentoAsync(movimento, cancellationToken).ConfigureAwait(false);
+
+            return AplicarResposta(movimento, dto);
+        }
+
+        private async Task<PagamentoPixResponse> ObterPagamentoAsync(Movimento movimento, CancellationToken cancellationToken)
         {
             if (movimento == null) throw new ArgumentNullException(nameof(movimento));
 
@@ -73,9 +85,8 @@ namespace BancoBr.API.Santander.Pagamentos.Pix
 
             var workspace = ResolverWorkspace();
             var url = $"{_baseUrl}workspaces/{workspace.WorkspaceId}/pix_payments/{movimento.NumeroDocumentoNoBanco}";
-            var dto = await _gateway.SendAsync<PagamentoPixResponse>(HttpMethod.Get, url, body: null, cancellationToken).ConfigureAwait(false);
 
-            return AplicarResposta(movimento, dto);
+            return await _gateway.SendAsync<PagamentoPixResponse>(HttpMethod.Get, url, body: null, cancellationToken).ConfigureAwait(false);
         }
 
         internal override async Task<Movimento> IniciarPagamentoAsync(Movimento movimento, CancellationToken cancellationToken = default)

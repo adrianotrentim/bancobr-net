@@ -32,6 +32,9 @@ namespace BancoBr.API.Santander.Http
         /// <summary>Base da API do Hub de Pagamentos (management_payments_partners v1), igual para Pix, boleto e convênio.</summary>
         public static readonly Uri PagamentosBaseUrl = new Uri("https://trust-open.api.santander.com.br/management_payments_partners/v1");
 
+        /// <summary>Base da API de comprovantes de pagamento (consult_payment_receipts v2).</summary>
+        public static readonly Uri ComprovantesBaseUrl = new Uri("https://trust-open.api.santander.com.br/consult_payment_receipts/v2");
+
         /// <summary>Base da API de consulta de extrato (bank_account_information v1).</summary>
         public static readonly Uri ContaCorrenteBaseUrl = new Uri("https://trust-open.api.santander.com.br/bank_account_information/v1");
 
@@ -155,6 +158,91 @@ namespace BancoBr.API.Santander.Http
 
         public Task<PagamentoCodigoResponse> ConsultarPagamentoCodigoAsync(string baseUrl, string recurso, string workspaceId, string pagamentoId, CancellationToken cancellationToken) =>
             SendAsync<PagamentoCodigoResponse>(HttpMethod.Get, $"{baseUrl}workspaces/{workspaceId}/{recurso}/{pagamentoId}", body: null, cancellationToken);
+
+        #endregion
+
+        #region ::. Comprovante (consult_payment_receipts) .::
+
+        private const string StatusComprovanteSolicitado = "REQUESTED";
+        private const string StatusComprovanteDisponivel = "AVAILABLE";
+
+        /// <summary>
+        /// Obtém o link do comprovante em PDF de um pagamento já efetivado, a partir do
+        /// <c>transaction.code</c> devolvido pela consulta do pagamento. O arquivo nem sempre fica
+        /// pronto na hora, então primeiro procura uma solicitação já existente (GET
+        /// <c>file_requests</c>) e só cria outra (POST) se não houver; em seguida consulta a
+        /// solicitação (GET <c>file_requests/{request_id}</c>) até o link ficar AVAILABLE, no
+        /// máximo <paramref name="tentativas"/> vezes, esperando <paramref name="intervalo"/> entre
+        /// elas. Devolve nulo se o arquivo ainda não ficou pronto — uma nova chamada reaproveita
+        /// a solicitação em andamento, em vez de criar outra.
+        /// </summary>
+        public async Task<ComprovanteResponse> ObterComprovanteAsync(string baseUrl, string codigoTransacao, int tentativas, TimeSpan intervalo, CancellationToken cancellationToken)
+        {
+            var urlSolicitacoes = $"{baseUrl}payment_receipts/{Uri.EscapeDataString(codigoTransacao)}/file_requests";
+
+            var solicitacao = await BuscarSolicitacaoComprovanteAsync(urlSolicitacoes, cancellationToken).ConfigureAwait(false);
+            if (solicitacao == null)
+            {
+                var corpo = new RequisicaoComprovante
+                {
+                    Payment = new RequisicaoComprovantePagamento { RequestValueDate = DateTime.Today.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture) },
+                };
+
+                solicitacao = await SendAsync<ComprovanteResponse>(HttpMethod.Post, urlSolicitacoes, corpo, cancellationToken).ConfigureAwait(false);
+            }
+
+            var requestId = solicitacao?.Request?.RequestId;
+            if (string.IsNullOrWhiteSpace(requestId))
+                throw new InvalidOperationException("O Santander não devolveu o identificador (requestId) da solicitação do comprovante.");
+
+            var urlSolicitacao = $"{urlSolicitacoes}/{Uri.EscapeDataString(requestId)}";
+
+            for (var tentativa = 0; tentativa < tentativas; tentativa++)
+            {
+                if (tentativa > 0)
+                    await Task.Delay(intervalo, cancellationToken).ConfigureAwait(false);
+
+                var atual = await SendAsync<ComprovanteResponse>(HttpMethod.Get, urlSolicitacao, body: null, cancellationToken).ConfigureAwait(false);
+                if (StatusComprovante(atual) == StatusComprovanteDisponivel && !string.IsNullOrWhiteSpace(atual.File.FileRepository?.Location))
+                    return atual;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// A solicitação mais recente ainda aproveitável (REQUESTED ou AVAILABLE) do pagamento, ou
+        /// nulo. Sem solicitações, o banco pode responder 404 — tratado como lista vazia; se o 404
+        /// for por outra causa (pagamento inexistente), o POST seguinte devolve o erro real.
+        /// </summary>
+        private async Task<ComprovanteResponse> BuscarSolicitacaoComprovanteAsync(string urlSolicitacoes, CancellationToken cancellationToken)
+        {
+            ComprovanteListaResponse lista;
+            try
+            {
+                lista = await SendAsync<ComprovanteListaResponse>(HttpMethod.Get, urlSolicitacoes, body: null, cancellationToken).ConfigureAwait(false);
+            }
+            catch (BancoApiException ex) when (ex.HttpStatusCode == 404)
+            {
+                return null;
+            }
+
+            return (lista?.PaymentReceiptsFileRequests ?? new List<ComprovanteResponse>())
+                .Where(c => !string.IsNullOrWhiteSpace(c.Request?.RequestId))
+                .Where(c =>
+                {
+                    var status = StatusComprovante(c);
+                    return status == StatusComprovanteSolicitado || status == StatusComprovanteDisponivel;
+                })
+                .OrderByDescending(c => c.Request.CreationDateTime ?? DateTime.MinValue)
+                .FirstOrDefault();
+        }
+
+        private static string StatusComprovante(ComprovanteResponse comprovante)
+        {
+            var status = comprovante?.File?.StatusInfo?.StatusCode;
+            return string.IsNullOrWhiteSpace(status) ? null : status.Trim().ToUpperInvariant();
+        }
 
         #endregion
 

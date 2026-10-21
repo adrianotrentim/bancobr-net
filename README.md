@@ -267,6 +267,12 @@ var movimentoPix = new Movimento
 await banco.EnviarAgendamentoAsync(movimentoPix);
 
 Console.WriteLine($"Situação={movimentoPix.SituacaoBancoBr}, EndToEndId={movimentoPix.NumeroDocumentoNoBanco}");
+
+// Só Santander: link do comprovante (PDF) de um Pix já efetivado, em Movimento.LinkComprovanteBancoBr.
+// O link é temporário (ValidadeLinkComprovanteBancoBr). Se o banco ainda não gerou o arquivo, o link
+// volta vazio: chame de novo mais tarde — a solicitação já feita é reaproveitada.
+await banco.ConsultarComprovanteAsync(movimentoPix);
+Console.WriteLine($"Comprovante={movimentoPix.LinkComprovanteBancoBr}, válido até {movimentoPix.ValidadeLinkComprovanteBancoBr}");
 ```
 
 ###### TED
