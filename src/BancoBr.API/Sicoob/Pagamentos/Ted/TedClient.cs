@@ -161,7 +161,12 @@ namespace BancoBr.API.Sicoob.Pagamentos.Ted
 
                 var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                 var dto = JsonConvert.DeserializeObject<TedRetorno>(body, SerializerSettings);
-                return AplicarRetorno(movimento, item, dto);
+                var retorno = AplicarRetorno(movimento, item, dto);
+
+                if (dto != null && string.IsNullOrWhiteSpace(dto.Situacao))
+                    retorno.SituacaoBancoBr = dto.Agendamento ? BancoBrSituacaoEnum.Agendado : BancoBrSituacaoEnum.Efetivado;
+
+                return retorno;
             }
         }
 
@@ -280,7 +285,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Ted
             item.IdAgendamento = dto.IdAgendamento;
             item.Agendado = dto.Agendamento;
             item.Situacao = dto.Situacao;
-            item.CodigoSituacaoAgendamento = dto.CodigoSituacaoAgendamento;
+            item.CodigoSituacaoAgendamento = dto.CodigoSituacaoAgendamento != 0 ? dto.CodigoSituacaoAgendamento : dto.CodSituacaoAgendamento;
             item.MensagemErro = dto.MensagemErro;
             item.TipoPessoaDebito = dto.TipoPessoaDebito;
             item.NomePessoaDebito = dto.NomePessoaDebito;

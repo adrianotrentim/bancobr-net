@@ -48,6 +48,9 @@ namespace BancoBr.API.Sicoob.Pagamentos.Ted.Models
         [JsonProperty("codigoSituacaoAgendamento")]
         public int CodigoSituacaoAgendamento { get; set; }
 
+        [JsonProperty("codSituacaoAgendamento")]
+        public int CodSituacaoAgendamento { get; set; }
+
         [JsonProperty("debtorAccount")]
         public DebtorAccount DebtorAccount { get; set; }
 

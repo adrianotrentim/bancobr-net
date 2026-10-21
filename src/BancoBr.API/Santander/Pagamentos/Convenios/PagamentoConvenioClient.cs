@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using BancoBr.API.Base;
@@ -75,7 +76,7 @@ namespace BancoBr.API.Santander.Pagamentos.Convenios
                 throw new InvalidOperationException("Informe o código de barras (CodigoBarra) do convênio.");
 
             var workspace = ResolverWorkspace();
-            var dto = await _gateway.IniciarPagamentoCodigoAsync(_baseUrl, Recurso, workspace.WorkspaceId, item.CodigoBarra.JustNumbers(), movimento.DataPagamento, cancellationToken).ConfigureAwait(false);
+            var dto = await _gateway.IniciarPagamentoCodigoAsync(_baseUrl, Recurso, workspace.WorkspaceId, ParaLinhaDigitavel(item.CodigoBarra.JustNumbers()), movimento.DataPagamento, cancellationToken).ConfigureAwait(false);
 
             return AplicarResposta(movimento, item, dto);
         }
@@ -130,6 +131,67 @@ namespace BancoBr.API.Santander.Pagamentos.Convenios
         /// </summary>
         private (string WorkspaceId, ContaDebito Conta) ResolverWorkspace() =>
             SantanderHttpGateway.UsarWorkspace(_idWorkspace, Origem, "Convênios");
+
+        #endregion
+
+        #region ::. Código .::
+
+        /// <summary>
+        /// O Santander espera a linha digitável (48 dígitos, com o DV de cada bloco de 11). Quando
+        /// vem o código de barras (44 dígitos), cada DV é recalculado: módulo 10 se o 3º dígito é
+        /// 6 ou 7, módulo 11 se é 8 ou 9. Vai sem traços nem espaços, com o DV colado ao bloco de 11
+        /// dígitos e um ponto entre os blocos (<c>858200000074.293703852623.930716262907.705041379220</c>).
+        /// Qualquer outro tamanho segue como veio.
+        /// </summary>
+        private static string ParaLinhaDigitavel(string codigo)
+        {
+            if (codigo.Length == 48)
+                return string.Join(".", Enumerable.Range(0, 4).Select(bloco => codigo.Substring(bloco * 12, 12)));
+
+            if (codigo.Length != 44)
+                return codigo;
+
+            var modulo10 = codigo[2] == '6' || codigo[2] == '7';
+            var blocos = new string[4];
+
+            for (var bloco = 0; bloco < 4; bloco++)
+            {
+                var campo = codigo.Substring(bloco * 11, 11);
+                blocos[bloco] = $"{campo}{(modulo10 ? DigitoModulo10(campo) : DigitoModulo11(campo))}";
+            }
+
+            return string.Join(".", blocos);
+        }
+
+        private static int DigitoModulo10(string campo)
+        {
+            var soma = 0;
+            var peso = 2;
+
+            for (var i = campo.Length - 1; i >= 0; i--)
+            {
+                var produto = (campo[i] - '0') * peso;
+                soma += produto / 10 + produto % 10;
+                peso = peso == 2 ? 1 : 2;
+            }
+
+            return (10 - soma % 10) % 10;
+        }
+
+        private static int DigitoModulo11(string campo)
+        {
+            var soma = 0;
+            var peso = 2;
+
+            for (var i = campo.Length - 1; i >= 0; i--)
+            {
+                soma += (campo[i] - '0') * peso;
+                peso = peso == 9 ? 2 : peso + 1;
+            }
+
+            var digito = 11 - soma % 11;
+            return digito >= 10 ? 0 : digito;
+        }
 
         #endregion
 

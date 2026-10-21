@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BancoBr.API.Core.Errors
 {
@@ -34,8 +35,7 @@ namespace BancoBr.API.Core.Errors
                 return "Erro de negócio retornado pela API do banco.";
             }
 
-            var primeira = mensagens[0];
-            return $"[{primeira.Codigo}] {primeira.Mensagem}";
+            return string.Join("; ", mensagens.Select(m => $"[{m.Codigo}] {m.Mensagem}"));
         }
     }
 }

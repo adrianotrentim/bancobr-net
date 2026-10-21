@@ -14,6 +14,7 @@ using BancoBr.API.Sicoob.Pagamentos.Pix;
 using BancoBr.API.Sicoob.Pagamentos.Ted;
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
+using SantanderComprovanteClient = BancoBr.API.Santander.Pagamentos.Comprovantes.ComprovanteClient;
 using SantanderExtratoClient = BancoBr.API.Santander.ContaCorrente.ExtratoClient;
 using SantanderPagamentoBoletoClient =BancoBr.API.Santander.Pagamentos.Boletos.PagamentoBoletoClient;
 using SantanderPagamentoConvenioClient = BancoBr.API.Santander.Pagamentos.Convenios.PagamentoConvenioClient;
@@ -86,7 +87,8 @@ namespace BancoBr.API
                         new SantanderPagamentoPixClient(clientId, clientSecret, certificateSource, origem, tokenEndpointOverride, idWorkspace),
                         new SantanderPagamentoTedClient(clientId, clientSecret, certificateSource, origem, tokenEndpointOverride, idWorkspace),
                         new SantanderExtratoClient(clientId, clientSecret, certificateSource, origem, tokenEndpointOverride),
-                        new SantanderWorkspaceClient(clientId, clientSecret, certificateSource, origem, tokenEndpointOverride));
+                        new SantanderWorkspaceClient(clientId, clientSecret, certificateSource, origem, tokenEndpointOverride),
+                        new SantanderComprovanteClient(clientId, clientSecret, certificateSource, origem, tokenEndpointOverride, idWorkspace));
 
                 default:
                     throw new Exception($"Banco não implementado: {configuracao.Correntista.Banco}!");
@@ -126,7 +128,8 @@ namespace BancoBr.API
                         new SantanderPagamentoPixClient(clientId, certificateSource, tokenProvider, origem, idWorkspace),
                         new SantanderPagamentoTedClient(clientId, certificateSource, tokenProvider, origem, idWorkspace),
                         new SantanderExtratoClient(clientId, certificateSource, tokenProvider, origem),
-                        new SantanderWorkspaceClient(clientId, certificateSource, tokenProvider, origem));
+                        new SantanderWorkspaceClient(clientId, certificateSource, tokenProvider, origem),
+                        new SantanderComprovanteClient(clientId, certificateSource, tokenProvider, origem, idWorkspace));
 
                 default:
                     throw new Exception($"Banco não implementado: {configuracao.Correntista.Banco}!");
@@ -140,9 +143,10 @@ namespace BancoBr.API
         private readonly PagamentoTedApiBase _ted;
         private readonly ContaCorrenteApiBase _contaCorrente;
         private readonly WorkspaceApiBase _workspace;
+        private readonly ComprovanteApiBase _comprovante;
 
-        private BancoApi(Correntista origem, PagamentoBoletoApiBase boleto, PagamentoConvenioApiBase convenio, PagamentoPixApiBase pix, PagamentoTedApiBase ted, ContaCorrenteApiBase contaCorrente, WorkspaceApiBase workspace = null) =>
-            (_origem, _boleto, _convenio, _pix, _ted, _contaCorrente, _workspace) = (origem, boleto, convenio, pix, ted, contaCorrente, workspace);
+        private BancoApi(Correntista origem, PagamentoBoletoApiBase boleto, PagamentoConvenioApiBase convenio, PagamentoPixApiBase pix, PagamentoTedApiBase ted, ContaCorrenteApiBase contaCorrente, WorkspaceApiBase workspace = null, ComprovanteApiBase comprovante = null) =>
+            (_origem, _boleto, _convenio, _pix, _ted, _contaCorrente, _workspace, _comprovante) = (origem, boleto, convenio, pix, ted, contaCorrente, workspace, comprovante);
 
         /// <summary>
         /// Só Santander. Consulta as workspaces do Hub de Pagamentos e devolve o id da workspace
@@ -246,8 +250,9 @@ namespace BancoBr.API
         }
 
         /// <summary>
-        /// Só Santander, e só Pix (chave ou Copia e Cola). Obtém o link do comprovante (PDF) de um
-        /// pagamento já efetivado — o id do pagamento vem de <see cref="Movimento.NumeroDocumentoNoBanco"/> —
+        /// Só Santander, para qualquer tipo de pagamento (Pix, TED, boleto e convênio). Obtém o link
+        /// do comprovante (PDF) de um pagamento já efetivado — o id do pagamento vem de
+        /// <see cref="Movimento.NumeroDocumentoNoBanco"/> —
         /// e o devolve em <see cref="Movimento.LinkComprovanteBancoBr"/> (com a validade em
         /// <see cref="Movimento.ValidadeLinkComprovanteBancoBr"/>), junto da situação atualizada do pagamento.
         /// O banco pode demorar a gerar o arquivo: se ele não ficar pronto durante a chamada, o link
@@ -255,15 +260,9 @@ namespace BancoBr.API
         /// </summary>
         public Task<Movimento> ConsultarComprovanteAsync(Movimento movimento, CancellationToken cancellationToken = default)
         {
-            switch (ExtrairItem(movimento))
-            {
-                case MovimentoItemTransferenciaPIX _:
-                case MovimentoItemPagamentoTituloPIXQRCode _:
-                    return Requer(_pix).ConsultarComprovanteAsync(movimento, cancellationToken);
+            ExtrairItem(movimento);
 
-                default:
-                    throw OperacaoNaoSuportada("consulta de comprovante", movimento);
-            }
+            return Requer(_comprovante).ConsultarComprovanteAsync(movimento, cancellationToken);
         }
 
         /// <summary>

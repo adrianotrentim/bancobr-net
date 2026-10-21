@@ -4,6 +4,26 @@ using Newtonsoft.Json;
 
 namespace BancoBr.API.Santander.Pagamentos.Models
 {
+    /// <summary>
+    /// Só o que o comprovante precisa de qualquer consulta de pagamento (Pix, TED, boleto ou
+    /// código de barras): o status e o <c>transaction.code</c>, que identifica o pagamento na
+    /// API de comprovantes. O resto da resposta varia por modalidade e é ignorado.
+    /// </summary>
+    internal class PagamentoTransacaoResponse
+    {
+        [JsonProperty("status")]
+        public string Status { get; set; }
+
+        [JsonProperty("transaction")]
+        public PagamentoTransacao Transaction { get; set; }
+    }
+
+    internal class PagamentoTransacao
+    {
+        [JsonProperty("code")]
+        public string Code { get; set; }
+    }
+
     /// <summary>Resposta do GET <c>file_requests</c> (lista de solicitações do comprovante de um pagamento).</summary>
     internal class ComprovanteListaResponse
     {
