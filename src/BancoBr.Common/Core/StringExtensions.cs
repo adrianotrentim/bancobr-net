@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace BancoBr.Common.Core
@@ -54,6 +55,13 @@ namespace BancoBr.Common.Core
         /// letras.
         /// </summary>
         public static string RemoveMascaraCpfCnpj(this string value) => value?.Replace(".", "").Replace("-", "").Replace("/", "");
+
+        /// <summary>
+        /// Converte um valor em texto no formato pt-BR (milhar com ponto, decimal com vírgula,
+        /// ex.: "1.748,31") para <see cref="decimal"/>; devolve 0 se o texto for vazio ou inválido.
+        /// </summary>
+        public static decimal ToDecimalPtBr(this string value) =>
+            decimal.TryParse(value, NumberStyles.Number, CultureInfo.GetCultureInfo("pt-BR"), out var resultado) ? resultado : 0;
 
         public static string Truncate(this string value, int length)
         {

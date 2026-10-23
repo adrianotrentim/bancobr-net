@@ -245,15 +245,17 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
                 CodigoTipoSituacaoBoleto = (int)situacao,
                 DescricaoSituacaoBoleto = titleSituation,
                 NumeroCodigoBarras = dto.Code.JustNumbers(),
-                ValorBoleto = dto.NominalValue.GetValueOrDefault(),
+                ValorBoleto = dto.NominalValue.ToDecimalPtBr(),
                 DataVencimentoBoleto = dto.DueDate.GetValueOrDefault(),
                 DataLimitePagamento = dto.PaymentLimitDate,
+                TipoPessoaPagador = dto.PayerDocumentType,
                 NumeroCpfCnpjPagador = dto.PayerDocumentNumber,
+                NomeRazaoSocialPagador = dto.PayerName?.Trim(),
                 NumeroNossoNumero = dto.BankIdentificationNumber,
-                NumeroDocumento = dto.BeneficiaryIdentificationNumber,
-                TipoPessoaBeneficiario = dto.Beneficiary?.DocumentType ?? dto.BeneficiaryType,
-                NumeroCpfCnpjBeneficiario = dto.Beneficiary?.DocumentNumber ?? dto.BeneficiaryDocument,
-                NomeRazaoSocialBeneficiario = dto.Beneficiary?.Name ?? dto.BeneficiaryName,
+                NumeroDocumento = dto.Beneficiary?.IdentificationNumber,
+                TipoPessoaBeneficiario = dto.Beneficiary?.Type,
+                NumeroCpfCnpjBeneficiario = dto.Beneficiary?.Document,
+                NomeRazaoSocialBeneficiario = dto.Beneficiary?.Name?.Trim(),
             };
 
             if (int.TryParse(dto.KindCode, out var especie))
