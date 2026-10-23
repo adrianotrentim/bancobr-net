@@ -180,7 +180,7 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
             const int limite = 200;
             var movimentos = new List<Movimento>();
 
-            for (var pagina = 1; ; pagina++)
+            for (var pagina = 0; ; pagina++)
             {
                 var url = $"{_baseUrl}workspaces/{workspace.WorkspaceId}/authorized_direct_debits?_limit={limite}&_PageNumber={pagina}" +
                           $"&initialDueDate={dataInicial:yyyy-MM-dd}&finalDueDate={dataFinal:yyyy-MM-dd}&titleSituation={titleSituation}";
