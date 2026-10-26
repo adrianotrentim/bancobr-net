@@ -311,6 +311,9 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
                 item.PagadorConfirmadoTipoPessoa = dto.Payer.DocumentType;
             }
 
+            if (!string.IsNullOrWhiteSpace(dto.Beneficiary?.Name))
+                item.NomeFantasiaBeneficiario = dto.Beneficiary.Name.Trim();
+
             AplicarBeneficiario(movimento, dto.Beneficiary);
 
             return movimento;
