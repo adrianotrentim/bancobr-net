@@ -160,32 +160,24 @@ namespace BancoBr.API
             var boleto = new Sicredi.PagamentosClient(gateway(new[] { "multipag.boleto.pagar", "multipag.boleto.consultar" }));
             var convenio = new Sicredi.PagamentosClient(gateway(new[] { "multipag.tributos.pagar", "multipag.tributos.consultar" }));
             var pix = new Sicredi.PagamentosClient(gateway(new[] { "multipag.pix.pagar", "multipag.pix.consultar" }));
-            var api = new BancoApi(config.Correntista, new Sicredi.PagamentoBoletoClient(boleto, new Sicredi.DdaClient(gateway(new[] { "multipag.dda.consultar" }))), new Sicredi.PagamentoConvenioClient(convenio),
-                new Sicredi.PagamentoPixClient(pix), null, new Sicredi.ExtratoClient(gateway(new[] { "contacorrente.extratos.consultar" })));
-            api._sicrediSaldo = new Sicredi.ExtratoClient(gateway(new[] { "contacorrente.saldo.consultar" }));
-            api._sicrediPagamentos = new[] { boleto, convenio, pix };
-            return api;
+            var multipag = new Sicredi.MultipagClient(boleto, convenio, pix);
+            return new BancoApi(config.Correntista,
+                new Sicredi.PagamentoBoletoClient(boleto, new Sicredi.DdaClient(gateway(new[] { "multipag.dda.consultar" }))),
+                new Sicredi.PagamentoConvenioClient(convenio), new Sicredi.PagamentoPixClient(pix), null,
+                new Sicredi.ExtratoClient(gateway(new[] { "contacorrente.extratos.consultar" })),
+                saldo: new Sicredi.ExtratoClient(gateway(new[] { "contacorrente.saldo.consultar" })),
+                pagamentoDireto: multipag, comprovanteBinario: multipag);
         }
 
-        private Sicredi.ExtratoClient _sicrediSaldo;
-        private Sicredi.PagamentosClient[] _sicrediPagamentos;
-
-        /// <summary>Consulta o saldo atual da conta vinculada às credenciais Sicredi.</summary>
+        /// <summary>Consulta o saldo atual da conta vinculada às credenciais, quando suportado pelo banco.</summary>
         public Task<Movimento> ConsultarSaldoAsync(CancellationToken cancellationToken = default)
-            => Requer(_sicrediSaldo).ConsultarSaldoAsync(cancellationToken);
+            => Requer(_saldo).ConsultarSaldoAsync(cancellationToken);
 
-        /// <summary>Baixa o PDF binário do comprovante Multipag Sicredi. Disponível após SUCESSO.</summary>
+        /// <summary>Baixa o comprovante em PDF binário, quando suportado pelo banco. No Sicredi, disponível após SUCESSO.</summary>
         public Task<byte[]> BaixarComprovanteAsync(Movimento movimento, CancellationToken cancellationToken = default)
         {
             ExtrairItem(movimento);
-            return ObterPagamentosSicredi(movimento).ComprovanteAsync(movimento, cancellationToken);
-        }
-
-        private Sicredi.PagamentosClient ObterPagamentosSicredi(Movimento m)
-        {
-            var clientes = Requer(_sicrediPagamentos);
-            var recurso = Sicredi.PagamentosClient.Recurso(m);
-            return clientes[recurso == "boletos" ? 0 : recurso == "tributos/barras" ? 1 : 2];
+            return Requer(_comprovanteBinario).BaixarComprovanteAsync(movimento, cancellationToken);
         }
 
         private static BancoApi ConectarBancoDoBrasil(ConfiguracaoAPI configuracao, Uri tokenEndpoint, IAccessTokenProvider tokenProvider)
@@ -231,9 +223,16 @@ namespace BancoBr.API
         private readonly ContaCorrenteApiBase _contaCorrente;
         private readonly WorkspaceApiBase _workspace;
         private readonly ComprovanteApiBase _comprovante;
+        private readonly ISaldoApi _saldo;
+        private readonly IPagamentoDiretoApi _pagamentoDireto;
+        private readonly IComprovanteBinarioApi _comprovanteBinario;
 
-        private BancoApi(Correntista origem, PagamentoBoletoApiBase boleto, PagamentoConvenioApiBase convenio, PagamentoPixApiBase pix, PagamentoTedApiBase ted, ContaCorrenteApiBase contaCorrente, WorkspaceApiBase workspace = null, ComprovanteApiBase comprovante = null) =>
+        private BancoApi(Correntista origem, PagamentoBoletoApiBase boleto, PagamentoConvenioApiBase convenio, PagamentoPixApiBase pix, PagamentoTedApiBase ted, ContaCorrenteApiBase contaCorrente, WorkspaceApiBase workspace = null, ComprovanteApiBase comprovante = null,
+            ISaldoApi saldo = null, IPagamentoDiretoApi pagamentoDireto = null, IComprovanteBinarioApi comprovanteBinario = null)
+        {
             (_origem, _boleto, _convenio, _pix, _ted, _contaCorrente, _workspace, _comprovante) = (origem, boleto, convenio, pix, ted, contaCorrente, workspace, comprovante);
+            (_saldo, _pagamentoDireto, _comprovanteBinario) = (saldo, pagamentoDireto, comprovanteBinario);
+        }
 
         /// <summary>
         /// Só Santander. Consulta as workspaces do Hub de Pagamentos e devolve o id da workspace
@@ -264,10 +263,10 @@ namespace BancoBr.API
         /// </summary>
         public async Task<Movimento> EnviarAgendamentoAsync(Movimento movimento, string idempotencyKey = null, int unidade = 0, CancellationToken cancellationToken = default)
         {
-            if (_sicrediPagamentos != null)
+            if (_pagamentoDireto != null)
             {
                 ExtrairItem(movimento);
-                return await ObterPagamentosSicredi(movimento).PagarAsync(movimento, idempotencyKey, cancellationToken).ConfigureAwait(false);
+                return await _pagamentoDireto.EnviarAsync(movimento, idempotencyKey, cancellationToken).ConfigureAwait(false);
             }
             switch (ExtrairItem(movimento))
             {
@@ -367,10 +366,10 @@ namespace BancoBr.API
         /// </summary>
         public Task<Movimento> CancelarAgendamentoAsync(Movimento movimento, string idempotencyKey = null, CancellationToken cancellationToken = default)
         {
-            if (_sicrediPagamentos != null)
+            if (_pagamentoDireto != null)
             {
                 ExtrairItem(movimento);
-                return ObterPagamentosSicredi(movimento).CancelarAsync(movimento, cancellationToken);
+                return _pagamentoDireto.CancelarAsync(movimento, cancellationToken);
             }
             switch (ExtrairItem(movimento))
             {

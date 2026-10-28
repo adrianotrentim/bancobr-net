@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,7 +26,7 @@ namespace BancoBr.API.Sicredi
         {
             if (m.DataPagamento == default || m.ValorPagamento < 0) throw new ArgumentException("Informe data e valor do pagamento.");
             var body = Gateway.Conta();
-            body["dataPagamento"] = m.DataPagamento.ToString("yyyy-MM-dd");
+            body["dataPagamento"] = m.DataPagamento.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
             body["valorPagamento"] = m.ValorPagamento;
             var identificador = m.NumeroDocumento;
             if (string.IsNullOrWhiteSpace(identificador) || identificador.Length > 100)
@@ -92,6 +93,51 @@ namespace BancoBr.API.Sicredi
 
         private static void Aplicar(Movimento m, JObject r)
         {
+            // Respostas parciais de situação preservam os dados já conhecidos do lançamento.
+            var valor = r.Value<decimal?>("valorPagamento");
+            if (valor.HasValue) m.ValorPagamento = valor.Value;
+            var data = r.Value<DateTime?>("dataPagamento");
+            if (data.HasValue) m.DataPagamento = data.Value;
+            var documento = r.Value<string>("identificadorPagamentoAssociado");
+            if (documento != null) m.NumeroDocumento = documento;
+            var idTransacao = r.Value<string>("idTransacao");
+            if (!string.IsNullOrWhiteSpace(idTransacao))
+            {
+                m.NumeroDocumentoNoBanco = idTransacao;
+                m.IdRequisicaoBancoBr = idTransacao;
+            }
+
+            var codigoBarra = r.Value<string>("codigoBarra");
+            if (m.MovimentoItem is MovimentoItemPagamentoTituloCodigoBarra boleto && codigoBarra != null)
+                boleto.CodigoBarras = codigoBarra;
+            if (m.MovimentoItem is MovimentoItemPagamentoConvenioCodigoBarra tributo)
+            {
+                if (codigoBarra != null) tributo.CodigoBarra = codigoBarra;
+                var idFgts = r.Value<string>("idFgts");
+                if (idFgts != null) tributo.IdentificadorFgts = idFgts;
+            }
+            if (m.MovimentoItem is MovimentoItemTransferenciaPIX pix)
+            {
+                var chavePix = r.Value<string>("chavePix");
+                if (chavePix != null) pix.ChavePIX = chavePix;
+                var nome = r.Value<string>("nomeBeneficiario");
+                var cpfCnpj = r.Value<string>("documentoBeneficiario");
+                if (nome != null || cpfCnpj != null)
+                {
+                    if (m.Favorecido == null) m.Favorecido = new Favorecido();
+                    if (nome != null)
+                    {
+                        m.Favorecido.Nome = nome;
+                        pix.TitularConfirmadoNome = nome;
+                    }
+                    if (cpfCnpj != null)
+                    {
+                        m.Favorecido.CPF_CNPJ = cpfCnpj;
+                        pix.TitularConfirmadoDocumento = cpfCnpj;
+                    }
+                }
+            }
+
             var status = (string)r["status"];
             m.SituacaoOriginalBancoBr = status;
             switch (status)

@@ -13,6 +13,8 @@ A fachada `BancoApi` suporta envio, consulta e cancelamento de boleto, tributo/c
 
 O Sicredi não oferece consulta prévia de boleto ou tributo por código, nem resolução prévia de chave Pix. Informe valor, data e `NumeroDocumento` (identificador do associado, até 100 caracteres) antes de enviar. Código de barras deve conter 44 dígitos; converta linhas digitáveis antes de chamar. Para Pix, informe também `Favorecido.CPF_CNPJ` e preferencialmente `Favorecido.Nome`. Para FGTS, informe `IdentificadorFgts = "0181"` no item de convênio.
 
+As datas enviadas usam calendário gregoriano e formato ISO `yyyy-MM-dd`, independentemente da cultura da aplicação. Ao consultar por `NumeroDocumentoNoBanco`, a resposta recupera valor, data, identificador do associado e `idTransacao`; também atualiza o código de barras, o identificador FGTS ou a chave e o beneficiário Pix, conforme a modalidade e os campos presentes. Campos ausentes ou nulos preservam os dados já conhecidos.
+
 `RECEBIDO`, `AGENDADO`, `AGUARDANDO_APROVACAO` e `APROVADO` são normalizados como `Agendado`, nunca como liquidação. Somente `SUCESSO` é `Efetivado`. `SituacaoOriginalBancoBr` preserva o status original. A aprovação é realizada nos canais digitais do Sicredi.
 
 `IdRequisicaoBancoBr` guarda o `idTransacao` antes do envio; `NumeroDocumentoNoBanco` recebe esse mesmo valor após resposta de criação aceita. O UUID interno do Sicredi e o endToEnd Pix não são usados como chave de consulta. Persista a identidade de cada lançamento antes de enviar e reutilize-a em caso de timeout; consulte pelo `idTransacao` para reconciliar o resultado antes de reenviar. A biblioteca não presume garantia de deduplicação do servidor nem repete pagamentos após erros de transporte/5xx. Somente HTTP 401 causa uma renovação e repetição, mantendo o mesmo corpo.
@@ -75,4 +77,4 @@ O console fixa homologação, consulta saldo/extrato e, se houver ID, consulta p
 
 ## Validação desta implementação
 
-Compilação da solução aprovada e 162 testes locais aprovados, incluindo 21 cenários Sicredi com HTTP simulado. O console foi executado e retornou saída 2: credenciais, certificado e identificação da conta de homologação ausentes. Portanto, comunicação autenticada com o Sicredi e homologação bancária permanecem pendentes.
+Compilação da solução aprovada e 176 testes locais aprovados, incluindo 35 cenários Sicredi com HTTP simulado. O console foi executado e retornou saída 2: credenciais, certificado e identificação da conta de homologação ausentes. Portanto, comunicação autenticada com o Sicredi e homologação bancária permanecem pendentes.
