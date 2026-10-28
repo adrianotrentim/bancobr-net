@@ -5,6 +5,7 @@
 [![BancoBr.CNAB](https://img.shields.io/nuget/v/BancoBr.CNAB.svg?label=BancoBr.CNAB)](https://www.nuget.org/packages/BancoBr.CNAB/)
 [![Downloads](https://img.shields.io/nuget/dt/BancoBr.CNAB.svg)](https://www.nuget.org/packages/BancoBr.CNAB/)
 
+[![Target Frameworks](https://img.shields.io/badge/.NET%20Standard-netstandard2.0-blue.svg)](https://dotnet.microsoft.com/)
 [![GitHub contributors](https://img.shields.io/github/contributors/adrianotrentim/bancobr-net)](https://github.com/adrianotrentim/bancobr-net/graphs/contributors) [![GitHub issues](https://img.shields.io/github/issues/adrianotrentim/bancobr-net)](https://github.com/adrianotrentim/bancobr-net/issues) [![GitHub issues-pr](https://img.shields.io/github/issues-pr/adrianotrentim/bancobr-net)](https://github.com/adrianotrentim/bancobr-net/pulls) [![GitHub](https://img.shields.io/github/license/adrianotrentim/bancobr-net)](https://github.com/adrianotrentim/bancobr-net/blob/main/LICENSE)
 
 Biblioteca para integração bancária para pagamentos de contas, transferências e PIX.
