@@ -263,12 +263,11 @@ namespace BancoBr.Tests.Santander
             await Assert.ThrowsAsync<NotSupportedException>(() => client.ConsultarComprovantePorIdempotencyAsync("chave"));
         }
 
-        private static string PaginaDda(int quantidade) => @"{ ""_limit"": 200, ""_pageNumber"": 1, ""_pageElements"": " + quantidade + @", ""_content"": [" +
+        private static string PaginaDda(int quantidade) => @"{ ""pageable"": { ""_limit"": 200, ""_pageNumber"": 1, ""_pageElements"": " + quantidade + @" }, ""content"": [" +
             string.Join(",", Enumerable.Range(0, quantidade).Select(_ => @"{
                 ""code"": ""03391234500000150001234567890123456789012345"", ""authorizedDirectDebitId"": ""987654321"", ""bankIdentificationNumber"": ""1234567890123"",
-                ""kindCode"": ""2"", ""dueDate"": ""2026-10-20"", ""paymentLimitDate"": ""2026-11-20"", ""nominalValue"": 150.00, ""payerDocumentNumber"": ""11222333000181"",
-                ""beneficiaryIdentificationNumber"": ""NF-123"",
-                ""beneficiary"": { ""name"": ""Fornecedor LTDA"", ""documentType"": ""CNPJ"", ""documentNumber"": ""12345678000100"" }
+                ""kindCode"": ""2"", ""dueDate"": ""2026-10-20"", ""paymentLimitDate"": ""2026-11-20"", ""nominalValue"": ""150,00"", ""payerDocumentNumber"": ""11222333000181"",
+                ""beneficiary"": { ""beneficiaryName"": ""Fornecedor LTDA"", ""beneficiaryType"": ""CNPJ"", ""beneficiaryDocument"": ""12345678000100"", ""beneficiaryIdentificationNumber"": ""NF-123"" }
             }")) + "]}";
 
         [Fact]
@@ -348,7 +347,8 @@ namespace BancoBr.Tests.Santander
             var post = handler.Requests[0];
             Assert.Equal(HttpMethod.Post, post.Method);
             Assert.Equal($"{BaseUrl}/workspaces/ws-1/barcode_payments", post.RequestUri!.ToString());
-            Assert.Equal(@"{""code"":""" + CodigoBarrasConvenio + @"""}", handler.Bodies[0]);
+            // O cliente converte o código de 44 posições para a linha digitável com DVs.
+            Assert.Equal(@"{""code"":""826400000012.234567890129.345678901231.456789012345""}", handler.Bodies[0]);
 
             Assert.Equal(PaymentId, resultado.NumeroDocumentoNoBanco);
             Assert.Equal(89.90m, resultado.ValorPagamento);

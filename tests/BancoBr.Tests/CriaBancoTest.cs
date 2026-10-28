@@ -3,6 +3,7 @@ using BancoBr.CNAB.Core;
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
 using Xunit;
+using System.Globalization;
 
 namespace BancoBr.Tests
 {
@@ -61,7 +62,7 @@ namespace BancoBr.Tests
                     Favorecido = new Favorecido
                     {
                         TipoPessoa = TipoInscricaoCPFCNPJEnum.CPF,
-                        CPF_CNPJ = "123.456.789-00",
+                        CPF_CNPJ = "529.982.247-25",
                         Nome = "Fornecedor A BancoBR.Net",
                         Endereco = "Rua Teste Fornecedor A BancoBR.Net",
                         NumeroEndereco = "765",
@@ -106,7 +107,7 @@ namespace BancoBr.Tests
                     Favorecido = new Favorecido()
                     {
                         TipoPessoa = TipoInscricaoCPFCNPJEnum.CPF,
-                        CPF_CNPJ = "123.456.789-00",
+                        CPF_CNPJ = "529.982.247-25",
                         Nome = "Fornecedor B BancoBR.Net",
                         Endereco = "Rua Teste Fornecedor B BancoBR.Net",
                         NumeroEndereco = "765",
@@ -141,13 +142,10 @@ namespace BancoBr.Tests
             var cnab = new ArquivoCNAB(banco, correntista, numeroArquivo, localDebito, tipoServico, movimentos);
             var stringArquivo = cnab.Exportar();
 
-            var path = AppDomain.CurrentDomain.BaseDirectory + "..\\..\\..\\ArquivosGerados";
-            File.WriteAllText(Path.Combine(path, $"cnab240_{banco}_TED.txt"), stringArquivo);
-
             #region ::. Testes Básicos .::
 
             //Todas as linhas devem conter exatamente 240 caracteres
-            foreach (var linha in stringArquivo.Split("\r\n"))
+            foreach (var linha in stringArquivo.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
             {
                 if (string.IsNullOrWhiteSpace(linha))
                     continue; // Fim do Arquivo deve ter uma linha em branco
@@ -163,13 +161,10 @@ namespace BancoBr.Tests
             cnab = new ArquivoCNAB(banco, correntista, numeroArquivo, localDebito, tipoServico, movimentos);
             stringArquivo = cnab.Exportar();
 
-            path = AppDomain.CurrentDomain.BaseDirectory + "..\\..\\..\\ArquivosGerados";
-            File.WriteAllText(Path.Combine(path, $"cnab240_{banco}_PIX.txt"), stringArquivo);
-
             #region ::. Testes Básicos .::
 
             //Todas as linhas devem conter exatamente 240 caracteres
-            foreach (var linha in stringArquivo.Split("\r\n"))
+            foreach (var linha in stringArquivo.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
             {
                 if (string.IsNullOrWhiteSpace(linha))
                     continue; // Fim do Arquivo deve ter uma linha em branco
@@ -180,28 +175,51 @@ namespace BancoBr.Tests
             #endregion
         }
 
+        [Theory]
+        [InlineData("en-US", 28, 10)]
+        [InlineData("en-US", 5, 4)]
+        [InlineData("pt-BR", 28, 10)]
+        [InlineData("pt-BR", 5, 4)]
+        public static void ImportacaoRetorno_PreservaDataIndependentementeDaCultura(string cultura, int dia, int mes)
+        {
+            var culturaAnterior = CultureInfo.CurrentCulture;
+            try
+            {
+                CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(cultura);
+                var dados = CNAB240.First();
+                var data = new DateTime(2026, mes, dia);
+                var movimentos = CriarMovimentoTransferenciaTED();
+                movimentos[0].DataPagamento = data;
+                var remessa = new ArquivoCNAB((BancoEnum)dados[0], (Correntista)dados[1], (int)dados[2],
+                    (LocalDebitoEnum)dados[3], (TipoServicoEnum)dados[4], movimentos);
+                remessa.Header.DataGeracao = data;
+                var linhas = remessa.Exportar().Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                var retorno = new ArquivoCNAB((BancoEnum)dados[0]);
+
+                retorno.Importar(linhas);
+
+                Assert.Equal(data, Assert.Single(retorno.Movimentos).DataPagamento);
+            }
+            finally
+            {
+                CultureInfo.CurrentCulture = culturaAnterior;
+            }
+        }
+
         [Theory, MemberData("CNAB240")]
         public static void ImportacaoRetorno(BancoEnum banco, Correntista correntista, int numeroArquivo, LocalDebitoEnum localDebito, TipoServicoEnum tipoServico)
         {
-            var path = AppDomain.CurrentDomain.BaseDirectory + "..\\..\\..\\ArquivosGerados";
-            var fileName = Path.Combine(path, $"cnab240_{banco}_TED.txt");
+            // Cada cenário produz sua própria entrada, sem depender da ordem dos testes.
+            foreach (var movimentos in new[] { CriarMovimentoTransferenciaTED(), CriarMovimentoTransferenciaPIX() })
+            {
+                var remessa = new ArquivoCNAB(banco, correntista, numeroArquivo, localDebito, tipoServico, movimentos);
+                var linhas = remessa.Exportar().Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                var cnabLeitura = new ArquivoCNAB(banco);
 
-            var linhas = File.ReadLines(fileName);
+                cnabLeitura.Importar(linhas);
 
-            var cnabLeitura = new ArquivoCNAB(banco);
-            cnabLeitura.Importar(linhas);
-
-            File.Delete(fileName);
-
-            path = AppDomain.CurrentDomain.BaseDirectory + "..\\..\\..\\ArquivosGerados";
-            fileName = Path.Combine(path, $"cnab240_{banco}_PIX.txt");
-
-            linhas = File.ReadLines(fileName);
-
-            cnabLeitura = new ArquivoCNAB(banco);
-            cnabLeitura.Importar(linhas);
-
-            File.Delete(fileName);
+                Assert.Equal(movimentos.Count, cnabLeitura.Movimentos.Count());
+            }
         }
     }
 }

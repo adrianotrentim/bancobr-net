@@ -18,6 +18,12 @@ namespace BancoBr.API.Core.OAuth
         /// </summary>
         public string ClientSecret { get; set; }
 
+        /// <summary>
+        /// Envia client_id e client_secret no cabeçalho HTTP Basic, em vez do corpo,
+        /// conforme exigido pelo OAuth2 do Banco do Brasil. Padrão: credenciais no corpo.
+        /// </summary>
+        public bool UseBasicAuthentication { get; set; }
+
         public IReadOnlyList<string> Scopes { get; set; } = Array.Empty<string>();
     }
 }

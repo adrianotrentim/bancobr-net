@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
@@ -62,10 +64,14 @@ namespace BancoBr.API.Core.OAuth
             var formValues = new List<KeyValuePair<string, string>>
             {
                 new KeyValuePair<string, string>("grant_type", "client_credentials"),
-                new KeyValuePair<string, string>("client_id", _options.ClientId),
             };
 
-            if (!string.IsNullOrEmpty(_options.ClientSecret))
+            if (!_options.UseBasicAuthentication)
+            {
+                formValues.Add(new KeyValuePair<string, string>("client_id", _options.ClientId));
+            }
+
+            if (!_options.UseBasicAuthentication && !string.IsNullOrEmpty(_options.ClientSecret))
             {
                 formValues.Add(new KeyValuePair<string, string>("client_secret", _options.ClientSecret));
             }
@@ -77,27 +83,35 @@ namespace BancoBr.API.Core.OAuth
 
             using (var content = new FormUrlEncodedContent(formValues))
             using (var request = new HttpRequestMessage(HttpMethod.Post, _options.TokenEndpoint) { Content = content })
-            using (var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false))
             {
-                var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-                // EnsureSuccessStatusCode() descarta o corpo da resposta — para um erro de
-                // OAuth2 (ex.: "invalid_scope"), é exatamente nesse corpo que está o motivo
-                // real. Incluir aqui evita depurar às cegas quando um scope está errado/não
-                // habilitado para o app.
-                if (!response.IsSuccessStatusCode)
+                if (_options.UseBasicAuthentication)
                 {
-                    throw new HttpRequestException($"Falha ao obter token OAuth2 ({(int)response.StatusCode} {response.StatusCode}): {body}");
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Basic",
+                        Convert.ToBase64String(Encoding.UTF8.GetBytes(_options.ClientId + ":" + _options.ClientSecret)));
                 }
 
-                var root = JObject.Parse(body);
-                _cachedAccessToken = (string)root["access_token"];
+                using (var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false))
+                {
+                    var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-                var expiresInSeconds = root["expires_in"]?.Value<int>() ?? 0;
+                    // EnsureSuccessStatusCode() descarta o corpo da resposta — para um erro de
+                    // OAuth2 (ex.: "invalid_scope"), é exatamente nesse corpo que está o motivo
+                    // real. Incluir aqui evita depurar às cegas quando um scope está errado/não
+                    // habilitado para o app.
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        throw new HttpRequestException($"Falha ao obter token OAuth2 ({(int)response.StatusCode} {response.StatusCode}): {body}");
+                    }
 
-                // Renova um pouco antes do vencimento real para evitar usar um token expirado em trânsito.
-                var safetyMargin = TimeSpan.FromSeconds(Math.Min(30, expiresInSeconds / 4.0));
-                _expiresAt = DateTimeOffset.UtcNow.AddSeconds(expiresInSeconds) - safetyMargin;
+                    var root = JObject.Parse(body);
+                    _cachedAccessToken = (string)root["access_token"];
+
+                    var expiresInSeconds = root["expires_in"]?.Value<int>() ?? 0;
+
+                    // Renova um pouco antes do vencimento real para evitar usar um token expirado em trânsito.
+                    var safetyMargin = TimeSpan.FromSeconds(Math.Min(30, expiresInSeconds / 4.0));
+                    _expiresAt = DateTimeOffset.UtcNow.AddSeconds(expiresInSeconds) - safetyMargin;
+                }
             }
         }
     }

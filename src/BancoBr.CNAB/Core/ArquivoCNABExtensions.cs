@@ -7,6 +7,7 @@ using BancoBr.Common.Instances;
 using BancoBr.Common.Interfaces.CNAB;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -238,9 +239,8 @@ namespace BancoBr.CNAB.Core
                             }
                             else
                             {
-                                value = value.Substring(0, 2) + "/" + value.Substring(2, 2) + "/" + value.Substring(4, 4);
-
-                                valueObject = DateTime.Parse(value);
+                                // O CNAB usa dia, mês e ano fixos, independentemente da cultura do consumidor.
+                                valueObject = DateTime.ParseExact(value, "ddMMyyyy", CultureInfo.InvariantCulture);
                             }
                         }
                         else if (campoCNAB.Formatacao == "HHmmss")

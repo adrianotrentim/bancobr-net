@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
+using BancoBr.API.BancoDoBrasil.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using BancoBr.API.Base;
@@ -70,6 +72,8 @@ namespace BancoBr.API
 
             switch (banco)
             {
+                case BancoEnum.BancoDoBrasil:
+                    return ConectarBancoDoBrasil(configuracao, tokenEndpointOverride, null);
                 case BancoEnum.Sicoob:
                     return new BancoApi(
                         configuracao.Correntista,
@@ -98,8 +102,8 @@ namespace BancoBr.API
         /// <summary>
         /// Fluxo com token já emitido (ex.: portal de sandbox), pulando o fluxo OAuth2
         /// client_credentials — o mesmo token é reaproveitado pelos clientes internos.
-        /// Só <see cref="ConfiguracaoAPI.ClientId"/>, <see cref="ConfiguracaoAPI.CertificadoDigital"/>
-        /// e <see cref="ConfiguracaoAPI.IdWorkspace"/> (este só no Santander) são usados; <see cref="ConfiguracaoAPI.ClientSecret"/> é ignorado.
+        /// Usa certificado e configuração do banco (incluindo chave da aplicação, ambiente e contrato no BB).
+        /// <see cref="ConfiguracaoAPI.ClientSecret"/> é ignorado.
         /// </summary>
         public static BancoApi Conectar(ConfiguracaoAPI configuracao, IAccessTokenProvider tokenProvider)
         {
@@ -111,6 +115,8 @@ namespace BancoBr.API
 
             switch (banco)
             {
+                case BancoEnum.BancoDoBrasil:
+                    return ConectarBancoDoBrasil(configuracao, null, tokenProvider ?? throw new ArgumentNullException(nameof(tokenProvider)));
                 case BancoEnum.Sicoob:
                     return new BancoApi(
                         configuracao.Correntista,
@@ -134,6 +140,41 @@ namespace BancoBr.API
                 default:
                     throw new Exception($"Banco não implementado: {configuracao.Correntista.Banco}!");
             }
+        }
+
+        private static BancoApi ConectarBancoDoBrasil(ConfiguracaoAPI configuracao, Uri tokenEndpoint, IAccessTokenProvider tokenProvider)
+        {
+            if (string.IsNullOrWhiteSpace(configuracao.ChaveAplicacao))
+                throw new ArgumentException("Informe ConfiguracaoAPI.ChaveAplicacao para o Banco do Brasil.", nameof(configuracao));
+            if (configuracao.CertificadoDigital == null)
+                throw new ArgumentException("Informe o certificado mTLS do Banco do Brasil.", nameof(configuracao));
+            var endpoint = tokenEndpoint ?? new Uri(configuracao.AmbienteHomologacao
+                ? "https://oauth.hm.bb.com.br/oauth/token" : "https://oauth.bb.com.br/oauth/token");
+            var pagamentosToken = tokenProvider ?? new OAuthTokenProvider(new HttpClient(), new OAuthTokenProviderOptions
+            {
+                TokenEndpoint = endpoint, ClientId = configuracao.ClientId, ClientSecret = configuracao.ClientSecret,
+                UseBasicAuthentication = true,
+                Scopes = new[] { "pagamentos-lote.boletos-requisicao", "pagamentos-lote.boletos-info",
+                    "pagamentos-lote.pagamentos-info",
+                    "pagamentos-lote.guias-codigo-barras-requisicao", "pagamentos-lote.guias-codigo-barras-info",
+                    "pagamentos-lote.transferencias-requisicao", "pagamentos-lote.transferencias-info",
+                    "pagamentos-lote.transferencias-pix-requisicao", "pagamentos-lote.pix-info",
+                    "pagamentos-lote.cancelar-requisicao" }
+            });
+            var extratoToken = tokenProvider ?? new OAuthTokenProvider(new HttpClient(), new OAuthTokenProviderOptions
+            {
+                TokenEndpoint = endpoint, ClientId = configuracao.ClientId, ClientSecret = configuracao.ClientSecret,
+                UseBasicAuthentication = true, Scopes = new[] { "extrato-info" }
+            });
+            var http = BancoDoBrasilHttpGateway.BuildHttpClient(configuracao.CertificadoDigital);
+            var url = new Uri(configuracao.AmbienteHomologacao
+                ? "https://pagamentos-lote.mtls.api.hm.bb.com.br/v1/" : "https://pagamentos-lote.mtls.api.bb.com.br/v1/");
+            return new BancoApi(configuracao.Correntista,
+                new BancoDoBrasil.Pagamentos.PagamentoBoletoClient(http, pagamentosToken, configuracao.ChaveAplicacao, configuracao.Correntista, url),
+                new BancoDoBrasil.Pagamentos.PagamentoConvenioClient(http, pagamentosToken, configuracao.ChaveAplicacao, configuracao.Correntista, url),
+                new BancoDoBrasil.Pagamentos.PagamentoPixClient(http, pagamentosToken, configuracao.ChaveAplicacao, configuracao.Correntista, url),
+                new BancoDoBrasil.Pagamentos.PagamentoTedClient(http, pagamentosToken, configuracao.ChaveAplicacao, configuracao.Correntista, url),
+                new BancoDoBrasil.Extrato.ExtratoClient(configuracao, extratoToken));
         }
 
         private readonly Correntista _origem;
@@ -187,7 +228,7 @@ namespace BancoBr.API
 
                 case MovimentoItemPagamentoConvenioCodigoBarra itemConvenio:
                     // Transacao (Sicoob) ou o id do pagamento em NumeroDocumentoNoBanco (Santander) indicam consulta prévia já feita.
-                    if (itemConvenio.Transacao == null && string.IsNullOrEmpty(movimento.NumeroDocumentoNoBanco))
+                    if (Requer(_convenio).ExigeConsultaPrevia && itemConvenio.Transacao == null && string.IsNullOrEmpty(movimento.NumeroDocumentoNoBanco))
                         await Requer(_convenio).ConsultarCodigoBarrasAsync(movimento, unidade: unidade, cancellationToken: cancellationToken).ConfigureAwait(false);
                     return await Requer(_convenio).PagarConvenioAsync(movimento, unidade, cancellationToken).ConfigureAwait(false);
 
@@ -196,11 +237,11 @@ namespace BancoBr.API
 
                 case MovimentoItemTransferenciaPIX _:
                     return string.IsNullOrEmpty(movimento.NumeroDocumentoNoBanco)
-                        ? await _pix.PagarComIniciacaoAsync(movimento, cancellationToken).ConfigureAwait(false)
-                        : await _pix.ConfirmarPagamentoAsync(movimento, cancellationToken).ConfigureAwait(false);
+                        ? await Requer(_pix).PagarComIniciacaoAsync(movimento, cancellationToken).ConfigureAwait(false)
+                        : await Requer(_pix).ConfirmarPagamentoAsync(movimento, cancellationToken).ConfigureAwait(false);
 
                 case MovimentoItemPagamentoTituloPIXQRCode _:
-                    return await _pix.PagarViaQrCodeAsync(movimento, cancellationToken).ConfigureAwait(false);
+                    return await Requer(_pix).PagarViaQrCodeAsync(movimento, cancellationToken).ConfigureAwait(false);
 
                 default:
                     throw OperacaoNaoSuportada("envio", movimento);
@@ -236,13 +277,13 @@ namespace BancoBr.API
 
                 case MovimentoItemTransferenciaPIX _:
                     return jaEnviado
-                        ? _pix.ConsultarPagamentoAsync(movimento, cancellationToken)
-                        : _pix.IniciarPagamentoAsync(movimento, cancellationToken);
+                        ? Requer(_pix).ConsultarPagamentoAsync(movimento, cancellationToken)
+                        : Requer(_pix).IniciarPagamentoAsync(movimento, cancellationToken);
 
                 case MovimentoItemPagamentoTituloPIXQRCode _:
                     if (!jaEnviado)
                         throw new NotSupportedException("Pix Copia e Cola não tem consulta prévia — chame EnviarAgendamentoAsync diretamente; ConsultarAgendamentoAsync só se aplica depois do pagamento.");
-                    return _pix.ConsultarPagamentoAsync(movimento, cancellationToken);
+                    return Requer(_pix).ConsultarPagamentoAsync(movimento, cancellationToken);
 
                 default:
                     throw OperacaoNaoSuportada("consulta", movimento);

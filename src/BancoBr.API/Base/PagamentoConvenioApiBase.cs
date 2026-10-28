@@ -26,6 +26,9 @@ namespace BancoBr.API.Base
             Origem = origem;
         }
 
+        /// <summary>Indica se o protocolo exige consulta do código antes do envio.</summary>
+        internal virtual bool ExigeConsultaPrevia => true;
+
         protected HttpClient HttpClient { get; }
 
         /// <summary>Conta pagadora/titular informada em <c>ConfiguracaoAPI.Correntista</c>.</summary>
