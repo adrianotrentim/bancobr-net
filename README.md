@@ -186,6 +186,10 @@ foreach (var movimento in cnab.Movimentos) {
 - [ ] CEF
 - [x] [Banco do Brasil](src/BancoBr.API/BancoDoBrasil/README.md) — **em testes**
 
+## Chamadas detalhadas opcionais
+
+Os métodos existentes continuam disponíveis com os mesmos modelos e estados. A [nova forma de chamada](docs/operacoes-api.md) oferece requisição com identidade persistida, referências serializáveis, situações separadas de execução/autorização e respostas adicionais para os quatro bancos, sem alterar `BancoBr.Common`.
+
 ## Exemplos API
 
 ###### Conectando

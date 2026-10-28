@@ -15,9 +15,9 @@ O Sicredi não oferece consulta prévia de boleto ou tributo por código, nem re
 
 As datas enviadas usam calendário gregoriano e formato ISO `yyyy-MM-dd`, independentemente da cultura da aplicação. Ao consultar por `NumeroDocumentoNoBanco`, a resposta recupera valor, data, identificador do associado e `idTransacao`; também atualiza o código de barras, o identificador FGTS ou a chave e o beneficiário Pix, conforme a modalidade e os campos presentes. Campos ausentes ou nulos preservam os dados já conhecidos.
 
-`RECEBIDO`, `AGENDADO`, `AGUARDANDO_APROVACAO` e `APROVADO` são normalizados como `Agendado`, nunca como liquidação. Somente `SUCESSO` é `Efetivado`. `SituacaoOriginalBancoBr` preserva o status original. A aprovação é realizada nos canais digitais do Sicredi.
+`RECEBIDO`, `AGENDADO`, `AGUARDANDO_APROVACAO` e `APROVADO` são normalizados como `Agendado`, nunca como liquidação. Somente `SUCESSO` é `Efetivado`. Na chamada detalhada, `ResultadoPagamento.SituacaoOriginal` preserva o status original, e `Autorizacao` distingue a aprovação da execução. A aprovação é realizada nos canais digitais do Sicredi.
 
-`IdRequisicaoBancoBr` guarda o `idTransacao` antes do envio; `NumeroDocumentoNoBanco` recebe esse mesmo valor após resposta de criação aceita. O UUID interno do Sicredi e o endToEnd Pix não são usados como chave de consulta. Persista a identidade de cada lançamento antes de enviar e reutilize-a em caso de timeout; consulte pelo `idTransacao` para reconciliar o resultado antes de reenviar. A biblioteca não presume garantia de deduplicação do servidor nem repete pagamentos após erros de transporte/5xx. Somente HTTP 401 causa uma renovação e repetição, mantendo o mesmo corpo.
+`idempotencyKey` informa o `idTransacao`; `NumeroDocumentoNoBanco` recebe esse mesmo valor após resposta de criação aceita. Na chamada detalhada, a identidade vem de `RequisicaoPagamento.IdOperacao`. O UUID interno do Sicredi e o endToEnd Pix não são usados como chave de consulta. Persista a identidade de cada lançamento antes de enviar e reutilize-a em caso de timeout; consulte pelo `idTransacao` para reconciliar o resultado antes de reenviar. A biblioteca não presume garantia de deduplicação do servidor nem repete pagamentos após erros de transporte/5xx. Somente HTTP 401 causa uma renovação e repetição, mantendo o mesmo corpo.
 
 ```csharp
 var banco = BancoApi.Conectar(new ConfiguracaoAPI
@@ -37,7 +37,6 @@ var banco = BancoApi.Conectar(new ConfiguracaoAPI
 var movimento = new Movimento
 {
     NumeroDocumento = "ERP-0001",
-    IdRequisicaoBancoBr = "identidade-persistida-do-lancamento",
     DataPagamento = new DateTime(2026, 10, 28),
     ValorPagamento = 6000m,
     MovimentoItem = new MovimentoItemPagamentoTituloCodigoBarra
@@ -45,7 +44,7 @@ var movimento = new Movimento
         CodigoBarras = "74892950500006000001123100010108100200003107"
     }
 };
-await banco.EnviarAgendamentoAsync(movimento);
+await banco.EnviarAgendamentoAsync(movimento, idempotencyKey: identidadePersistidaNoERP);
 await banco.ConsultarAgendamentoAsync(movimento);
 // Apenas após SUCESSO:
 // byte[] pdf = await banco.BaixarComprovanteAsync(movimento);
@@ -55,7 +54,7 @@ var extrato = await banco.ConsultarExtratoAsync(0, 6, 2026);
 var saldoAtual = await banco.ConsultarSaldoAsync();
 ```
 
-As contas de extrato/saldo são vinculadas à credencial; o parâmetro `numeroContaCorrente` da fachada é ignorado. O extrato inclui um `MovimentoItemExtratoSaldo` inicial com saldo anterior e saldo final do período, seguido dos lançamentos com valores absolutos, direção crédito/débito e `SaldoAposLancamento`. Esse saldo final não é o saldo atual em tempo real; use `ConsultarSaldoAsync` para este último. Contas legadas podem apresentar movimentos em D-1. DDA suporta somente boletos em aberto e filtro por vencimento; sua base de homologação é `multipag-sandbox`, diferente de `multipag-pagamento-sandbox` usada nos pagamentos.
+As contas de extrato/saldo são vinculadas à credencial; o parâmetro `numeroContaCorrente` da fachada é ignorado. O extrato inclui um `MovimentoItemExtratoSaldo` inicial com saldo anterior e saldo final do período, seguido dos lançamentos com valores absolutos, direção crédito/débito e, na [consulta detalhada](../../../docs/operacoes-api.md), `LancamentoExtrato.SaldoAposLancamento`. Esse saldo final não é o saldo atual em tempo real; use `ConsultarSaldoAsync` para este último. Contas legadas podem apresentar movimentos em D-1. DDA suporta somente boletos em aberto e filtro por vencimento; sua base de homologação é `multipag-sandbox`, diferente de `multipag-pagamento-sandbox` usada nos pagamentos.
 
 ## Liberação junto ao Sicredi
 
@@ -77,4 +76,4 @@ O console fixa homologação, consulta saldo/extrato e, se houver ID, consulta p
 
 ## Validação desta implementação
 
-Compilação da solução aprovada e 176 testes locais aprovados, incluindo 35 cenários Sicredi com HTTP simulado. O console foi executado e retornou saída 2: credenciais, certificado e identificação da conta de homologação ausentes. Portanto, comunicação autenticada com o Sicredi e homologação bancária permanecem pendentes.
+A compilação e os testes locais usam HTTP simulado, incluindo compatibilidade das chamadas antigas e resultados detalhados. O console foi executado e retornou saída 2: credenciais, certificado e identificação da conta de homologação ausentes. Portanto, comunicação autenticada com o Sicredi e homologação bancária permanecem pendentes.

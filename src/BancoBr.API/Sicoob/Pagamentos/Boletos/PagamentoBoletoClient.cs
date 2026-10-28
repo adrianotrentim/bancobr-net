@@ -1,3 +1,4 @@
+using BancoBr.API.Core.Operacoes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -203,6 +204,8 @@ namespace BancoBr.API.Sicoob.Pagamentos.Boletos
             {
                 if (response.StatusCode == System.Net.HttpStatusCode.Accepted)
                 {
+                    CapturaRetorno.Registrar(null, (int)response.StatusCode);
+                    MetadadosOperacao.De(movimento).IdentidadeConsulta = idempotencyKey;
                     movimento.SituacaoBancoBr = BancoBrSituacaoEnum.Agendado;
                     movimento.DetalheRejeicaoBancoBr = "Pagamento pendente de assinatura.";
                     return movimento;
@@ -227,6 +230,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Boletos
                 }
 
                 var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                CapturaRetorno.Registrar(body, (int)response.StatusCode);
                 var envelope = JsonConvert.DeserializeObject<ResultadoEnvelope<ComprovantePagamento>>(body, SerializerSettings);
                 return AplicarComprovante(movimento, item, envelope?.Resultado);
             }
@@ -299,6 +303,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Boletos
                 await EnsureSuccessOrThrowAsync(response).ConfigureAwait(false);
 
                 var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                CapturaRetorno.Registrar(body, (int)response.StatusCode);
                 var envelope = JsonConvert.DeserializeObject<ResultadoEnvelope<BoletoDDA[]>>(body, SerializerSettings);
                 return envelope?.Resultado?.Select(MapBoletoDda).ToList();
             }
@@ -630,6 +635,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Boletos
                 await EnsureSuccessOrThrowAsync(response).ConfigureAwait(false);
 
                 var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                CapturaRetorno.Registrar(responseBody, (int)response.StatusCode);
                 var envelope = JsonConvert.DeserializeObject<ResultadoEnvelope<T>>(responseBody, SerializerSettings);
                 return envelope.Resultado;
             }
@@ -686,6 +692,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Boletos
             }
 
             var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            CapturaRetorno.Registrar(body, (int)response.StatusCode);
             SicoobErrorResponse errorResponse;
             try
             {

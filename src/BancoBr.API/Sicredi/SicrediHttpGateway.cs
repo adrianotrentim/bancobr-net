@@ -1,4 +1,5 @@
 using System;
+using BancoBr.API.Core.Operacoes;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -78,7 +79,9 @@ namespace BancoBr.API.Sicredi
                                 Mensagem = (string)erro?["detail"] ?? (string)erro?["mensagem"] ?? (string)erro?["message"] ?? response.ReasonPhrase
                             }});
                         }
-                        return await response.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+                        var bytes = await response.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+                        if (!pdf) CapturaRetorno.Registrar(Encoding.UTF8.GetString(bytes), (int)response.StatusCode);
+                        return bytes;
                     }
                 }
             }

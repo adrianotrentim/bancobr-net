@@ -1,3 +1,4 @@
+using BancoBr.API.Core.Operacoes;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -118,6 +119,7 @@ namespace BancoBr.API.Sicoob.ContaCorrente
                 await EnsureSuccessOrThrowAsync(response).ConfigureAwait(false);
 
                 var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                CapturaRetorno.Registrar(body, (int)response.StatusCode);
                 var envelope = JsonConvert.DeserializeObject<ResultadoEnvelope<ExtratoResponse>>(body, SerializerSettings);
 
                 return MapExtrato(envelope?.Resultado);
@@ -256,6 +258,7 @@ namespace BancoBr.API.Sicoob.ContaCorrente
                 return;
 
             var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            CapturaRetorno.Registrar(body, (int)response.StatusCode);
             var mensagens = new List<MensagemErro>();
 
             try

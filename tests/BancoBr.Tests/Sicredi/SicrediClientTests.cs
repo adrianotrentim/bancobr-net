@@ -1,3 +1,4 @@
+using BancoBr.API.Core.Operacoes;
 using System.Net;
 using BancoBr.API.Sicredi;
 using BancoBr.API.Core.Errors;
@@ -41,7 +42,7 @@ namespace BancoBr.Tests.Sicredi
             Assert.Equal("transacao-1", (string?)body["idTransacao"]);
             Assert.Equal("/sb/multipag-pagamento-sandbox/v1/pagamentos/boletos", handler.Requests[0].RequestUri!.AbsolutePath);
             Assert.Equal(esperado, m.SituacaoBancoBr);
-            Assert.Equal(status, m.SituacaoOriginalBancoBr);
+            Assert.Equal(status, MetadadosOperacao.De(m).SituacaoOriginal);
             Assert.Equal("transacao-1", m.NumeroDocumentoNoBanco);
         }
 
@@ -93,7 +94,7 @@ namespace BancoBr.Tests.Sicredi
             Assert.Equal(100, saldo.SaldoAnterior); Assert.Equal(110, saldo.SaldoAtual);
             var debito = Assert.IsType<MovimentoItemExtratoTransacao>(r[1].MovimentoItem);
             Assert.Equal(10, debito.Valor); Assert.Equal(BancoBrTipoCreditoDebitoEnum.Debito, debito.Tipo);
-            Assert.Equal(90, debito.SaldoAposLancamento);
+            Assert.Equal(90, MetadadosOperacao.De(debito).SaldoAposLancamento);
         }
 
         [Fact]
