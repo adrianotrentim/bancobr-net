@@ -1,15 +1,15 @@
-# Pagamentos bancários
+# Termos usados nos pagamentos
 
-Vocabulário comum para acompanhar pagamentos entre instituições financeiras.
+Estes termos têm o mesmo significado nos guias dos diferentes bancos.
 
 ## Linguagem
 
-**Situação do pagamento**: etapa de execução financeira, como processamento, agendamento, efetivação ou cancelamento. Um pagamento registrado ainda pode depender de autorização.
+**Situação do pagamento**: mostra em que etapa está o pagamento. Por exemplo: o banco ainda está processando a solicitação, o pagamento está agendado ou já foi realizado.
 
-**Autorização**: aprovação exigida para permitir a execução do pagamento. Pode depender de um ou mais signatários e não comprova, por si só, que o débito foi realizado.
+**Autorização**: aprovação necessária para o banco executar o pagamento. Uma empresa pode exigir a assinatura de dois sócios; mesmo após a aprovação, ainda é preciso acompanhar se o pagamento foi realizado.
 
-**Efetivação**: realização do pagamento confirmada pela instituição financeira. O aceite de uma solicitação não constitui efetivação.
+**Efetivação**: confirmação do banco de que o pagamento foi realizado. Receber a solicitação ou aprová-la são etapas anteriores à efetivação.
 
-**Identidade da operação**: identificação escolhida pelo solicitante para acompanhar o mesmo lançamento ao longo das tentativas de envio.
+**Identidade da operação**: código que seu sistema cria e guarda para identificar um pagamento. Ao tentar enviar o mesmo pagamento novamente, o código deve continuar igual.
 
-**Referência do pagamento**: identificação de acompanhamento vinculada ao banco e à conta de origem, utilizada para localizar um pagamento já solicitado.
+**Referência do pagamento**: conjunto de informações usado para localizar e acompanhar um pagamento na conta de origem. Funciona como um protocolo: você guarda a referência e a apresenta nas próximas consultas.
