@@ -23,7 +23,7 @@ namespace BancoBr.API.Base.Models
         /// <summary>Número do contrato de pagamentos do Banco do Brasil.</summary>
         public int? NumeroContratoPagamento { get; set; }
 
-        /// <summary>Seleciona os endpoints de homologação do Banco do Brasil.</summary>
+        /// <summary>Seleciona os endpoints de homologação do Banco do Brasil ou Sicredi.</summary>
         public bool AmbienteHomologacao { get; set; }
 
         /// <summary>

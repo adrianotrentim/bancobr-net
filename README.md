@@ -180,6 +180,7 @@ foreach (var movimento in cnab.Movimentos) {
 
 - [x] Sicoob
 - [X] Santander
+- [x] [Sicredi](src/BancoBr.API/Sicredi/README.md) — pagamentos, DDA, extrato e saldo; homologação pendente de credenciais
 - [ ] Itaú
 - [ ] Bradesco
 - [ ] CEF

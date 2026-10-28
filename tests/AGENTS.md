@@ -14,3 +14,5 @@
 `BancoBr.Sicoob.Sandbox` é um executável de integração externa, separado da suíte xUnit. Leia seu `Program.cs` antes de usá-lo. Ele recebe configuração por variáveis de ambiente e pode enviar pagamento quando `SICOOB_CONFIRMAR_PAGAMENTO=true`.
 
 Execute esse console apenas sob solicitação explícita para a integração externa, conforme o `AGENTS.md` da raiz. Não habilite confirmação de pagamento como parte de um build ou teste local. Para conhecer as variáveis disponíveis, consulte o código sem imprimir os valores do ambiente.
+
+`BancoBr.Sicredi.Sandbox` fixa o ambiente de homologação e executa apenas consultas de saldo, extrato e, quando configurado, de um pagamento existente. Leia seu `Program.cs` antes de executar e consulte `src/BancoBr.API/Sicredi/README.md` para variáveis e liberação de acesso. Saída 2 indica configuração ausente e comunicação não executada; a ausência de `SICREDI_ID_TRANSACAO` deixa a consulta Multipag não executada. Mantenha esse console separado dos testes locais e do CI.

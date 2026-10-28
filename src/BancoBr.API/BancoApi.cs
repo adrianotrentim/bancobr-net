@@ -72,6 +72,8 @@ namespace BancoBr.API
 
             switch (banco)
             {
+                case BancoEnum.Sicredi:
+                    return ConectarSicredi(configuracao, tokenEndpointOverride, null);
                 case BancoEnum.BancoDoBrasil:
                     return ConectarBancoDoBrasil(configuracao, tokenEndpointOverride, null);
                 case BancoEnum.Sicoob:
@@ -115,6 +117,8 @@ namespace BancoBr.API
 
             switch (banco)
             {
+                case BancoEnum.Sicredi:
+                    return ConectarSicredi(configuracao, null, tokenProvider ?? throw new ArgumentNullException(nameof(tokenProvider)));
                 case BancoEnum.BancoDoBrasil:
                     return ConectarBancoDoBrasil(configuracao, null, tokenProvider ?? throw new ArgumentNullException(nameof(tokenProvider)));
                 case BancoEnum.Sicoob:
@@ -140,6 +144,48 @@ namespace BancoBr.API
                 default:
                     throw new Exception($"Banco não implementado: {configuracao.Correntista.Banco}!");
             }
+        }
+
+        internal static BancoApi ConectarSicredi(ConfiguracaoAPI config, Uri endpoint, IAccessTokenProvider tokens, HttpClient httpClient = null)
+        {
+            if (config.CertificadoDigital == null && httpClient == null) throw new ArgumentException("Informe o certificado mTLS do Sicredi.");
+            var http = httpClient ?? Sicredi.SicrediHttpGateway.CriarHttpClient(config.CertificadoDigital);
+            var raiz = "https://mtls-api-parceiro.sicredi.com.br/" + (config.AmbienteHomologacao ? "sb/" : "");
+            Func<string[], Sicredi.SicrediHttpGateway> gateway = scopes => new Sicredi.SicrediHttpGateway(http,
+                tokens ?? new OAuthTokenProvider(http, new OAuthTokenProviderOptions
+                {
+                    TokenEndpoint = endpoint ?? new Uri(raiz + "thirdparty/auth/token"),
+                    ClientId = config.ClientId, ClientSecret = config.ClientSecret, Scopes = scopes
+                }), config.Correntista, config.AmbienteHomologacao);
+            var boleto = new Sicredi.PagamentosClient(gateway(new[] { "multipag.boleto.pagar", "multipag.boleto.consultar" }));
+            var convenio = new Sicredi.PagamentosClient(gateway(new[] { "multipag.tributos.pagar", "multipag.tributos.consultar" }));
+            var pix = new Sicredi.PagamentosClient(gateway(new[] { "multipag.pix.pagar", "multipag.pix.consultar" }));
+            var api = new BancoApi(config.Correntista, new Sicredi.PagamentoBoletoClient(boleto, new Sicredi.DdaClient(gateway(new[] { "multipag.dda.consultar" }))), new Sicredi.PagamentoConvenioClient(convenio),
+                new Sicredi.PagamentoPixClient(pix), null, new Sicredi.ExtratoClient(gateway(new[] { "contacorrente.extratos.consultar" })));
+            api._sicrediSaldo = new Sicredi.ExtratoClient(gateway(new[] { "contacorrente.saldo.consultar" }));
+            api._sicrediPagamentos = new[] { boleto, convenio, pix };
+            return api;
+        }
+
+        private Sicredi.ExtratoClient _sicrediSaldo;
+        private Sicredi.PagamentosClient[] _sicrediPagamentos;
+
+        /// <summary>Consulta o saldo atual da conta vinculada às credenciais Sicredi.</summary>
+        public Task<Movimento> ConsultarSaldoAsync(CancellationToken cancellationToken = default)
+            => Requer(_sicrediSaldo).ConsultarSaldoAsync(cancellationToken);
+
+        /// <summary>Baixa o PDF binário do comprovante Multipag Sicredi. Disponível após SUCESSO.</summary>
+        public Task<byte[]> BaixarComprovanteAsync(Movimento movimento, CancellationToken cancellationToken = default)
+        {
+            ExtrairItem(movimento);
+            return ObterPagamentosSicredi(movimento).ComprovanteAsync(movimento, cancellationToken);
+        }
+
+        private Sicredi.PagamentosClient ObterPagamentosSicredi(Movimento m)
+        {
+            var clientes = Requer(_sicrediPagamentos);
+            var recurso = Sicredi.PagamentosClient.Recurso(m);
+            return clientes[recurso == "boletos" ? 0 : recurso == "tributos/barras" ? 1 : 2];
         }
 
         private static BancoApi ConectarBancoDoBrasil(ConfiguracaoAPI configuracao, Uri tokenEndpoint, IAccessTokenProvider tokenProvider)
@@ -201,6 +247,8 @@ namespace BancoBr.API
             => Requer(_workspace).ObterOuCriarWorkspaceAsync(cancellationToken);
 
         /// <summary>
+        /// No Sicredi, o envio é direto, sem consulta prévia: informe data, valor e NumeroDocumento.
+        /// A identidade é preservada em IdRequisicaoBancoBr; a aceitação ainda depende de processamento/aprovação.
         /// Envia o movimento — consulta prévia (quando o banco exige) + pagamento, na mesma
         /// chamada. <paramref name="idempotencyKey"/> é opcional: para Boleto (que exige um GUID
         /// de lançamento por baixo) uma chave que não seja um GUID válido gera um novo; para TED
@@ -216,6 +264,11 @@ namespace BancoBr.API
         /// </summary>
         public async Task<Movimento> EnviarAgendamentoAsync(Movimento movimento, string idempotencyKey = null, int unidade = 0, CancellationToken cancellationToken = default)
         {
+            if (_sicrediPagamentos != null)
+            {
+                ExtrairItem(movimento);
+                return await ObterPagamentosSicredi(movimento).PagarAsync(movimento, idempotencyKey, cancellationToken).ConfigureAwait(false);
+            }
             switch (ExtrairItem(movimento))
             {
                 case MovimentoItemPagamentoTituloCodigoBarra itemBoleto:
@@ -249,6 +302,7 @@ namespace BancoBr.API
         }
 
         /// <summary>
+        /// No Sicredi, a consulta exige o idTransacao em NumeroDocumentoNoBanco; não existe consulta prévia por código/chave.
         /// Consulta o movimento. Antes do envio (<see cref="Movimento.NumeroDocumentoNoBanco"/>
         /// ainda vazio), é a consulta prévia — pra exibir dados ao usuário antes de confirmar o
         /// pagamento (Boleto, Convênio) ou resolver a chave Pix. Depois do envio, é a consulta de
@@ -307,11 +361,17 @@ namespace BancoBr.API
         }
 
         /// <summary>
+        /// No Sicredi, cancela boleto, tributo com barras ou Pix agendado pelo idTransacao.
         /// Cancela o agendamento do movimento. Só Boleto e TED têm cancelamento na API do
         /// Sicoob — para Pix e Convênio, lança <see cref="NotSupportedException"/>.
         /// </summary>
         public Task<Movimento> CancelarAgendamentoAsync(Movimento movimento, string idempotencyKey = null, CancellationToken cancellationToken = default)
         {
+            if (_sicrediPagamentos != null)
+            {
+                ExtrairItem(movimento);
+                return ObterPagamentosSicredi(movimento).CancelarAsync(movimento, cancellationToken);
+            }
             switch (ExtrairItem(movimento))
             {
                 case MovimentoItemPagamentoTituloCodigoBarra _:
