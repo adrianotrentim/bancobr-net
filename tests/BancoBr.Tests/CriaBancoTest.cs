@@ -3,6 +3,7 @@ using BancoBr.CNAB.Core;
 using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
 using Xunit;
+using System.Globalization;
 
 namespace BancoBr.Tests
 {
@@ -172,6 +173,37 @@ namespace BancoBr.Tests
             }
 
             #endregion
+        }
+
+        [Theory]
+        [InlineData("en-US", 28, 10)]
+        [InlineData("en-US", 5, 4)]
+        [InlineData("pt-BR", 28, 10)]
+        [InlineData("pt-BR", 5, 4)]
+        public static void ImportacaoRetorno_PreservaDataIndependentementeDaCultura(string cultura, int dia, int mes)
+        {
+            var culturaAnterior = CultureInfo.CurrentCulture;
+            try
+            {
+                CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(cultura);
+                var dados = CNAB240.First();
+                var data = new DateTime(2026, mes, dia);
+                var movimentos = CriarMovimentoTransferenciaTED();
+                movimentos[0].DataPagamento = data;
+                var remessa = new ArquivoCNAB((BancoEnum)dados[0], (Correntista)dados[1], (int)dados[2],
+                    (LocalDebitoEnum)dados[3], (TipoServicoEnum)dados[4], movimentos);
+                remessa.Header.DataGeracao = data;
+                var linhas = remessa.Exportar().Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                var retorno = new ArquivoCNAB((BancoEnum)dados[0]);
+
+                retorno.Importar(linhas);
+
+                Assert.Equal(data, Assert.Single(retorno.Movimentos).DataPagamento);
+            }
+            finally
+            {
+                CultureInfo.CurrentCulture = culturaAnterior;
+            }
         }
 
         [Theory, MemberData("CNAB240")]
