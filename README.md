@@ -1,3 +1,5 @@
+<img src="src/icon-512.png" width="96" alt="BancoBr" />
+
 # BancoBr.NET 
 
 [![BancoBr.API](https://img.shields.io/nuget/v/BancoBr.API.svg?label=BancoBr.API)](https://www.nuget.org/packages/BancoBr.API/)
