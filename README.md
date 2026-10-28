@@ -1,4 +1,11 @@
-# BancoBr.NET [![GitHub contributors](https://img.shields.io/github/contributors/adrianotrentim/bancobr-net)](https://github.com/adrianotrentim/bancobr-net/graphs/contributors) [![GitHub issues](https://img.shields.io/github/issues/adrianotrentim/bancobr-net)](https://github.com/adrianotrentim/bancobr-net/issues) [![GitHub issues-pr](https://img.shields.io/github/issues-pr/adrianotrentim/bancobr-net)](https://github.com/adrianotrentim/bancobr-net/pulls) [![GitHub](https://img.shields.io/github/license/adrianotrentim/bancobr-net)](https://github.com/adrianotrentim/bancobr-net/blob/main/LICENSE)
+# BancoBr.NET 
+
+[![BancoBr.API](https://img.shields.io/nuget/v/BancoBr.API.svg?label=BancoBr.API)](https://www.nuget.org/packages/BancoBr.API/)
+[![Downloads](https://img.shields.io/nuget/dt/BancoBr.API.svg)](https://www.nuget.org/packages/BancoBr.API/)
+[![BancoBr.CNAB](https://img.shields.io/nuget/v/BancoBr.CNAB.svg?label=BancoBr.CNAB)](https://www.nuget.org/packages/BancoBr.CNAB/)
+[![Downloads](https://img.shields.io/nuget/dt/BancoBr.CNAB.svg)](https://www.nuget.org/packages/BancoBr.CNAB/)
+
+[![GitHub contributors](https://img.shields.io/github/contributors/adrianotrentim/bancobr-net)](https://github.com/adrianotrentim/bancobr-net/graphs/contributors) [![GitHub issues](https://img.shields.io/github/issues/adrianotrentim/bancobr-net)](https://github.com/adrianotrentim/bancobr-net/issues) [![GitHub issues-pr](https://img.shields.io/github/issues-pr/adrianotrentim/bancobr-net)](https://github.com/adrianotrentim/bancobr-net/pulls) [![GitHub](https://img.shields.io/github/license/adrianotrentim/bancobr-net)](https://github.com/adrianotrentim/bancobr-net/blob/main/LICENSE)
 
 Biblioteca para integração bancária para pagamentos de contas, transferências e PIX.
 
