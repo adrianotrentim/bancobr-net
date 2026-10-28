@@ -263,12 +263,11 @@ namespace BancoBr.Tests.Santander
             await Assert.ThrowsAsync<NotSupportedException>(() => client.ConsultarComprovantePorIdempotencyAsync("chave"));
         }
 
-        private static string PaginaDda(int quantidade) => @"{ ""_limit"": 200, ""_pageNumber"": 1, ""_pageElements"": " + quantidade + @", ""_content"": [" +
+        private static string PaginaDda(int quantidade) => @"{ ""pageable"": { ""_limit"": 200, ""_pageNumber"": 1, ""_pageElements"": " + quantidade + @" }, ""content"": [" +
             string.Join(",", Enumerable.Range(0, quantidade).Select(_ => @"{
                 ""code"": ""03391234500000150001234567890123456789012345"", ""authorizedDirectDebitId"": ""987654321"", ""bankIdentificationNumber"": ""1234567890123"",
-                ""kindCode"": ""2"", ""dueDate"": ""2026-10-20"", ""paymentLimitDate"": ""2026-11-20"", ""nominalValue"": 150.00, ""payerDocumentNumber"": ""11222333000181"",
-                ""beneficiaryIdentificationNumber"": ""NF-123"",
-                ""beneficiary"": { ""name"": ""Fornecedor LTDA"", ""documentType"": ""CNPJ"", ""documentNumber"": ""12345678000100"" }
+                ""kindCode"": ""2"", ""dueDate"": ""2026-10-20"", ""paymentLimitDate"": ""2026-11-20"", ""nominalValue"": ""150,00"", ""payerDocumentNumber"": ""11222333000181"",
+                ""beneficiary"": { ""beneficiaryName"": ""Fornecedor LTDA"", ""beneficiaryType"": ""CNPJ"", ""beneficiaryDocument"": ""12345678000100"", ""beneficiaryIdentificationNumber"": ""NF-123"" }
             }")) + "]}";
 
         [Fact]
