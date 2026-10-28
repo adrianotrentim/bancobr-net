@@ -17,9 +17,9 @@ namespace BancoBr.API.BancoDoBrasil.Pagamentos
     internal class PagamentoTedClient : PagamentoTedApiBase
     {
         private readonly PagamentosClient _pagamentos;
-        internal PagamentoTedClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string chaveAplicacao, Correntista origem, int? numeroContratoPagamento = null, Uri baseUrl = null) : base(httpClient, origem)
+        internal PagamentoTedClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string chaveAplicacao, Correntista origem, Uri baseUrl = null) : base(httpClient, origem)
         {
-            _pagamentos = new PagamentosClient(new BancoDoBrasilHttpGateway(httpClient, tokenProvider, chaveAplicacao), origem, numeroContratoPagamento, baseUrl);
+            _pagamentos = new PagamentosClient(new BancoDoBrasilHttpGateway(httpClient, tokenProvider, chaveAplicacao), origem, baseUrl);
         }
         internal override Task<Movimento> PagarTedAsync(Movimento movimento, string idempotencyKey, CancellationToken cancellationToken = default)
         {

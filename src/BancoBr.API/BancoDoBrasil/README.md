@@ -10,13 +10,13 @@ var bancoBB = BancoApi.Conectar(new ConfiguracaoAPI
     ChaveAplicacao = "sua-developer-application-key",
     CertificadoDigital = certificado,
     AmbienteHomologacao = true,
-    // NumeroContratoPagamento = 123456, // quando previsto no contrato com o BB
     Correntista = new Correntista
     {
         Banco = (int)BancoEnum.BancoDoBrasil,
         NumeroAgencia = 1234,
         NumeroConta = 56789,
-        DVConta = "X"
+        DVConta = "X",
+        Convenio = "123456" // convênio de pagamentos, quando previsto no contrato com o BB
     }
 });
 
@@ -44,3 +44,5 @@ O aceite da requisição fica como `NaoIntegrado` até a consulta confirmar a si
 
 O extrato usa agência e conta de `ConfiguracaoAPI.Correntista`, percorre todas as páginas e retorna lançamentos contabilizados e a posição de saldo atual quando informada. Lançamentos futuros ou em processamento não são incluídos. `numeroContaCorrente` e `agruparCnab` não alteram a consulta do BB.
 
+
+O contrato de pagamentos é obtido de `ConfiguracaoAPI.Correntista.Convenio`. Quando preenchido, deve ser um inteiro positivo compatível com Int32; o cliente o converte para o campo numérico exigido por cada endpoint. Quando vazio, o campo é omitido. O extrato não utiliza esse convênio.

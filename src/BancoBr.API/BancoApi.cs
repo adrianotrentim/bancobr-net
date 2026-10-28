@@ -170,10 +170,10 @@ namespace BancoBr.API
             var url = new Uri(configuracao.AmbienteHomologacao
                 ? "https://pagamentos-lote.mtls.api.hm.bb.com.br/v1/" : "https://pagamentos-lote.mtls.api.bb.com.br/v1/");
             return new BancoApi(configuracao.Correntista,
-                new BancoDoBrasil.Pagamentos.PagamentoBoletoClient(http, pagamentosToken, configuracao.ChaveAplicacao, configuracao.Correntista, configuracao.NumeroContratoPagamento, url),
-                new BancoDoBrasil.Pagamentos.PagamentoConvenioClient(http, pagamentosToken, configuracao.ChaveAplicacao, configuracao.Correntista, configuracao.NumeroContratoPagamento, url),
-                new BancoDoBrasil.Pagamentos.PagamentoPixClient(http, pagamentosToken, configuracao.ChaveAplicacao, configuracao.Correntista, configuracao.NumeroContratoPagamento, url),
-                new BancoDoBrasil.Pagamentos.PagamentoTedClient(http, pagamentosToken, configuracao.ChaveAplicacao, configuracao.Correntista, configuracao.NumeroContratoPagamento, url),
+                new BancoDoBrasil.Pagamentos.PagamentoBoletoClient(http, pagamentosToken, configuracao.ChaveAplicacao, configuracao.Correntista, url),
+                new BancoDoBrasil.Pagamentos.PagamentoConvenioClient(http, pagamentosToken, configuracao.ChaveAplicacao, configuracao.Correntista, url),
+                new BancoDoBrasil.Pagamentos.PagamentoPixClient(http, pagamentosToken, configuracao.ChaveAplicacao, configuracao.Correntista, url),
+                new BancoDoBrasil.Pagamentos.PagamentoTedClient(http, pagamentosToken, configuracao.ChaveAplicacao, configuracao.Correntista, url),
                 new BancoDoBrasil.Extrato.ExtratoClient(configuracao, extratoToken));
         }
 

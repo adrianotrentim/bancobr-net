@@ -17,9 +17,9 @@ namespace BancoBr.API.BancoDoBrasil.Pagamentos
     internal class PagamentoPixClient : PagamentoPixApiBase
     {
         private readonly PagamentosClient _pagamentos;
-        internal PagamentoPixClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string chaveAplicacao, Correntista origem, int? numeroContratoPagamento = null, Uri baseUrl = null) : base(httpClient, origem)
+        internal PagamentoPixClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string chaveAplicacao, Correntista origem, Uri baseUrl = null) : base(httpClient, origem)
         {
-            _pagamentos = new PagamentosClient(new BancoDoBrasilHttpGateway(httpClient, tokenProvider, chaveAplicacao), origem, numeroContratoPagamento, baseUrl);
+            _pagamentos = new PagamentosClient(new BancoDoBrasilHttpGateway(httpClient, tokenProvider, chaveAplicacao), origem, baseUrl);
         }
         internal override Task<Movimento> PagarComIniciacaoAsync(Movimento movimento, CancellationToken cancellationToken = default)
         {

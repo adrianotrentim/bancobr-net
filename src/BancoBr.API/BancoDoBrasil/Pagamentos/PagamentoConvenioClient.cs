@@ -18,9 +18,9 @@ namespace BancoBr.API.BancoDoBrasil.Pagamentos
     {
         private readonly PagamentosClient _pagamentos;
         internal override bool ExigeConsultaPrevia => false;
-        internal PagamentoConvenioClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string chaveAplicacao, Correntista origem, int? numeroContratoPagamento = null, Uri baseUrl = null) : base(httpClient, origem)
+        internal PagamentoConvenioClient(HttpClient httpClient, IAccessTokenProvider tokenProvider, string chaveAplicacao, Correntista origem, Uri baseUrl = null) : base(httpClient, origem)
         {
-            _pagamentos = new PagamentosClient(new BancoDoBrasilHttpGateway(httpClient, tokenProvider, chaveAplicacao), origem, numeroContratoPagamento, baseUrl);
+            _pagamentos = new PagamentosClient(new BancoDoBrasilHttpGateway(httpClient, tokenProvider, chaveAplicacao), origem, baseUrl);
         }
         internal override Task<Movimento> PagarConvenioAsync(Movimento movimento, int unidade = 0, CancellationToken cancellationToken = default)
         {

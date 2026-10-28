@@ -16,14 +16,21 @@ namespace BancoBr.API.BancoDoBrasil.Pagamentos
     {
         private readonly BancoDoBrasilHttpGateway _gateway;
         private readonly Correntista _origem;
-        private readonly int? _contrato;
         private readonly string _baseUrl;
-        internal PagamentosClient(BancoDoBrasilHttpGateway gateway, Correntista origem, int? contrato, Uri baseUrl)
+        internal PagamentosClient(BancoDoBrasilHttpGateway gateway, Correntista origem, Uri baseUrl)
         {
             _gateway = gateway;
             _origem = origem ?? throw new ArgumentNullException(nameof(origem));
-            _contrato = contrato;
             _baseUrl = (baseUrl ?? BancoDoBrasilHttpGateway.PagamentosBaseUrl).ToString().TrimEnd('/') + "/";
+        }
+
+        /// <summary>O convênio de pagamentos da conta identifica o contrato BB no protocolo.</summary>
+        private int? ObterContrato()
+        {
+            if (string.IsNullOrWhiteSpace(_origem.Convenio)) return null;
+            if (!int.TryParse(_origem.Convenio, NumberStyles.None, CultureInfo.InvariantCulture, out var contrato) || contrato <= 0)
+                throw new ArgumentException("Correntista.Convenio deve conter um número inteiro positivo para os pagamentos BB.", nameof(Correntista.Convenio));
+            return contrato;
         }
 
         internal static int NumeroRequisicao(Movimento movimento)
@@ -42,7 +49,8 @@ namespace BancoBr.API.BancoDoBrasil.Pagamentos
             corpo[codigo ? "numeroAgenciaDebito" : "agenciaDebito"] = _origem.NumeroAgencia;
             corpo[codigo ? "numeroContaCorrenteDebito" : "contaCorrenteDebito"] = _origem.NumeroConta;
             corpo[codigo ? "digitoVerificadorContaCorrenteDebito" : "digitoVerificadorContaCorrente"] = _origem.DVConta;
-            if (_contrato.HasValue) corpo[codigo ? "codigoContrato" : recurso == "lotes-transferencias-pix" ? "numeroContrato" : "numeroContratoPagamento"] = _contrato.Value;
+            var contrato = ObterContrato();
+            if (contrato.HasValue) corpo[codigo ? "codigoContrato" : recurso == "lotes-transferencias-pix" ? "numeroContrato" : "numeroContratoPagamento"] = contrato.Value;
             if (!codigo) corpo["tipoPagamento"] = 128;
             corpo[codigo ? "lancamentos" : "listaTransferencias"] = new JArray(lancamento);
             var resposta = await _gateway.SendAsync<JObject>(HttpMethod.Post, _baseUrl + recurso, corpo, ct).ConfigureAwait(false);
@@ -82,7 +90,8 @@ namespace BancoBr.API.BancoDoBrasil.Pagamentos
         {
             if (!long.TryParse(movimento.NumeroDocumentoNoBanco, out var id)) throw new ArgumentException("Informe identificador numérico do pagamento BB.");
             var corpo = new JObject { ["agenciaDebito"] = _origem.NumeroAgencia, ["contaCorrenteDebito"] = _origem.NumeroConta, ["digitoVerificadorContaCorrente"] = _origem.DVConta, ["listaPagamentos"] = new JArray(new JObject { ["codigoPagamento"] = id }) };
-            if (_contrato.HasValue) corpo["numeroContratoPagamento"] = _contrato.Value;
+            var contrato = ObterContrato();
+            if (contrato.HasValue) corpo["numeroContratoPagamento"] = contrato.Value;
             var resposta = await _gateway.SendAsync<JObject>(HttpMethod.Post, _baseUrl + "cancelar-pagamentos", corpo, ct).ConfigureAwait(false);
             var item = resposta["pagamentos"]?.First;
             movimento.DetalheRejeicaoBancoBr = (string)item?["estadoCancelamento"];
