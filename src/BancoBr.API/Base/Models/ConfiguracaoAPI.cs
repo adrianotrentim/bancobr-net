@@ -17,6 +17,15 @@ namespace BancoBr.API.Base.Models
 
         public string IdWorkspace { get; set; }
 
+        /// <summary>Chave da aplicação no Portal Developers BB (gw-dev-app-key).</summary>
+        public string ChaveAplicacao { get; set; }
+
+        /// <summary>Número do contrato de pagamentos do Banco do Brasil.</summary>
+        public int? NumeroContratoPagamento { get; set; }
+
+        /// <summary>Seleciona os endpoints de homologação do Banco do Brasil.</summary>
+        public bool AmbienteHomologacao { get; set; }
+
         /// <summary>
         /// Conta pagadora/titular das operações: usada como origem em todos os métodos de
         /// <c>BancoApi</c> (pagamento, consulta, cancelamento, DDA, extrato, workspace). Obrigatório:

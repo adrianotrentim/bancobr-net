@@ -183,7 +183,7 @@ foreach (var movimento in cnab.Movimentos) {
 - [ ] Itaú
 - [ ] Bradesco
 - [ ] CEF
-- [ ] Banco do Brasil
+- [x] [Banco do Brasil](src/BancoBr.API/BancoDoBrasil/README.md) — **em testes**
 
 ## Exemplos API
 

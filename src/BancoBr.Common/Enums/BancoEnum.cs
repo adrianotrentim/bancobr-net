@@ -2,6 +2,7 @@
 {
     public enum BancoEnum
     {
+        BancoDoBrasil = 1,
         BradescoSA = 237,
         Itau = 341,
         CEF = 104,
