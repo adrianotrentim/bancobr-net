@@ -10,9 +10,11 @@
     <RepositoryUrl Condition="'$(RepositoryUrl)' == ''">https://github.com/adrianotrentim/bancobr-net</RepositoryUrl>
     <PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+	<PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
+	<None Include="$(MSBuildThisFileDirectory)icon.png" Pack="true" PackagePath="\" Visible="false" />
     <None Include="$(MSBuildThisFileDirectory)../docs/nuget/$(MSBuildProjectName).md" Pack="true" PackagePath="README.md" />
     <None Include="$(MSBuildThisFileDirectory)../LICENSE" Pack="true" PackagePath="" />
   </ItemGroup>
