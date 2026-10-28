@@ -19,3 +19,5 @@
 ## Evidência e testes
 
 Use os testes em `tests/BancoBr.Tests/Sicoob` e `Santander` como exemplos de HTTP simulado. Para alterações de protocolo, valide a requisição emitida e o mapeamento de sucesso/erro, incluindo reautenticação ou múltiplas etapas quando afetadas. Para mudanças de endpoint, campo ou status bancário, baseie-se em especificação oficial fornecida ou consultada e registre a fonte na entrega; não deduza contratos de outro banco.
+
+Para Sicredi, consulte `Sicredi/README.md` e os guias oficiais vinculados antes de alterar o protocolo. A criação Multipag é assíncrona e não confirma liquidação; preserve `idTransacao` entre tentativas. Homologação usa bases distintas para pagamentos e DDA. Comprovantes são PDF binário, e extrato/saldo usam a conta vinculada à credencial.

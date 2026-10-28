@@ -35,6 +35,12 @@ namespace BancoBr.Common.Instances
         /// </summary>
         public string NumeroDocumentoNoBanco { get; set; }
 
+        /// <summary>Identidade persistida antes do envio para recuperar tentativas incertas. No Sicredi é o idTransacao; reutilize o mesmo movimento ou restaure este valor no reenvio.</summary>
+        public string IdRequisicaoBancoBr { get; set; }
+
+        /// <summary>Situação textual original retornada pelo banco, incluindo pendências de aprovação do Sicredi.</summary>
+        public string SituacaoOriginalBancoBr { get; set; }
+
         public MovimentoItem MovimentoItem { get; set; }
         public AvisoFavorecidoEnum AvisoAoFavorecido { get; set; }
 
@@ -524,6 +530,9 @@ namespace BancoBr.Common.Instances
 
     public class MovimentoItemExtratoTransacao : MovimentoItem
     {
+        /// <summary>Saldo após o lançamento, quando fornecido pela API (Sicredi).</summary>
+        public decimal? SaldoAposLancamento { get; set; }
+
         public string TransactionId { get; set; }
 
         /// <summary>
