@@ -40,9 +40,11 @@ namespace BancoBr.API.Sicredi
             if (string.IsNullOrWhiteSpace(identificador) || identificador.Length > 100)
                 throw new ArgumentException("Informe NumeroDocumento como identificador do associado (até 100 caracteres).");
             body["identificadorPagamentoAssociado"] = identificador;
-            if (string.IsNullOrWhiteSpace(IdentidadeDe(m).Value)) IdentidadeDe(m).Value = chave ?? Guid.NewGuid().ToString();
-            if (IdentidadeDe(m).Value.Length > 100) throw new ArgumentException("idTransacao excede 100 caracteres.");
-            body["idTransacao"] = IdentidadeDe(m).Value;
+            var identidade = IdentidadeDe(m);
+            var idTransacao = string.IsNullOrWhiteSpace(identidade.Value) ? chave ?? Guid.NewGuid().ToString() : identidade.Value;
+            if (idTransacao.Length > 100) throw new ArgumentException("idTransacao excede 100 caracteres.");
+            identidade.Value = idTransacao;
+            body["idTransacao"] = idTransacao;
             var recurso = Recurso(m);
             var rota = recurso;
             string barras = null;

@@ -46,6 +46,26 @@ namespace BancoBr.Tests.Sicredi
         }
 
         [Fact]
+        public async Task Pagar_ChaveMuitoLonga_PermiteCorrigirNoMesmoMovimento()
+        {
+            var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.OK, "{\"status\":\"RECEBIDO\"}"));
+            var api = new PagamentosClient(Gateway(handler));
+            var movimento = Boleto();
+            var chaveValida = new string('v', 100);
+
+            await Assert.ThrowsAsync<ArgumentException>(() => api.PagarAsync(movimento, new string('x', 101), default));
+            Assert.Empty(handler.Requests);
+            Assert.Null(movimento.NumeroDocumentoNoBanco);
+
+            await api.PagarAsync(movimento, chaveValida, default);
+
+            Assert.Single(handler.Requests);
+            Assert.Equal(chaveValida, (string?)JObject.Parse(handler.Bodies.Single()!)["idTransacao"]);
+            Assert.Equal(chaveValida, movimento.NumeroDocumentoNoBanco);
+            Assert.Equal(BancoBrSituacaoEnum.Agendado, movimento.SituacaoBancoBr);
+        }
+
+        [Fact]
         public async Task Reenvio_ErroServidor_PreservaIdentidade()
         {
             var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.InternalServerError, "{}"), (HttpStatusCode.OK, "{\"status\":\"RECEBIDO\"}"));
