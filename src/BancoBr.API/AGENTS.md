@@ -3,6 +3,7 @@
 ## Contratos e distribuição
 
 - `BancoApi` é a fachada pública: despacha operações para clientes internos pelo tipo de `MovimentoItem`. Preserve `Movimento`/`MovimentoItem` como contrato de domínio, inclusive em consultas de listas.
+- Ao integrar outro banco, siga a seção `API agnóstica ao banco` do `AGENTS.md` da raiz. Leia a implementação, a documentação e os testes da operação existente antes de definir outro fluxo.
 - A origem vem de `ConfiguracaoAPI.Correntista`. Reutilize essa configuração nos clientes em vez de criar outra fonte de agência e conta.
 - Para implementar uma operação, reutilize os modelos, a base e o cliente mais próximos e conecte o fluxo à fachada quando aplicável. A criação ou alteração de contratos em `Base`, `Base/Models` ou DTOs bancários segue a regra de autorização do `AGENTS.md` da raiz. Mantenha particularidades de protocolo nas pastas do banco.
 - O Santander compartilha transporte e normalização em `Santander/Http/SantanderHttpGateway.cs`. Confira esse gateway antes de duplicar comportamento nos clientes.

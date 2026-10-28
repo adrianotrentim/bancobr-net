@@ -24,6 +24,12 @@ BancoBr.NET é uma biblioteca de integração bancária por API e arquivos CNAB 
 - Pedidos genéricos de integração, correção ou refatoração não autorizam implicitamente essas mudanças. Uma adição compatível também precisa de autorização; criar outro modo de chamada ou mover os modelos para outro pacote não dispensa a regra.
 - Quando a autorização já tiver sido dada para a alteração específica, execute somente o escopo aprovado. Uma solicitação explícita de desfazer uma alteração autoriza sua remoção, sem reintroduzir outros modelos ou ampliar o escopo.
 
+## API agnóstica ao banco
+
+- Para uma operação já oferecida pela biblioteca, integre outro banco pelo mesmo método público, preservando assinatura, modelos e significado do retorno. A escolha do banco vem da configuração; autenticação, etapas de processamento, download e formatos de protocolo ficam na implementação interna.
+- Antes de criar interfaces, bases ou métodos públicos alternativos, confira como a operação existente pode acomodar o banco. Uma diferença de protocolo não justifica exigir outra chamada do consumidor. Se o contrato atual não representar o resultado, apresente o impedimento e as alternativas antes de implementar uma solução; mudanças de contrato seguem a autorização da seção anterior.
+- Preserve também a forma de consumo do resultado. Um link HTTP para um comprovante, bytes do PDF, uma URL de dados e um caminho local têm comportamentos diferentes. Valide a substituição do banco com o mesmo fluxo do consumidor, além dos testes do protocolo específico.
+
 ## Validação e entrega
 
 Execute a partir da raiz, conforme a área alterada:
