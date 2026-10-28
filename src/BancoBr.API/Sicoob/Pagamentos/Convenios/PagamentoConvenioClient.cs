@@ -174,7 +174,6 @@ namespace BancoBr.API.Sicoob.Pagamentos.Convenios
             {
                 if (response.StatusCode == System.Net.HttpStatusCode.Accepted)
                 {
-
                     movimento.SituacaoBancoBr = BancoBrSituacaoEnum.Agendado;
                     movimento.DetalheRejeicaoBancoBr = "Pagamento pendente de assinatura.";
                     return movimento;
@@ -190,7 +189,6 @@ namespace BancoBr.API.Sicoob.Pagamentos.Convenios
                 }
 
                 var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
                 var envelope = JsonConvert.DeserializeObject<ResultadoEnvelope<ArrecadacaoResultado>>(body, SerializerSettings);
 
                 if (envelope?.Resultado != null)
@@ -481,7 +479,6 @@ namespace BancoBr.API.Sicoob.Pagamentos.Convenios
                 await EnsureSuccessOrThrowAsync(response).ConfigureAwait(false);
 
                 var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
                 var envelope = JsonConvert.DeserializeObject<ResultadoEnvelope<T>>(responseBody, SerializerSettings);
                 return envelope.Resultado;
             }
@@ -533,7 +530,6 @@ namespace BancoBr.API.Sicoob.Pagamentos.Convenios
             }
 
             var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
             SicoobErrorResponse errorResponse;
             try
             {

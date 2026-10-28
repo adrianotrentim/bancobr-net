@@ -387,7 +387,6 @@ namespace BancoBr.API.Sicoob.Pagamentos.Pix
 
                 var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-
                 await EnsureSuccessOrThrowAsync(response).ConfigureAwait(false);
 
                 return JsonConvert.DeserializeObject<T>(responseBody, SerializerSettings);
@@ -453,7 +452,6 @@ namespace BancoBr.API.Sicoob.Pagamentos.Pix
             }
 
             var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
             var mensagens = new System.Collections.Generic.List<MensagemErro>();
 
             PixErrorResponse problemResponse;

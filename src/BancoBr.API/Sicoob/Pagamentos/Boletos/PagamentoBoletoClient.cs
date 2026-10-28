@@ -203,7 +203,6 @@ namespace BancoBr.API.Sicoob.Pagamentos.Boletos
             {
                 if (response.StatusCode == System.Net.HttpStatusCode.Accepted)
                 {
-
                     movimento.SituacaoBancoBr = BancoBrSituacaoEnum.Agendado;
                     movimento.DetalheRejeicaoBancoBr = "Pagamento pendente de assinatura.";
                     return movimento;
@@ -228,7 +227,6 @@ namespace BancoBr.API.Sicoob.Pagamentos.Boletos
                 }
 
                 var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
                 var envelope = JsonConvert.DeserializeObject<ResultadoEnvelope<ComprovantePagamento>>(body, SerializerSettings);
                 return AplicarComprovante(movimento, item, envelope?.Resultado);
             }
@@ -301,7 +299,6 @@ namespace BancoBr.API.Sicoob.Pagamentos.Boletos
                 await EnsureSuccessOrThrowAsync(response).ConfigureAwait(false);
 
                 var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
                 var envelope = JsonConvert.DeserializeObject<ResultadoEnvelope<BoletoDDA[]>>(body, SerializerSettings);
                 return envelope?.Resultado?.Select(MapBoletoDda).ToList();
             }
@@ -633,7 +630,6 @@ namespace BancoBr.API.Sicoob.Pagamentos.Boletos
                 await EnsureSuccessOrThrowAsync(response).ConfigureAwait(false);
 
                 var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
                 var envelope = JsonConvert.DeserializeObject<ResultadoEnvelope<T>>(responseBody, SerializerSettings);
                 return envelope.Resultado;
             }
@@ -690,7 +686,6 @@ namespace BancoBr.API.Sicoob.Pagamentos.Boletos
             }
 
             var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
             SicoobErrorResponse errorResponse;
             try
             {

@@ -27,7 +27,7 @@ namespace BancoBr.API.Sicredi
             if (movimento?.MovimentoItem == null) throw new ArgumentException("Informe o movimento e o item do pagamento.", nameof(movimento));
             foreach (var entrada in _clientes)
                 if (entrada.Key.IsInstanceOfType(movimento.MovimentoItem)) return entrada.Value;
-            throw new NotSupportedException("Multipag suporta boleto, tributo com barras e Pix por chave.");
+            throw new NotSupportedException("Multipag suporta boleto, tributo com barras e Pix por chave ou dados bancários.");
         }
 
         public Task<Movimento> EnviarAsync(Movimento movimento, string idempotencyKey, CancellationToken cancellationToken)

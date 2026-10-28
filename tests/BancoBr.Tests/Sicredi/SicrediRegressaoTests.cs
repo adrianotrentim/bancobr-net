@@ -136,6 +136,123 @@ namespace BancoBr.Tests.Sicredi
         }
 
         [Theory]
+        [InlineData("boletos", null)]
+        [InlineData("boletos", "outra-chave")]
+        [InlineData("tributos/barras", null)]
+        [InlineData("tributos/barras", "outra-chave")]
+        [InlineData("pix", null)]
+        [InlineData("pix", "outra-chave")]
+        public async Task EnviarAgendamento_MovimentoRestaurado_ConsultaReferenciaSemNovoPagamento(string recurso, string? chave)
+        {
+            var handler = new SequencedFakeHttpMessageHandler(
+                (HttpStatusCode.OK, "{\"status\":\"RECEBIDO\"}"),
+                (HttpStatusCode.OK, "{\"status\":\"SUCESSO\"}"));
+            var banco = Criar(handler);
+            var movimento = new Movimento
+            {
+                NumeroDocumento = "ERP-001", DataPagamento = new DateTime(2026, 10, 28), ValorPagamento = 10,
+                Favorecido = new Favorecido { CPF_CNPJ = "11111111111" }, MovimentoItem = Item(recurso)
+            };
+            await banco.EnviarAgendamentoAsync(movimento, "referencia-original");
+            // Uma nova instância, como na leitura dos dados persistidos pelo consumidor.
+            var restaurado = new Movimento
+            {
+                NumeroDocumento = movimento.NumeroDocumento, NumeroDocumentoNoBanco = movimento.NumeroDocumentoNoBanco,
+                DataPagamento = movimento.DataPagamento, ValorPagamento = movimento.ValorPagamento,
+                Favorecido = movimento.Favorecido, MovimentoItem = Item(recurso)
+            };
+            var resultado = await banco.EnviarAgendamentoAsync(restaurado, chave);
+
+            Assert.Same(restaurado, resultado);
+            Assert.Equal(2, handler.Requests.Count);
+            Assert.Equal(HttpMethod.Post, handler.Requests[0].Method);
+            Assert.Equal(HttpMethod.Get, handler.Requests[1].Method);
+            Assert.EndsWith("/" + recurso + "/referencia-original", handler.Requests[1].RequestUri!.AbsolutePath);
+            Assert.Equal("referencia-original", resultado.NumeroDocumentoNoBanco);
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
+        }
+
+        [Fact]
+        public async Task EnviarAgendamento_ReferenciaNaoEncontrada_NaoCriaOutroPagamento()
+        {
+            var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.NotFound, "{}"));
+            var movimento = new Movimento { NumeroDocumentoNoBanco = "referencia-original", MovimentoItem = Item("boletos") };
+            await Assert.ThrowsAsync<BancoBr.API.Core.Errors.BancoApiException>(() => Criar(handler).EnviarAgendamentoAsync(movimento));
+            Assert.Equal(HttpMethod.Get, Assert.Single(handler.Requests).Method);
+            Assert.Equal("referencia-original", movimento.NumeroDocumentoNoBanco);
+        }
+
+        private static Movimento PixDadosBancarios() => new Movimento
+        {
+            NumeroDocumento = "ERP-PIX", DataPagamento = new DateTime(2026, 10, 28), ValorPagamento = 51.22m,
+            Favorecido = new Favorecido { Nome = "Favorecido fictício", CPF_CNPJ = "111.111.111-11" },
+            MovimentoItem = new MovimentoItemTransferenciaPIX
+            {
+                Ispb = "1234567", NumeroAgencia = 101, NumeroConta = 1111, DVConta = "9"
+            }
+        };
+
+        [Theory]
+        [InlineData(TipoContaEnum.ContaCorrente, "CORRENTE")]
+        [InlineData(TipoContaEnum.ContaPoupanca, "POUPANCA")]
+        [InlineData(TipoContaEnum.ContaPagamento, "PAGAMENTO")]
+        public async Task EnviarPix_DadosBancarios_UsaModelosExistentesERotasDaModalidade(TipoContaEnum tipo, string esperado)
+        {
+            var handler = new SequencedFakeHttpMessageHandler(
+                (HttpStatusCode.OK, "{\"status\":\"AGENDADO\"}"),
+                (HttpStatusCode.OK, "{\"status\":\"AGENDADO\"}"), (HttpStatusCode.OK, ""));
+            var banco = Criar(handler);
+            var movimento = PixDadosBancarios();
+            ((MovimentoItemTransferenciaPIX)movimento.MovimentoItem).TipoConta = tipo;
+            await banco.EnviarAgendamentoAsync(movimento, "referencia-pix");
+            await banco.ConsultarAgendamentoAsync(movimento);
+            await banco.CancelarAgendamentoAsync(movimento);
+
+            var body = JObject.Parse(handler.Bodies[0]!);
+            Assert.EndsWith("/pix/dados-bancarios", handler.Requests[0].RequestUri!.AbsolutePath);
+            Assert.Equal("0101", (string?)body["agenciaBeneficiario"]);
+            Assert.Equal("11119", (string?)body["contaBeneficiario"]);
+            Assert.Equal("01234567", (string?)body["ispbBeneficiario"]);
+            Assert.Equal(esperado, (string?)body["tipoContaBeneficiario"]);
+            Assert.Equal("Favorecido fictício", (string?)body["nomeBeneficiario"]);
+            Assert.Equal("11111111111", (string?)body["documentoBeneficiario"]);
+            Assert.Equal("referencia-pix", (string?)body["idTransacao"]);
+            Assert.Null(body["chavePix"]);
+            Assert.EndsWith("/pix/referencia-pix", handler.Requests[1].RequestUri!.AbsolutePath);
+            Assert.EndsWith("/pix/cancelamentos", handler.Requests[2].RequestUri!.AbsolutePath);
+            Assert.Equal(BancoBrSituacaoEnum.Cancelado, movimento.SituacaoBancoBr);
+        }
+
+        [Theory]
+        [InlineData("sem-ispb")]
+        [InlineData("ispb-longo")]
+        [InlineData("ispb-nao-numerico")]
+        [InlineData("sem-nome")]
+        [InlineData("sem-documento")]
+        [InlineData("sem-conta")]
+        [InlineData("agencia-longa")]
+        [InlineData("conta-longa")]
+        public async Task EnviarPix_DadosBancariosInvalidos_NaoEnvia(string cenario)
+        {
+            var handler = new SequencedFakeHttpMessageHandler();
+            var movimento = PixDadosBancarios();
+            var pix = (MovimentoItemTransferenciaPIX)movimento.MovimentoItem;
+            switch (cenario)
+            {
+                case "sem-ispb": pix.Ispb = ""; pix.Banco = 748; break;
+                case "ispb-longo": pix.Ispb = "123456789"; break;
+                case "ispb-nao-numerico": pix.Ispb = "ISPB"; break;
+                case "sem-nome": movimento.Favorecido.Nome = ""; break;
+                case "sem-documento": movimento.Favorecido.CPF_CNPJ = ""; break;
+                case "sem-conta": pix.NumeroConta = 0; break;
+                case "agencia-longa": pix.NumeroAgencia = 10000; break;
+                case "conta-longa": pix.NumeroConta = long.MaxValue; pix.DVConta = "12"; break;
+            }
+            await Assert.ThrowsAsync<ArgumentException>(() => Criar(handler).EnviarAgendamentoAsync(movimento));
+            Assert.Empty(handler.Requests);
+        }
+
+        [Theory]
         [InlineData("boletos", "multipag.boleto")]
         [InlineData("tributos/barras", "multipag.tributos")]
         [InlineData("pix", "multipag.pix")]

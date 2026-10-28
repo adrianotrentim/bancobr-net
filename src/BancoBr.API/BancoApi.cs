@@ -248,6 +248,7 @@ namespace BancoBr.API
         /// <summary>
         /// No Sicredi, o envio é direto, sem consulta prévia: informe data, valor e NumeroDocumento.
         /// Preserve idempotencyKey nos reenvios; a aceitação ainda depende de processamento/aprovação.
+        /// Com NumeroDocumentoNoBanco preenchido, o Sicredi consulta o pagamento existente sem criar outro.
         /// Envia o movimento — consulta prévia (quando o banco exige) + pagamento, na mesma
         /// chamada. <paramref name="idempotencyKey"/> é opcional: para Boleto (que exige um GUID
         /// de lançamento por baixo) uma chave que não seja um GUID válido gera um novo; para TED

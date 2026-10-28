@@ -88,7 +88,6 @@ namespace BancoBr.API.Santander.Http
 
                 var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-
                 EnsureSuccessOrThrow(response, responseBody);
 
                 return JsonConvert.DeserializeObject<T>(responseBody, SerializerSettings);

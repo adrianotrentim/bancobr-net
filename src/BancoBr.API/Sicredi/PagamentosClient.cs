@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Globalization;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,11 +23,15 @@ namespace BancoBr.API.Sicredi
             if (m.MovimentoItem is MovimentoItemPagamentoTituloCodigoBarra) return "boletos";
             if (m.MovimentoItem is MovimentoItemPagamentoConvenioCodigoBarra) return "tributos/barras";
             if (m.MovimentoItem is MovimentoItemTransferenciaPIX) return "pix";
-            throw new NotSupportedException("Multipag suporta boleto, tributo com barras e Pix por chave.");
+            throw new NotSupportedException("Multipag suporta boleto, tributo com barras e Pix por chave ou dados bancários.");
         }
 
         internal async Task<Movimento> PagarAsync(Movimento m, string chave, CancellationToken ct)
         {
+            // Uma referência persistida identifica um pagamento já enviado, mesmo em outra instância.
+            if (!string.IsNullOrWhiteSpace(m.NumeroDocumentoNoBanco))
+                return await ConsultarAsync(m, ct).ConfigureAwait(false);
+
             if (m.DataPagamento == default || m.ValorPagamento < 0) throw new ArgumentException("Informe data e valor do pagamento.");
             var body = Gateway.Conta();
             body["dataPagamento"] = m.DataPagamento.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
@@ -39,6 +44,7 @@ namespace BancoBr.API.Sicredi
             if (IdentidadeDe(m).Value.Length > 100) throw new ArgumentException("idTransacao excede 100 caracteres.");
             body["idTransacao"] = IdentidadeDe(m).Value;
             var recurso = Recurso(m);
+            var rota = recurso;
             string barras = null;
             if (m.MovimentoItem is MovimentoItemPagamentoTituloCodigoBarra boleto)
             {
@@ -52,11 +58,20 @@ namespace BancoBr.API.Sicredi
             }
             else if (m.MovimentoItem is MovimentoItemTransferenciaPIX pix)
             {
-                if (string.IsNullOrWhiteSpace(pix.ChavePIX) || string.IsNullOrWhiteSpace(m.Favorecido?.CPF_CNPJ))
-                    throw new ArgumentException("Informe a chave Pix e o documento do favorecido.");
-                body["chavePix"] = pix.ChavePIX.Contains("@") ? pix.ChavePIX.ToLowerInvariant() : pix.ChavePIX;
+                if (string.IsNullOrWhiteSpace(m.Favorecido?.CPF_CNPJ))
+                    throw new ArgumentException("Informe o documento do favorecido.");
                 body["documentoBeneficiario"] = SicrediHttpGateway.Digitos(m.Favorecido.CPF_CNPJ);
                 if (!string.IsNullOrWhiteSpace(m.Favorecido.Nome)) body["nomeBeneficiario"] = m.Favorecido.Nome;
+                if (!string.IsNullOrWhiteSpace(pix.ChavePIX))
+                {
+                    rota += "/chave";
+                    body["chavePix"] = pix.ChavePIX.Contains("@") ? pix.ChavePIX.ToLowerInvariant() : pix.ChavePIX;
+                }
+                else
+                {
+                    rota += "/dados-bancarios";
+                    PreencherDadosBancarios(body, m, pix);
+                }
             }
             if (barras != null)
             {
@@ -65,10 +80,36 @@ namespace BancoBr.API.Sicredi
                 body["codigoBarra"] = barras;
             }
             else if (recurso != "pix") throw new ArgumentException("Informe o código de barras.");
-            var resposta = await Gateway.JsonAsync(HttpMethod.Post, Gateway.Pagamentos + recurso + (recurso == "pix" ? "/chave" : ""), body, ct).ConfigureAwait(false);
+            var resposta = await Gateway.JsonAsync(HttpMethod.Post, Gateway.Pagamentos + rota, body, ct).ConfigureAwait(false);
             m.NumeroDocumentoNoBanco = IdentidadeDe(m).Value;
             Aplicar(m, resposta);
             return m;
+        }
+
+        private static void PreencherDadosBancarios(JObject body, Movimento movimento, MovimentoItemTransferenciaPIX pix)
+        {
+            if (string.IsNullOrWhiteSpace(movimento.Favorecido.Nome) || movimento.Favorecido.Nome.Length > 100)
+                throw new ArgumentException("Informe o nome do favorecido (até 100 caracteres) para Pix por dados bancários.");
+            var ispb = pix.Ispb?.Trim();
+            if (string.IsNullOrEmpty(ispb) || ispb.Length > 8 || ispb.Any(c => c < '0' || c > '9'))
+                throw new ArgumentException("Informe o ISPB numérico do favorecido (até 8 dígitos); o Sicredi exige ISPB, não código COMPE.");
+            if (pix.NumeroAgencia < 0 || pix.NumeroAgencia > 9999 || pix.NumeroConta <= 0)
+                throw new ArgumentException("Informe a agência (até 4 dígitos) e a conta do favorecido.");
+            var conta = pix.NumeroConta.ToString(CultureInfo.InvariantCulture) + pix.DVConta;
+            if (conta.Length > 20)
+                throw new ArgumentException("A conta do favorecido com DV deve ter até 20 caracteres.");
+            string tipoConta;
+            switch (pix.TipoConta)
+            {
+                case TipoContaEnum.ContaCorrente: tipoConta = "CORRENTE"; break;
+                case TipoContaEnum.ContaPoupanca: tipoConta = "POUPANCA"; break;
+                case TipoContaEnum.ContaPagamento: tipoConta = "PAGAMENTO"; break;
+                default: throw new NotSupportedException("Tipo de conta não suportado para Pix Sicredi.");
+            }
+            body["agenciaBeneficiario"] = pix.NumeroAgencia.ToString("D4", CultureInfo.InvariantCulture);
+            body["contaBeneficiario"] = conta;
+            body["ispbBeneficiario"] = ispb.PadLeft(8, '0');
+            body["tipoContaBeneficiario"] = tipoConta;
         }
 
         private static string Id(Movimento m) => !string.IsNullOrWhiteSpace(m.NumeroDocumentoNoBanco)

@@ -1,6 +1,6 @@
 # Usar o Sicredi com BancoBr.NET
 
-Esta integração permite pagar boletos, tributos e contas de consumo com código de barras, fazer Pix por chave e consultar DDA, extrato e saldo.
+Esta integração permite pagar boletos, tributos e contas de consumo com código de barras, fazer Pix por chave ou dados bancários e consultar DDA, extrato e saldo.
 
 **Situação atual:** a implementação foi validada com respostas simuladas. O teste de comunicação com o Sicredi ainda depende de credenciais e certificado de homologação.
 
@@ -10,11 +10,14 @@ Esta integração permite pagar boletos, tributos e contas de consumo com códig
 | --- | --- |
 | Boleto com código de barras | Enviar, consultar, cancelar agendamento e obter PDF do comprovante |
 | Tributo ou conta de consumo com código de barras | Enviar, consultar, cancelar agendamento e obter PDF do comprovante |
-| Pix por chave | Enviar, consultar, cancelar agendamento e obter PDF do comprovante |
+| Pix por chave ou dados bancários | Enviar, consultar, cancelar agendamento e obter PDF do comprovante |
 | DDA — boletos emitidos contra o pagador cadastrado | Consultar boletos em aberto por vencimento |
 | Extrato | Consultar um período, incluindo todas as páginas |
 | Saldo | Consultar o saldo atual |
-| TED, Pix por dados bancários, pagamento por QR Code e cadastro de webhook | Ainda não implementados |
+| TED | Sem endpoint na documentação Multipag consultada; não suportado nesta integração por API |
+| Pagamento por QR Code e cadastro de webhook | Não implementados nesta integração |
+
+A documentação de pagamentos por API consultada descreve boletos, tributos e Pix. As referências a TED nos manuais CNAB tratam de integração por arquivo, que é um fluxo separado.
 
 ## Antes de conectar: o que pedir ao Sicredi
 
@@ -102,6 +105,8 @@ O código de barras deve ter **44 dígitos**. Se sua aplicação recebe uma linh
 
 Crie e guarde o identificador do envio antes da primeira tentativa. Reutilize esse mesmo valor se precisar tentar novamente. Depois que o banco aceitar o envio, `NumeroDocumentoNoBanco` recebe a referência usada nas consultas seguintes.
 
+Guarde também `NumeroDocumentoNoBanco` com o movimento. Se chamar `EnviarAgendamentoAsync` com essa referência preenchida, inclusive depois de reconstruir o movimento salvo, a biblioteca consulta o pagamento existente em vez de criar outro. Isso vale mesmo se outra chave for informada na chamada. Se a consulta falhar, a biblioteca informa o erro e não faz um novo envio automaticamente.
+
 Se a conexão cair antes da resposta, verifique se o banco registrou a solicitação antes de reenviar. A biblioteca não repete automaticamente envios após falhas de conexão ou erros de servidor. Uma resposta HTTP 401 pode gerar uma renovação do token e uma nova tentativa com os mesmos dados.
 
 ### Entender a resposta do banco
@@ -149,10 +154,42 @@ Algumas contas legadas do Sicredi podem apresentar movimentos apenas no dia segu
 ## Particularidades de outras operações
 
 - **Pix por chave:** informe também `Favorecido.CPF_CNPJ`. Preencha `Favorecido.Nome` sempre que possível para facilitar a conferência na aprovação.
+- **Pix por dados bancários:** deixe `ChavePIX` vazia e informe ISPB, agência, conta, DV e tipo de conta no item Pix, além de nome e documento em `Favorecido`. O Sicredi exige ISPB; somente o código COMPE em `Banco` não é suficiente. A integração usa os tipos já existentes: conta corrente, poupança e pagamento.
 - **FGTS:** informe `IdentificadorFgts = "0181"` no item de pagamento de convênio.
 - **DDA:** exige adesão como Pagador Eletrônico no Internet Banking ou aplicativo. A consulta desta integração traz boletos em aberto, filtrados por vencimento.
 
 Nas consultas de pagamentos, os campos que o banco devolver — como valor, data, código de barras, chave e beneficiário Pix — atualizam o movimento. Campos ausentes ou nulos preservam os dados já conhecidos.
+
+### Exemplo de Pix por agência e conta
+
+Use os mesmos modelos das outras integrações. Os dados abaixo são fictícios:
+
+```csharp
+var pix = new Movimento
+{
+    NumeroDocumento = "ERP-PIX-0001",
+    DataPagamento = dataPagamento,
+    ValorPagamento = valorPagamento,
+    Favorecido = new Favorecido
+    {
+        Nome = "Favorecido de exemplo",
+        CPF_CNPJ = "11111111111"
+    },
+    MovimentoItem = new MovimentoItemTransferenciaPIX
+    {
+        Ispb = "91586982",
+        NumeroAgencia = 101,
+        NumeroConta = 1111,
+        DVConta = "9",
+        TipoConta = TipoContaEnum.ContaCorrente
+    }
+};
+
+await banco.EnviarAgendamentoAsync(pix, idempotencyKey: identificadorSalvoNoSeuSistema);
+await banco.ConsultarAgendamentoAsync(pix);
+```
+
+Se `ChavePIX` estiver preenchida, o envio será por chave. Consulta, cancelamento e PDF usam os mesmos métodos para as duas modalidades Pix.
 
 ## Testar a conexão com o Sicredi
 

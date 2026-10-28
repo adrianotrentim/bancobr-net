@@ -50,7 +50,6 @@ namespace BancoBr.API.BancoDoBrasil.Http
                     {
                         if (response.StatusCode == HttpStatusCode.Unauthorized && tentativa == 0) { _tokens.InvalidateToken(); continue; }
                         var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
                         if (!response.IsSuccessStatusCode)
                         {
                             MensagemErro[] erros = null;
