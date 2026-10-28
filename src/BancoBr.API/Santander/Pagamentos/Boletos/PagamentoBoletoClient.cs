@@ -180,7 +180,7 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
             const int limite = 200;
             var movimentos = new List<Movimento>();
 
-            for (var pagina = 1; ; pagina++)
+            for (var pagina = 0; ; pagina++)
             {
                 var url = $"{_baseUrl}workspaces/{workspace.WorkspaceId}/authorized_direct_debits?_limit={limite}&_PageNumber={pagina}" +
                           $"&initialDueDate={dataInicial:yyyy-MM-dd}&finalDueDate={dataFinal:yyyy-MM-dd}&titleSituation={titleSituation}";
@@ -245,15 +245,17 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
                 CodigoTipoSituacaoBoleto = (int)situacao,
                 DescricaoSituacaoBoleto = titleSituation,
                 NumeroCodigoBarras = dto.Code.JustNumbers(),
-                ValorBoleto = dto.NominalValue.GetValueOrDefault(),
+                ValorBoleto = dto.NominalValue.ToDecimalPtBr(),
                 DataVencimentoBoleto = dto.DueDate.GetValueOrDefault(),
                 DataLimitePagamento = dto.PaymentLimitDate,
+                TipoPessoaPagador = dto.PayerDocumentType,
                 NumeroCpfCnpjPagador = dto.PayerDocumentNumber,
+                NomeRazaoSocialPagador = dto.PayerName?.Trim(),
                 NumeroNossoNumero = dto.BankIdentificationNumber,
-                NumeroDocumento = dto.BeneficiaryIdentificationNumber,
-                TipoPessoaBeneficiario = dto.Beneficiary?.DocumentType ?? dto.BeneficiaryType,
-                NumeroCpfCnpjBeneficiario = dto.Beneficiary?.DocumentNumber ?? dto.BeneficiaryDocument,
-                NomeRazaoSocialBeneficiario = dto.Beneficiary?.Name ?? dto.BeneficiaryName,
+                NumeroDocumento = dto.Beneficiary?.IdentificationNumber,
+                TipoPessoaBeneficiario = dto.Beneficiary?.Type,
+                NumeroCpfCnpjBeneficiario = dto.Beneficiary?.Document,
+                NomeRazaoSocialBeneficiario = dto.Beneficiary?.Name?.Trim(),
             };
 
             if (int.TryParse(dto.KindCode, out var especie))
@@ -308,6 +310,9 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
                 item.PagadorConfirmadoDocumento = dto.Payer.DocumentNumber;
                 item.PagadorConfirmadoTipoPessoa = dto.Payer.DocumentType;
             }
+
+            if (!string.IsNullOrWhiteSpace(dto.Beneficiary?.Name))
+                item.NomeFantasiaBeneficiario = dto.Beneficiary.Name.Trim();
 
             AplicarBeneficiario(movimento, dto.Beneficiary);
 
