@@ -13,7 +13,7 @@
 - Preserve Newtonsoft.Json e os nomes/formatações de campos definidos pelos DTOs existentes. Verifique URL, método, headers, corpo e interpretação da resposta ao alterar uma chamada.
 - Reutilize `Core/OAuth`, `CertificateSource` e os pontos de injeção de `HttpClient` e `IAccessTokenProvider`. Propague `CancellationToken` e acompanhe o padrão de `ConfigureAwait(false)` do transporte.
 - Normalize erros de negócio retornados pelo banco em `BancoApiException`/`MensagemErro`, mantendo código e mensagem disponíveis ao consumidor.
-- Comprovantes PDF usam `ConsultarComprovanteAsync` e `ComprovanteApiBase`: retornam `byte[]` e preenchem `Movimento.ArquivoComprovantePDF`. Resolva links e downloads dentro do cliente bancário; se o pagamento ou o arquivo ainda não estiver pronto, retorne nulo.
+- Comprovantes PDF usam `ConsultarComprovanteAsync` e `ComprovanteApiBase`: retornam `bool` e preenchem `Movimento.ArquivoComprovantePDF`. Resolva links e downloads dentro do cliente bancário; se o pagamento ou o arquivo ainda não estiver pronto, retorne `false`; retorne `true` quando o PDF for obtido.
 - Preserve a identidade do lançamento nas tentativas de pagamento: confira `Core/Models/IdempotencyKey.cs` e seus chamadores antes de alterar a chave. Uma nova tentativa do mesmo lançamento deve manter sua identidade.
 - No Santander, confira o uso de `IdWorkspace` e o fluxo explícito de obtenção/criação antes de mudar a descoberta de workspace nas operações.
 - Preserve as etapas de consulta, iniciação, confirmação e cancelamento próprias de cada operação. Confirme suporte no cliente e testes; sem evidência, não presuma que bancos diferentes oferecem o mesmo fluxo.

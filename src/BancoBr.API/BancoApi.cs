@@ -339,12 +339,12 @@ namespace BancoBr.API
 
         /// <summary>
         /// Obtém o comprovante PDF nos bancos que disponibilizam o documento, a partir do id em
-        /// <see cref="Movimento.NumeroDocumentoNoBanco"/>. Retorna os bytes e preenche
+        /// <see cref="Movimento.NumeroDocumentoNoBanco"/>. Retorna true quando obtido e preenche
         /// <see cref="Movimento.ArquivoComprovantePDF"/>, atualizando a situação do movimento.
-        /// Retorna nulo se o pagamento ou o arquivo ainda não estiver pronto; consulte novamente mais tarde.
+        /// Retorna false se o pagamento ou o arquivo ainda não estiver pronto; consulte novamente mais tarde.
         /// O cliente de cada banco resolve internamente os links e as etapas de download.
         /// </summary>
-        public Task<byte[]> ConsultarComprovanteAsync(Movimento movimento, CancellationToken cancellationToken = default)
+        public Task<bool> ConsultarComprovanteAsync(Movimento movimento, CancellationToken cancellationToken = default)
         {
             ExtrairItem(movimento);
 

@@ -38,16 +38,16 @@ namespace BancoBr.API.Sicredi
         public Task<Movimento> CancelarAsync(Movimento movimento, CancellationToken cancellationToken)
             => ObterCliente(movimento).CancelarAsync(movimento, cancellationToken);
 
-        internal override async Task<byte[]> ConsultarComprovanteAsync(Movimento movimento, CancellationToken cancellationToken = default)
+        internal override async Task<bool> ConsultarComprovanteAsync(Movimento movimento, CancellationToken cancellationToken = default)
         {
             var cliente = ObterCliente(movimento);
             movimento.ArquivoComprovantePDF = null;
             await cliente.ConsultarAsync(movimento, cancellationToken).ConfigureAwait(false);
-            if (movimento.SituacaoBancoBr != BancoBrSituacaoEnum.Efetivado) return null;
+            if (movimento.SituacaoBancoBr != BancoBrSituacaoEnum.Efetivado) return false;
 
             var pdf = await cliente.ComprovanteAsync(movimento, cancellationToken).ConfigureAwait(false);
             movimento.ArquivoComprovantePDF = pdf;
-            return pdf;
+            return true;
         }
     }
 }

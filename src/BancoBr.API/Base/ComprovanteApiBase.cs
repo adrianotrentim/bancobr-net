@@ -24,10 +24,10 @@ namespace BancoBr.API.Base
         protected Correntista Origem { get; }
 
         /// <summary>
-        /// Obtém os bytes do PDF do pagamento identificado por
+        /// Obtém o PDF do pagamento identificado por
         /// <see cref="Movimento.NumeroDocumentoNoBanco"/> e preenche
-        /// <see cref="Movimento.ArquivoComprovantePDF"/>. Retorna nulo se ainda não disponível.
+        /// <see cref="Movimento.ArquivoComprovantePDF"/>. Retorna true quando obtido, ou false se ainda indisponível.
         /// </summary>
-        internal abstract Task<byte[]> ConsultarComprovanteAsync(Movimento movimento, CancellationToken cancellationToken = default);
+        internal abstract Task<bool> ConsultarComprovanteAsync(Movimento movimento, CancellationToken cancellationToken = default);
     }
 }

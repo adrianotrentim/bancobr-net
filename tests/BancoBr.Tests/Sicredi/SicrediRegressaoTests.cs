@@ -305,9 +305,9 @@ namespace BancoBr.Tests.Sicredi
         {
             var handler = new PdfHandler();
             var movimento = new Movimento { NumeroDocumentoNoBanco = "id", MovimentoItem = Item(recurso) };
-            var bytes = await Criar(handler).ConsultarComprovanteAsync(movimento);
-            Assert.Equal(handler.Bytes, bytes);
-            Assert.Same(bytes, movimento.ArquivoComprovantePDF);
+            var obtido = await Criar(handler).ConsultarComprovanteAsync(movimento);
+            Assert.True(obtido);
+            Assert.Equal(handler.Bytes, movimento.ArquivoComprovantePDF);
             Assert.Equal("/sb/multipag-pagamento-sandbox/v1/pagamentos/" + recurso + "/id/comprovantes", handler.Caminho);
         }
 

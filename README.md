@@ -269,17 +269,17 @@ await banco.EnviarAgendamentoAsync(movimentoPix);
 
 Console.WriteLine($"Situação={movimentoPix.SituacaoBancoBr}, EndToEndId={movimentoPix.NumeroDocumentoNoBanco}");
 
-// Santander e Sicredi: mesma chamada e retorno PDF, com o download resolvido pela biblioteca.
-// Se o pagamento ou o arquivo ainda não estiver pronto, retorna null: consulte novamente mais tarde.
-byte[] pdf = await banco.ConsultarComprovanteAsync(movimentoPix);
-if (pdf != null)
-    System.IO.File.WriteAllBytes("comprovante.pdf", pdf);
-// O mesmo conteúdo fica disponível em movimentoPix.ArquivoComprovantePDF.
+// Santander e Sicredi: mesma chamada para obter o PDF, com o download resolvido pela biblioteca.
+// Se o pagamento ou o arquivo ainda não estiver pronto, retorna false: consulte novamente mais tarde.
+bool obtido = await banco.ConsultarComprovanteAsync(movimentoPix);
+if (obtido)
+    System.IO.File.WriteAllBytes("comprovante.pdf", movimentoPix.ArquivoComprovantePDF);
+// O PDF é preenchido em movimentoPix.ArquivoComprovantePDF.
 ```
 
-**Migração de comprovantes:** `ConsultarComprovanteAsync` passa de `Task<Movimento>` para `Task<byte[]>`. Os campos `LinkComprovanteBancoBr` e `ValidadeLinkComprovanteBancoBr` são substituídos por `ArquivoComprovantePDF` (`byte[]`). Atualize chamadas e persistência que utilizavam o link; na serialização JSON com Newtonsoft.Json, os bytes são representados em Base64.
+**Migração de comprovantes:** `ConsultarComprovanteAsync` passa de `Task<Movimento>` para `Task<bool>`, indicando se o arquivo foi obtido. Os campos `LinkComprovanteBancoBr` e `ValidadeLinkComprovanteBancoBr` são substituídos por `ArquivoComprovantePDF` (`byte[]`). Atualize chamadas e persistência que utilizavam o link; na serialização JSON com Newtonsoft.Json, os bytes são representados em Base64.
 
-O método separado `BaixarComprovanteAsync` foi removido. No Santander, obtenção do link temporário e download passam a ser internos; o Sicredi retorna o documento binário pelo mesmo contrato.
+O método separado `BaixarComprovanteAsync` foi removido. No Santander, obtenção do link temporário e download passam a ser internos. Nos dois bancos, `true` indica PDF preenchido em `ArquivoComprovantePDF`, e `false` indica que ele ainda não está disponível. Falhas de comunicação e cancelamento continuam propagando exceções.
 
 ###### TED
 

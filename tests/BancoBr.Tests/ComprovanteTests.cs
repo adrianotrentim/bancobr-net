@@ -32,21 +32,21 @@ namespace BancoBr.Tests
         [InlineData(748, "boleto", "boletos")]
         [InlineData(748, "tributo", "tributos/barras")]
         [InlineData(748, "pix", "pix")]
-        public async Task ConsultarComprovante_BancosSuportados_RetornaPdfEPreencheMesmoCampo(int banco, string modalidade, string recurso)
+        public async Task ConsultarComprovante_BancosSuportados_RetornaTrueEPreencheMesmoCampo(int banco, string modalidade, string recurso)
         {
             var handler = new ComprovanteHandler();
             var movimento = CriarMovimento(modalidade);
             var api = CompatibilidadeApiTests.Criar(banco, handler);
 
-            byte[] pdf = await api.ConsultarComprovanteAsync(movimento);
+            bool obtido = await api.ConsultarComprovanteAsync(movimento);
 
-            Assert.Equal(handler.Pdf, pdf);
-            Assert.Same(pdf, movimento.ArquivoComprovantePDF);
+            Assert.True(obtido);
+            Assert.Equal(handler.Pdf, movimento.ArquivoComprovantePDF);
             Assert.Equal(BancoBrSituacaoEnum.Efetivado, movimento.SituacaoBancoBr);
             Assert.Contains(handler.Requests, r => r.RequestUri!.AbsolutePath.EndsWith("/" + recurso + "/id"));
             Assert.Single(handler.Requests.Where(ComprovanteHandler.Download));
             var json = JObject.Parse(JsonConvert.SerializeObject(movimento));
-            Assert.Equal(Convert.ToBase64String(pdf), (string?)json[nameof(Movimento.ArquivoComprovantePDF)]);
+            Assert.Equal(Convert.ToBase64String(movimento.ArquivoComprovantePDF), (string?)json[nameof(Movimento.ArquivoComprovantePDF)]);
             Assert.Null(json["LinkComprovanteBancoBr"]);
             Assert.Null(json["ValidadeLinkComprovanteBancoBr"]);
         }
@@ -54,15 +54,15 @@ namespace BancoBr.Tests
         [Theory]
         [InlineData(33)]
         [InlineData(748)]
-        public async Task ConsultarComprovante_PagamentoPendente_RetornaNuloSemBaixarArquivo(int banco)
+        public async Task ConsultarComprovante_PagamentoPendente_RetornaFalseSemBaixarArquivo(int banco)
         {
             var handler = new ComprovanteHandler { PagamentoPendente = true };
             var movimento = CriarMovimento("pix");
             movimento.ArquivoComprovantePDF = new byte[] { 1, 2 };
 
-            var pdf = await CompatibilidadeApiTests.Criar(banco, handler).ConsultarComprovanteAsync(movimento);
+            var obtido = await CompatibilidadeApiTests.Criar(banco, handler).ConsultarComprovanteAsync(movimento);
 
-            Assert.Null(pdf);
+            Assert.False(obtido);
             Assert.Null(movimento.ArquivoComprovantePDF);
             Assert.Equal(BancoBrSituacaoEnum.Agendado, movimento.SituacaoBancoBr);
             Assert.Single(handler.Requests);
@@ -75,13 +75,14 @@ namespace BancoBr.Tests
             var movimento = CriarMovimento("pix");
             var api = CompatibilidadeApiTests.Criar(33, handler);
 
-            Assert.Null(await api.ConsultarComprovanteAsync(movimento));
+            Assert.False(await api.ConsultarComprovanteAsync(movimento));
             Assert.Null(movimento.ArquivoComprovantePDF);
             Assert.Equal(5, handler.Requests.Count(r => r.RequestUri!.AbsolutePath.EndsWith("/pedido")));
             Assert.DoesNotContain(handler.Requests, ComprovanteHandler.Download);
 
             handler.EmGeracao = false;
-            Assert.Equal(handler.Pdf, await api.ConsultarComprovanteAsync(movimento));
+            Assert.True(await api.ConsultarComprovanteAsync(movimento));
+            Assert.Equal(handler.Pdf, movimento.ArquivoComprovantePDF);
             Assert.All(handler.Requests, r => Assert.Equal(HttpMethod.Get, r.Method));
         }
 
@@ -90,9 +91,11 @@ namespace BancoBr.Tests
         {
             var handler = new ComprovanteHandler { SemSolicitacao = true };
 
-            var pdf = await CompatibilidadeApiTests.Criar(33, handler).ConsultarComprovanteAsync(CriarMovimento("pix"));
+            var movimento = CriarMovimento("pix");
+            var obtido = await CompatibilidadeApiTests.Criar(33, handler).ConsultarComprovanteAsync(movimento);
 
-            Assert.Equal(handler.Pdf, pdf);
+            Assert.True(obtido);
+            Assert.Equal(handler.Pdf, movimento.ArquivoComprovantePDF);
             var post = Assert.Single(handler.Requests.Where(r => r.Method == HttpMethod.Post));
             Assert.EndsWith("/file_requests", post.RequestUri!.AbsolutePath);
         }
