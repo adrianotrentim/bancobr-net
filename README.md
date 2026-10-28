@@ -186,9 +186,11 @@ foreach (var movimento in cnab.Movimentos) {
 - [ ] CEF
 - [x] [Banco do Brasil](src/BancoBr.API/BancoDoBrasil/README.md) — **em testes**
 
-## Chamadas detalhadas opcionais
+## Acompanhar pagamentos com mais informações
 
-Os métodos existentes continuam disponíveis com os mesmos modelos e estados. A [nova forma de chamada](docs/operacoes-api.md) oferece requisição com identidade persistida, referências serializáveis, situações separadas de execução/autorização e respostas adicionais para os quatro bancos, sem alterar `BancoBr.Common`.
+Você pode continuar usando os métodos e modelos atuais. Se precisar saber se falta autorização, salvar uma referência para consultar depois ou receber mais dados do banco, veja o [guia das chamadas detalhadas](docs/operacoes-api.md).
+
+Essa forma de uso é opcional e está disponível para Sicoob, Santander, Banco do Brasil e Sicredi, conforme as operações de cada integração.
 
 ## Exemplos API
 
