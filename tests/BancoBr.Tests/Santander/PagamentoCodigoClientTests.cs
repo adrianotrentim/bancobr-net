@@ -283,7 +283,7 @@ namespace BancoBr.Tests.Santander
             Assert.Equal(1, handler.Requests.Count);
             var get = handler.Requests[0];
             Assert.Equal(HttpMethod.Get, get.Method);
-            Assert.Equal($"{BaseUrl}/workspaces/ws-1/authorized_direct_debits?_limit=200&_PageNumber=1&initialDueDate=2026-10-01&finalDueDate=2026-10-31&titleSituation=ALL", get.RequestUri!.ToString());
+            Assert.Equal($"{BaseUrl}/workspaces/ws-1/authorized_direct_debits?_limit=200&_PageNumber=0&initialDueDate=2026-10-01&finalDueDate=2026-10-31&titleSituation=ALL", get.RequestUri!.ToString());
 
             Assert.Equal(2, resultado.Count);
             var item = Assert.IsType<MovimentoItemDDA>(resultado[0].MovimentoItem);
@@ -312,7 +312,8 @@ namespace BancoBr.Tests.Santander
 
             Assert.Equal(203, resultado.Count);
             Assert.Equal(2, handler.Requests.Count);
-            Assert.Contains("_PageNumber=2", handler.Requests[1].RequestUri!.Query);
+            Assert.Contains("_PageNumber=0", handler.Requests[0].RequestUri!.Query);
+            Assert.Contains("_PageNumber=1", handler.Requests[1].RequestUri!.Query);
             Assert.Contains("titleSituation=PAID", handler.Requests[1].RequestUri!.Query);
         }
 

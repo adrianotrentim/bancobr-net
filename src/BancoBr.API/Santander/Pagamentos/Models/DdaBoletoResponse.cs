@@ -1,12 +1,20 @@
 using System;
 using System.Collections.Generic;
-using BancoBr.API.Santander.Pagamentos.Pix.Models;
 using Newtonsoft.Json;
 
 namespace BancoBr.API.Santander.Pagamentos.Models
 {
     /// <summary>Página do GET /workspaces/{id}/authorized_direct_debits (boletos DDA).</summary>
     internal class DdaListResponse
+    {
+        [JsonProperty("pageable")]
+        public DdaPageable Pageable { get; set; }
+
+        [JsonProperty("content")]
+        public List<DdaBoletoResponse> Content { get; set; }
+    }
+
+    internal class DdaPageable
     {
         [JsonProperty("_limit")]
         public int Limit { get; set; }
@@ -16,9 +24,22 @@ namespace BancoBr.API.Santander.Pagamentos.Models
 
         [JsonProperty("_pageElements")]
         public int PageElements { get; set; }
+    }
 
-        [JsonProperty("_content")]
-        public List<DdaBoletoResponse> Content { get; set; }
+    internal class DdaBeneficiarioResponse
+    {
+        [JsonProperty("beneficiaryType")]
+        public string Type { get; set; }
+
+        [JsonProperty("beneficiaryDocument")]
+        public string Document { get; set; }
+
+        [JsonProperty("beneficiaryName")]
+        public string Name { get; set; }
+
+        /// <summary>"Seu número" do boleto, informado pelo beneficiário.</summary>
+        [JsonProperty("beneficiaryIdentificationNumber")]
+        public string IdentificationNumber { get; set; }
     }
 
     internal class DdaBoletoResponse
@@ -43,27 +64,20 @@ namespace BancoBr.API.Santander.Pagamentos.Models
         [JsonProperty("paymentLimitDate")]
         public string PaymentLimitDate { get; set; }
 
+        /// <summary>Valor em texto no formato pt-BR (ex.: "748,31").</summary>
         [JsonProperty("nominalValue")]
-        public decimal? NominalValue { get; set; }
+        public string NominalValue { get; set; }
+
+        [JsonProperty("payerDocumentType")]
+        public string PayerDocumentType { get; set; }
 
         [JsonProperty("payerDocumentNumber")]
         public string PayerDocumentNumber { get; set; }
 
-        /// <summary>"Seu número" do boleto, informado pelo beneficiário.</summary>
-        [JsonProperty("beneficiaryIdentificationNumber")]
-        public string BeneficiaryIdentificationNumber { get; set; }
+        [JsonProperty("payerName")]
+        public string PayerName { get; set; }
 
         [JsonProperty("beneficiary")]
-        public PixBeneficiario Beneficiary { get; set; }
-
-        // A documentação lista o beneficiário também em campos soltos (beneficiaryType/Document/Name).
-        [JsonProperty("beneficiaryType")]
-        public string BeneficiaryType { get; set; }
-
-        [JsonProperty("beneficiaryDocument")]
-        public string BeneficiaryDocument { get; set; }
-
-        [JsonProperty("beneficiaryName")]
-        public string BeneficiaryName { get; set; }
+        public DdaBeneficiarioResponse Beneficiary { get; set; }
     }
 }
