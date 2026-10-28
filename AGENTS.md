@@ -13,9 +13,16 @@ BancoBr.NET é uma biblioteca de integração bancária por API e arquivos CNAB 
 
 - As bibliotecas têm alvo `netstandard2.0`; mantenha APIs e dependências compatíveis. Os executáveis de testes têm alvo `net6.0`. Confirme as configurações nos respectivos `.csproj` antes de usar recursos novos.
 - Siga o arquivo vizinho: namespaces em bloco, indentação de quatro espaços, tipos e métodos em PascalCase e campos privados geralmente com `_camelCase`. Preserve a terminologia de domínio em português e nomes de protocolo nos DTOs.
-- Preserve assinaturas públicas, valores numéricos de enums e contratos de serialização; mudanças neles afetam consumidores e arquivos bancários. Explicite qualquer quebra exigida pela tarefa.
+- Preserve assinaturas públicas, valores numéricos de enums e contratos de serialização; mudanças neles afetam consumidores e arquivos bancários. Explique qualquer quebra proposta e siga a regra de autorização abaixo.
 - Documente contratos públicos e particularidades bancárias em comentários XML em português. Atualize exemplos do README quando o uso público mudar.
 - Concentre a alteração na funcionalidade pedida; preserve a formatação dos trechos não alterados.
+
+## Alterações de domínio e modelos
+
+- Preserve os modelos e contratos existentes como primeira opção. Criar, remover ou alterar domínio, modelos, enums ou contratos de entrada/saída exige justificativa concreta e autorização explícita do usuário antes da implementação. A regra inclui Common, Base/Models, DTOs dos bancos e novos modelos públicos em outros pacotes.
+- Antes de pedir autorização, apresente o problema real, por que os modelos atuais não o resolvem, a alteração proposta, as alternativas e o impacto nos consumidores, na serialização e em API/CNAB. Aguarde a aprovação da proposta específica.
+- Pedidos genéricos de integração, correção ou refatoração não autorizam implicitamente essas mudanças. Uma adição compatível também precisa de autorização; criar outro modo de chamada ou mover os modelos para outro pacote não dispensa a regra.
+- Quando a autorização já tiver sido dada para a alteração específica, execute somente o escopo aprovado. Uma solicitação explícita de desfazer uma alteração autoriza sua remoção, sem reintroduzir outros modelos ou ampliar o escopo.
 
 ## Validação e entrega
 

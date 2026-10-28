@@ -1,5 +1,5 @@
 using System;
-using BancoBr.API.Core.Operacoes;
+using System.Runtime.CompilerServices;
 using System.Globalization;
 using System.Net.Http;
 using System.Threading;
@@ -13,6 +13,8 @@ namespace BancoBr.API.Sicredi
     /// <summary>Protocolo de pagamentos Multipag. A criação não equivale à liquidação.</summary>
     internal sealed class PagamentosClient
     {
+        private static readonly ConditionalWeakTable<Movimento, StrongBox<string>> Identidades = new ConditionalWeakTable<Movimento, StrongBox<string>>();
+        private static StrongBox<string> IdentidadeDe(Movimento movimento) => Identidades.GetValue(movimento, _ => new StrongBox<string>());
         internal readonly SicrediHttpGateway Gateway;
         internal PagamentosClient(SicrediHttpGateway gateway) { Gateway = gateway; }
         internal static string Recurso(Movimento m)
@@ -33,9 +35,9 @@ namespace BancoBr.API.Sicredi
             if (string.IsNullOrWhiteSpace(identificador) || identificador.Length > 100)
                 throw new ArgumentException("Informe NumeroDocumento como identificador do associado (até 100 caracteres).");
             body["identificadorPagamentoAssociado"] = identificador;
-            if (string.IsNullOrWhiteSpace(MetadadosOperacao.De(m).IdRequisicao)) MetadadosOperacao.De(m).IdRequisicao = chave ?? Guid.NewGuid().ToString();
-            if (MetadadosOperacao.De(m).IdRequisicao.Length > 100) throw new ArgumentException("idTransacao excede 100 caracteres.");
-            body["idTransacao"] = MetadadosOperacao.De(m).IdRequisicao;
+            if (string.IsNullOrWhiteSpace(IdentidadeDe(m).Value)) IdentidadeDe(m).Value = chave ?? Guid.NewGuid().ToString();
+            if (IdentidadeDe(m).Value.Length > 100) throw new ArgumentException("idTransacao excede 100 caracteres.");
+            body["idTransacao"] = IdentidadeDe(m).Value;
             var recurso = Recurso(m);
             string barras = null;
             if (m.MovimentoItem is MovimentoItemPagamentoTituloCodigoBarra boleto)
@@ -64,7 +66,7 @@ namespace BancoBr.API.Sicredi
             }
             else if (recurso != "pix") throw new ArgumentException("Informe o código de barras.");
             var resposta = await Gateway.JsonAsync(HttpMethod.Post, Gateway.Pagamentos + recurso + (recurso == "pix" ? "/chave" : ""), body, ct).ConfigureAwait(false);
-            m.NumeroDocumentoNoBanco = MetadadosOperacao.De(m).IdRequisicao;
+            m.NumeroDocumentoNoBanco = IdentidadeDe(m).Value;
             Aplicar(m, resposta);
             return m;
         }
@@ -85,7 +87,7 @@ namespace BancoBr.API.Sicredi
             body["idTransacao"] = m.NumeroDocumentoNoBanco;
             await Gateway.JsonAsync(new HttpMethod("PATCH"), Gateway.Pagamentos + Recurso(m) + "/cancelamentos", body, ct).ConfigureAwait(false);
             m.SituacaoBancoBr = BancoBrSituacaoEnum.Cancelado;
-            MetadadosOperacao.De(m).SituacaoOriginal = "CANCELADO";
+
             return m;
         }
 
@@ -105,7 +107,7 @@ namespace BancoBr.API.Sicredi
             if (!string.IsNullOrWhiteSpace(idTransacao))
             {
                 m.NumeroDocumentoNoBanco = idTransacao;
-                MetadadosOperacao.De(m).IdRequisicao = idTransacao;
+                IdentidadeDe(m).Value = idTransacao;
             }
 
             var codigoBarra = r.Value<string>("codigoBarra");
@@ -140,7 +142,7 @@ namespace BancoBr.API.Sicredi
             }
 
             var status = (string)r["status"];
-            MetadadosOperacao.De(m).SituacaoOriginal = status;
+
             switch (status)
             {
                 case "SUCESSO": m.SituacaoBancoBr = BancoBrSituacaoEnum.Efetivado; break;

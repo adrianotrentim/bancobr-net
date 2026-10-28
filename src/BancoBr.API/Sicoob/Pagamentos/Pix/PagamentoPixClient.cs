@@ -1,4 +1,3 @@
-using BancoBr.API.Core.Operacoes;
 using System;
 using System.Net.Http;
 using System.Text;
@@ -387,7 +386,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Pix
                 }
 
                 var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                CapturaRetorno.Registrar(responseBody, (int)response.StatusCode);
+
 
                 await EnsureSuccessOrThrowAsync(response).ConfigureAwait(false);
 
@@ -454,7 +453,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Pix
             }
 
             var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            CapturaRetorno.Registrar(body, (int)response.StatusCode);
+
             var mensagens = new System.Collections.Generic.List<MensagemErro>();
 
             PixErrorResponse problemResponse;

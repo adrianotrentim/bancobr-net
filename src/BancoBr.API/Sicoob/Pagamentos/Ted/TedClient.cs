@@ -1,4 +1,3 @@
-using BancoBr.API.Core.Operacoes;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -161,7 +160,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Ted
                 await EnsureSuccessOrThrowAsync(response).ConfigureAwait(false);
 
                 var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                CapturaRetorno.Registrar(body, (int)response.StatusCode);
+
                 var dto = JsonConvert.DeserializeObject<TedRetorno>(body, SerializerSettings);
                 var retorno = AplicarRetorno(movimento, item, dto);
 
@@ -363,7 +362,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Ted
                 await EnsureSuccessOrThrowAsync(response).ConfigureAwait(false);
 
                 var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                CapturaRetorno.Registrar(body, (int)response.StatusCode);
+
                 var envelope = JsonConvert.DeserializeObject<ResultadoEnvelope<List<T>>>(body, SerializerSettings);
 
                 return envelope?.Resultado != null && envelope.Resultado.Count > 0 ? envelope.Resultado[0] : default;
@@ -466,7 +465,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Ted
             }
 
             var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            CapturaRetorno.Registrar(body, (int)response.StatusCode);
+
             var mensagens = new List<MensagemErro>();
 
             try

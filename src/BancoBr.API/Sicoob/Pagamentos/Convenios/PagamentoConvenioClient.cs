@@ -1,4 +1,3 @@
-using BancoBr.API.Core.Operacoes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -175,7 +174,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Convenios
             {
                 if (response.StatusCode == System.Net.HttpStatusCode.Accepted)
                 {
-                    CapturaRetorno.Registrar(null, (int)response.StatusCode);
+
                     movimento.SituacaoBancoBr = BancoBrSituacaoEnum.Agendado;
                     movimento.DetalheRejeicaoBancoBr = "Pagamento pendente de assinatura.";
                     return movimento;
@@ -191,7 +190,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Convenios
                 }
 
                 var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                CapturaRetorno.Registrar(body, (int)response.StatusCode);
+
                 var envelope = JsonConvert.DeserializeObject<ResultadoEnvelope<ArrecadacaoResultado>>(body, SerializerSettings);
 
                 if (envelope?.Resultado != null)
@@ -482,7 +481,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Convenios
                 await EnsureSuccessOrThrowAsync(response).ConfigureAwait(false);
 
                 var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                CapturaRetorno.Registrar(responseBody, (int)response.StatusCode);
+
                 var envelope = JsonConvert.DeserializeObject<ResultadoEnvelope<T>>(responseBody, SerializerSettings);
                 return envelope.Resultado;
             }
@@ -534,7 +533,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Convenios
             }
 
             var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            CapturaRetorno.Registrar(body, (int)response.StatusCode);
+
             SicoobErrorResponse errorResponse;
             try
             {

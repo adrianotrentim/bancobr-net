@@ -43,7 +43,7 @@ namespace BancoBr.API
     /// <see cref="MovimentoItem"/> específico da operação (<see cref="MovimentoItemDDA"/>,
     /// <see cref="MovimentoItemExtratoTransacao"/>, <see cref="MovimentoItemPagamentoConvenioCodigoBarra"/>).
     /// </summary>
-    public sealed partial class BancoApi
+    public sealed class BancoApi
     {
         /// <summary>
         /// Fluxo padrão: autenticação OAuth2 client_credentials, renovada automaticamente por

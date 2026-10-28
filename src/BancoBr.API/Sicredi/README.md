@@ -1,6 +1,6 @@
 # Usar o Sicredi com BancoBr.NET
 
-Esta integração permite pagar boletos, tributos e contas de consumo com código de barras, fazer Pix por chave e consultar DDA, extrato e saldo. Você pode usar os métodos que já conhece ou escolher as [chamadas detalhadas](../../../docs/operacoes-api.md) para receber mais informações.
+Esta integração permite pagar boletos, tributos e contas de consumo com código de barras, fazer Pix por chave e consultar DDA, extrato e saldo.
 
 **Situação atual:** a implementação foi validada com respostas simuladas. O teste de comunicação com o Sicredi ainda depende de credenciais e certificado de homologação.
 
@@ -104,12 +104,6 @@ Crie e guarde o identificador do envio antes da primeira tentativa. Reutilize es
 
 Se a conexão cair antes da resposta, verifique se o banco registrou a solicitação antes de reenviar. A biblioteca não repete automaticamente envios após falhas de conexão ou erros de servidor. Uma resposta HTTP 401 pode gerar uma renovação do token e uma nova tentativa com os mesmos dados.
 
-### Receber mais detalhes de acompanhamento
-
-Para distinguir processamento e autorização, use a [forma detalhada de enviar pagamentos](../../../docs/operacoes-api.md#enviar-e-receber-mais-informações). Ela também devolve uma referência que você pode salvar e consultar em outra execução da aplicação.
-
-As duas formas de envio são alternativas. Quem já utiliza os métodos antigos pode continuar com eles.
-
 ### Entender a resposta do banco
 
 O registro da solicitação é uma etapa do pagamento. Ele ainda pode depender de aprovação no aplicativo ou no Internet Banking.
@@ -123,7 +117,7 @@ O registro da solicitação é uma etapa do pagamento. Ele ainda pode depender d
 | `SUCESSO` | Pagamento efetivado |
 | `CANCELADO`, `ERRO`, `NAO_APROVADO` ou `EXPIRADO` | O pagamento foi cancelado ou não foi concluído |
 
-Na chamada antiga, os quatro primeiros estados aparecem como `Agendado`. No resultado detalhado, consulte `Situacao` e `Autorizacao` separadamente. `SituacaoOriginal` permite conferir o estado enviado pelo Sicredi.
+Os quatro primeiros estados aparecem em `Movimento.SituacaoBancoBr` como `Agendado`. Somente a confirmação de sucesso aparece como `Efetivado`. Acompanhe a aprovação pelos canais do Sicredi.
 
 ### Obter o PDF ou cancelar um agendamento
 
@@ -139,8 +133,6 @@ Para solicitar o cancelamento de um agendamento ainda cancelável:
 await banco.CancelarAgendamentoAsync(movimento);
 ```
 
-Quem usa a forma detalhada pode realizar essas ações com a referência salva, por meio de `ObterComprovanteAsync` e `CancelarPagamentoAsync`.
-
 ## Consultar saldo e extrato
 
 ```csharp
@@ -152,7 +144,7 @@ O Sicredi consulta a conta vinculada às credenciais da conexão. Por isso, o pr
 
 O extrato traz um item inicial com o saldo anterior e o saldo final do período, seguido das transações. Para saber o saldo atual em tempo real, use `ConsultarSaldoAsync`.
 
-Na [consulta detalhada do extrato](../../../docs/operacoes-api.md#consultar-o-extrato-com-mais-detalhes), cada lançamento também pode informar o saldo após aquela movimentação. Algumas contas legadas do Sicredi podem apresentar movimentos apenas no dia seguinte, em D-1.
+Algumas contas legadas do Sicredi podem apresentar movimentos apenas no dia seguinte, em D-1.
 
 ## Particularidades de outras operações
 

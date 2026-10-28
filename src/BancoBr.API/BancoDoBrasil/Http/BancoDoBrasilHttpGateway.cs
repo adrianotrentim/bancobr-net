@@ -1,4 +1,3 @@
-using BancoBr.API.Core.Operacoes;
 using System;
 using System.Linq;
 using System.Net;
@@ -51,7 +50,7 @@ namespace BancoBr.API.BancoDoBrasil.Http
                     {
                         if (response.StatusCode == HttpStatusCode.Unauthorized && tentativa == 0) { _tokens.InvalidateToken(); continue; }
                         var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                        CapturaRetorno.Registrar(content, (int)response.StatusCode);
+
                         if (!response.IsSuccessStatusCode)
                         {
                             MensagemErro[] erros = null;

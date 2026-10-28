@@ -1,4 +1,3 @@
-using BancoBr.API.Core.Operacoes;
 using System.Globalization;
 using System.Net;
 using BancoBr.API;
@@ -88,7 +87,7 @@ namespace BancoBr.Tests.Sicredi
             Assert.Equal(new DateTime(2026, 10, 28), resultado.DataPagamento);
             Assert.Equal("ERP-001", resultado.NumeroDocumento);
             Assert.Equal("transacao", resultado.NumeroDocumentoNoBanco);
-            Assert.Equal("transacao", MetadadosOperacao.De(resultado).IdRequisicao);
+
             if (item is MovimentoItemPagamentoTituloCodigoBarra boleto)
                 Assert.Equal((string?)resposta["codigoBarra"], boleto.CodigoBarras);
             if (item is MovimentoItemPagamentoConvenioCodigoBarra tributo)
@@ -117,12 +116,12 @@ namespace BancoBr.Tests.Sicredi
                 NumeroDocumentoNoBanco = "id", NumeroDocumento = "ERP-001",
                 DataPagamento = new DateTime(2026, 10, 28), ValorPagamento = 10, MovimentoItem = item
             };
-            MetadadosOperacao.De(movimento).IdRequisicao = "id";
+
             await Criar(handler).ConsultarAgendamentoAsync(movimento);
             Assert.Equal(10, movimento.ValorPagamento);
             Assert.Equal(new DateTime(2026, 10, 28), movimento.DataPagamento);
             Assert.Equal("ERP-001", movimento.NumeroDocumento);
-            Assert.Equal("id", MetadadosOperacao.De(movimento).IdRequisicao);
+
             Assert.Equal("barras-conhecidas", item.CodigoBarras);
             Assert.Equal(BancoBrSituacaoEnum.Agendado, movimento.SituacaoBancoBr);
         }

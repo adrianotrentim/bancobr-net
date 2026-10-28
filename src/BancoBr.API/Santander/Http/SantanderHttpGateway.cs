@@ -1,4 +1,3 @@
-using BancoBr.API.Core.Operacoes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -88,7 +87,7 @@ namespace BancoBr.API.Santander.Http
                 }
 
                 var responseBody = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                CapturaRetorno.Registrar(responseBody, (int)response.StatusCode);
+
 
                 EnsureSuccessOrThrow(response, responseBody);
 

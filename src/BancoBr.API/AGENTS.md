@@ -4,7 +4,7 @@
 
 - `BancoApi` é a fachada pública: despacha operações para clientes internos pelo tipo de `MovimentoItem`. Preserve `Movimento`/`MovimentoItem` como contrato de domínio, inclusive em consultas de listas.
 - A origem vem de `ConfiguracaoAPI.Correntista`. Reutilize essa configuração nos clientes em vez de criar outra fonte de agência e conta.
-- Coloque contratos comuns da operação em `Base`; mantenha DTOs e particularidades de protocolo nas pastas do banco. Para uma nova operação, siga a base e o cliente mais próximos e conecte o fluxo à fachada quando aplicável.
+- Para implementar uma operação, reutilize os modelos, a base e o cliente mais próximos e conecte o fluxo à fachada quando aplicável. A criação ou alteração de contratos em `Base`, `Base/Models` ou DTOs bancários segue a regra de autorização do `AGENTS.md` da raiz. Mantenha particularidades de protocolo nas pastas do banco.
 - O Santander compartilha transporte e normalização em `Santander/Http/SantanderHttpGateway.cs`. Confira esse gateway antes de duplicar comportamento nos clientes.
 
 ## HTTP e pagamentos
@@ -21,7 +21,3 @@
 Use os testes em `tests/BancoBr.Tests/Sicoob` e `Santander` como exemplos de HTTP simulado. Para alterações de protocolo, valide a requisição emitida e o mapeamento de sucesso/erro, incluindo reautenticação ou múltiplas etapas quando afetadas. Para mudanças de endpoint, campo ou status bancário, baseie-se em especificação oficial fornecida ou consultada e registre a fonte na entrega; não deduza contratos de outro banco.
 
 Para Sicredi, consulte `Sicredi/README.md` e os guias oficiais vinculados antes de alterar o protocolo. A criação Multipag é assíncrona e não confirma liquidação; preserve `idTransacao` entre tentativas. Homologação usa bases distintas para pagamentos e DDA. Comprovantes são PDF binário, e extrato/saldo usam a conta vinculada à credencial.
-
-## Chamadas detalhadas e compatibilidade
-
-Ao alterar as chamadas detalhadas, leia `../../docs/operacoes-api.md`. Mantenha os contratos de requisição/resultado em `Operacoes`, preserve os modelos e estados antigos do Common e registre dados adicionais somente na camada API. Execução e autorização são dimensões separadas; ausência de informação não confirma aprovação. A captura de diagnóstico deve abranger somente respostas de recursos bancários da chamada detalhada, preservando isolamento entre operações concorrentes e excluindo OAuth, headers e requisições.

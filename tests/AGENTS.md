@@ -17,4 +17,4 @@ Execute esse console apenas sob solicitação explícita para a integração ext
 
 `BancoBr.Sicredi.Sandbox` fixa o ambiente de homologação e executa apenas consultas de saldo, extrato e, quando configurado, de um pagamento existente. Leia seu `Program.cs` antes de executar e consulte `src/BancoBr.API/Sicredi/README.md` para variáveis e liberação de acesso. Saída 2 indica configuração ausente e comunicação não executada; a ausência de `SICREDI_ID_TRANSACAO` deixa a consulta Multipag não executada. Mantenha esse console separado dos testes locais e do CI.
 
-Os testes em `BancoBr.Tests/Operacoes` exercitam as duas formas de chamada nos quatro bancos, referências serializadas, autorização e isolamento de respostas concorrentes. Ao alterar esses contratos, valide a chamada antiga com os modelos originais e o resultado detalhado através da mesma fachada.
+Ao alterar uma integração, preserve e valide a utilização pela fachada com os modelos existentes. Testes e fixtures não são motivo para alterar modelos de produção: mudanças neles seguem a regra de autorização do `AGENTS.md` da raiz.

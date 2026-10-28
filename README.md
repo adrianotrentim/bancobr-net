@@ -186,12 +186,6 @@ foreach (var movimento in cnab.Movimentos) {
 - [ ] CEF
 - [x] [Banco do Brasil](src/BancoBr.API/BancoDoBrasil/README.md) — **em testes**
 
-## Acompanhar pagamentos com mais informações
-
-Você pode continuar usando os métodos e modelos atuais. Se precisar saber se falta autorização, salvar uma referência para consultar depois ou receber mais dados do banco, veja o [guia das chamadas detalhadas](docs/operacoes-api.md).
-
-Essa forma de uso é opcional e está disponível para Sicoob, Santander, Banco do Brasil e Sicredi, conforme as operações de cada integração.
-
 ## Exemplos API
 
 ###### Conectando
