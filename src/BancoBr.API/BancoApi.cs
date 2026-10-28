@@ -165,20 +165,14 @@ namespace BancoBr.API
                 new Sicredi.PagamentoBoletoClient(boleto, new Sicredi.DdaClient(gateway(new[] { "multipag.dda.consultar" }))),
                 new Sicredi.PagamentoConvenioClient(convenio), new Sicredi.PagamentoPixClient(pix), null,
                 new Sicredi.ExtratoClient(gateway(new[] { "contacorrente.extratos.consultar" })),
+                comprovante: multipag,
                 saldo: new Sicredi.ExtratoClient(gateway(new[] { "contacorrente.saldo.consultar" })),
-                pagamentoDireto: multipag, comprovanteBinario: multipag);
+                pagamentoDireto: multipag);
         }
 
         /// <summary>Consulta o saldo atual da conta vinculada às credenciais, quando suportado pelo banco.</summary>
         public Task<Movimento> ConsultarSaldoAsync(CancellationToken cancellationToken = default)
             => Requer(_saldo).ConsultarSaldoAsync(cancellationToken);
-
-        /// <summary>Baixa o comprovante em PDF binário, quando suportado pelo banco. No Sicredi, disponível após SUCESSO.</summary>
-        public Task<byte[]> BaixarComprovanteAsync(Movimento movimento, CancellationToken cancellationToken = default)
-        {
-            ExtrairItem(movimento);
-            return Requer(_comprovanteBinario).BaixarComprovanteAsync(movimento, cancellationToken);
-        }
 
         private static BancoApi ConectarBancoDoBrasil(ConfiguracaoAPI configuracao, Uri tokenEndpoint, IAccessTokenProvider tokenProvider)
         {
@@ -225,13 +219,12 @@ namespace BancoBr.API
         private readonly ComprovanteApiBase _comprovante;
         private readonly ISaldoApi _saldo;
         private readonly IPagamentoDiretoApi _pagamentoDireto;
-        private readonly IComprovanteBinarioApi _comprovanteBinario;
 
         internal BancoApi(Correntista origem, PagamentoBoletoApiBase boleto, PagamentoConvenioApiBase convenio, PagamentoPixApiBase pix, PagamentoTedApiBase ted, ContaCorrenteApiBase contaCorrente, WorkspaceApiBase workspace = null, ComprovanteApiBase comprovante = null,
-            ISaldoApi saldo = null, IPagamentoDiretoApi pagamentoDireto = null, IComprovanteBinarioApi comprovanteBinario = null)
+            ISaldoApi saldo = null, IPagamentoDiretoApi pagamentoDireto = null)
         {
             (_origem, _boleto, _convenio, _pix, _ted, _contaCorrente, _workspace, _comprovante) = (origem, boleto, convenio, pix, ted, contaCorrente, workspace, comprovante);
-            (_saldo, _pagamentoDireto, _comprovanteBinario) = (saldo, pagamentoDireto, comprovanteBinario);
+            (_saldo, _pagamentoDireto) = (saldo, pagamentoDireto);
         }
 
         /// <summary>
@@ -345,15 +338,13 @@ namespace BancoBr.API
         }
 
         /// <summary>
-        /// Só Santander, para qualquer tipo de pagamento (Pix, TED, boleto e convênio). Obtém o link
-        /// do comprovante (PDF) de um pagamento já efetivado — o id do pagamento vem de
-        /// <see cref="Movimento.NumeroDocumentoNoBanco"/> —
-        /// e o devolve em <see cref="Movimento.LinkComprovanteBancoBr"/> (com a validade em
-        /// <see cref="Movimento.ValidadeLinkComprovanteBancoBr"/>), junto da situação atualizada do pagamento.
-        /// O banco pode demorar a gerar o arquivo: se ele não ficar pronto durante a chamada, o link
-        /// volta vazio e basta chamar de novo mais tarde — a solicitação já feita é reaproveitada.
+        /// Obtém o comprovante PDF nos bancos que disponibilizam o documento, a partir do id em
+        /// <see cref="Movimento.NumeroDocumentoNoBanco"/>. Retorna os bytes e preenche
+        /// <see cref="Movimento.ArquivoComprovantePDF"/>, atualizando a situação do movimento.
+        /// Retorna nulo se o pagamento ou o arquivo ainda não estiver pronto; consulte novamente mais tarde.
+        /// O cliente de cada banco resolve internamente os links e as etapas de download.
         /// </summary>
-        public Task<Movimento> ConsultarComprovanteAsync(Movimento movimento, CancellationToken cancellationToken = default)
+        public Task<byte[]> ConsultarComprovanteAsync(Movimento movimento, CancellationToken cancellationToken = default)
         {
             ExtrairItem(movimento);
 

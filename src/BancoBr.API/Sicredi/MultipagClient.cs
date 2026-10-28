@@ -3,16 +3,18 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using BancoBr.API.Base;
+using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
 
 namespace BancoBr.API.Sicredi
 {
     /// <summary>Distribui as operações diretas Multipag para o cliente e os escopos de cada modalidade.</summary>
-    internal sealed class MultipagClient : IPagamentoDiretoApi, IComprovanteBinarioApi
+    internal sealed class MultipagClient : ComprovanteApiBase, IPagamentoDiretoApi
     {
         private readonly IReadOnlyDictionary<Type, PagamentosClient> _clientes;
 
         internal MultipagClient(PagamentosClient boleto, PagamentosClient tributo, PagamentosClient pix)
+            : base(null, boleto.Gateway.Origem)
         {
             _clientes = new Dictionary<Type, PagamentosClient>
             {
@@ -36,7 +38,16 @@ namespace BancoBr.API.Sicredi
         public Task<Movimento> CancelarAsync(Movimento movimento, CancellationToken cancellationToken)
             => ObterCliente(movimento).CancelarAsync(movimento, cancellationToken);
 
-        public Task<byte[]> BaixarComprovanteAsync(Movimento movimento, CancellationToken cancellationToken)
-            => ObterCliente(movimento).ComprovanteAsync(movimento, cancellationToken);
+        internal override async Task<byte[]> ConsultarComprovanteAsync(Movimento movimento, CancellationToken cancellationToken = default)
+        {
+            var cliente = ObterCliente(movimento);
+            movimento.ArquivoComprovantePDF = null;
+            await cliente.ConsultarAsync(movimento, cancellationToken).ConfigureAwait(false);
+            if (movimento.SituacaoBancoBr != BancoBrSituacaoEnum.Efetivado) return null;
+
+            var pdf = await cliente.ComprovanteAsync(movimento, cancellationToken).ConfigureAwait(false);
+            movimento.ArquivoComprovantePDF = pdf;
+            return pdf;
+        }
     }
 }

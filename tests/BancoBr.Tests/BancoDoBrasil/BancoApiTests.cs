@@ -24,7 +24,7 @@ namespace BancoBr.Tests.BancoDoBrasil
             ContaCorrenteApiBase? extrato = null)
         {
             var construtor = typeof(BancoApi).GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic).Single();
-            return (BancoApi)construtor.Invoke(new object?[] { Origem(), boleto, convenio, null, null, extrato, null, null, null, null, null });
+            return (BancoApi)construtor.Invoke(new object?[] { Origem(), boleto, convenio, null, null, extrato, null, null, null, null });
         }
 
         private static Movimento MovimentoConvenio() => new Movimento

@@ -129,8 +129,12 @@ Os quatro primeiros estados aparecem em `Movimento.SituacaoBancoBr` como `Agenda
 Quando o pagamento estiver efetivado:
 
 ```csharp
-byte[] pdf = await banco.BaixarComprovanteAsync(movimento);
+byte[] pdf = await banco.ConsultarComprovanteAsync(movimento);
+if (pdf != null)
+    System.IO.File.WriteAllBytes("comprovante.pdf", pdf);
 ```
+
+O mesmo PDF fica em `movimento.ArquivoComprovantePDF`. A chamada e o retorno são iguais no Santander: links e download são tratados internamente. Se o pagamento ou o arquivo ainda não estiver pronto, o retorno e a propriedade ficam nulos; consulte novamente mais tarde.
 
 Para solicitar o cancelamento de um agendamento ainda cancelável:
 

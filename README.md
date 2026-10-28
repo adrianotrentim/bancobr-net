@@ -269,12 +269,17 @@ await banco.EnviarAgendamentoAsync(movimentoPix);
 
 Console.WriteLine($"Situação={movimentoPix.SituacaoBancoBr}, EndToEndId={movimentoPix.NumeroDocumentoNoBanco}");
 
-// Só Santander: link do comprovante (PDF) de um Pix já efetivado, em Movimento.LinkComprovanteBancoBr.
-// O link é temporário (ValidadeLinkComprovanteBancoBr). Se o banco ainda não gerou o arquivo, o link
-// volta vazio: chame de novo mais tarde — a solicitação já feita é reaproveitada.
-await banco.ConsultarComprovanteAsync(movimentoPix);
-Console.WriteLine($"Comprovante={movimentoPix.LinkComprovanteBancoBr}, válido até {movimentoPix.ValidadeLinkComprovanteBancoBr}");
+// Santander e Sicredi: mesma chamada e retorno PDF, com o download resolvido pela biblioteca.
+// Se o pagamento ou o arquivo ainda não estiver pronto, retorna null: consulte novamente mais tarde.
+byte[] pdf = await banco.ConsultarComprovanteAsync(movimentoPix);
+if (pdf != null)
+    System.IO.File.WriteAllBytes("comprovante.pdf", pdf);
+// O mesmo conteúdo fica disponível em movimentoPix.ArquivoComprovantePDF.
 ```
+
+**Migração de comprovantes:** `ConsultarComprovanteAsync` passa de `Task<Movimento>` para `Task<byte[]>`. Os campos `LinkComprovanteBancoBr` e `ValidadeLinkComprovanteBancoBr` são substituídos por `ArquivoComprovantePDF` (`byte[]`). Atualize chamadas e persistência que utilizavam o link; na serialização JSON com Newtonsoft.Json, os bytes são representados em Base64.
+
+O método separado `BaixarComprovanteAsync` foi removido. No Santander, obtenção do link temporário e download passam a ser internos; o Sicredi retorna o documento binário pelo mesmo contrato.
 
 ###### TED
 

@@ -166,6 +166,21 @@ namespace BancoBr.API.Santander.Http
         private const string StatusComprovanteSolicitado = "REQUESTED";
         private const string StatusComprovanteDisponivel = "AVAILABLE";
 
+        /// <summary>Baixa o arquivo do link temporário, sem encaminhar credenciais OAuth ao repositório.</summary>
+        internal async Task<byte[]> BaixarArquivoComprovanteAsync(string url, CancellationToken cancellationToken)
+        {
+            using (var request = new HttpRequestMessage(HttpMethod.Get, url))
+            {
+                request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/pdf"));
+                using (var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false))
+                {
+                    if (!response.IsSuccessStatusCode)
+                        EnsureSuccessOrThrow(response, await response.Content.ReadAsStringAsync().ConfigureAwait(false));
+                    return await response.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+                }
+            }
+        }
+
         /// <summary>
         /// Obtém o link do comprovante em PDF de um pagamento já efetivado, a partir do
         /// <c>transaction.code</c> devolvido pela consulta do pagamento. O arquivo nem sempre fica

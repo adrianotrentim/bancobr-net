@@ -71,15 +71,10 @@ namespace BancoBr.Common.Instances
         public string DetalheRejeicaoBancoBr { get; set; }
 
         /// <summary>
-        /// Link para baixar o comprovante (PDF) do pagamento, preenchido pela consulta de
-        /// comprovante da API bancária (Santander). O link é temporário — veja
-        /// <see cref="ValidadeLinkComprovanteBancoBr"/>; guarde-o junto do movimento e, depois de
-        /// vencido, consulte o comprovante de novo para obter outro.
+        /// Arquivo PDF do comprovante, preenchido por ConsultarComprovanteAsync nos bancos
+        /// que disponibilizam o documento. Nulo enquanto o arquivo não estiver disponível.
         /// </summary>
-        public string LinkComprovanteBancoBr { get; set; }
-
-        /// <summary>Até quando o <see cref="LinkComprovanteBancoBr"/> é válido, conforme o banco (poucos minutos).</summary>
-        public DateTime? ValidadeLinkComprovanteBancoBr { get; set; }
+        public byte[] ArquivoComprovantePDF { get; set; }
 
         #endregion
     }

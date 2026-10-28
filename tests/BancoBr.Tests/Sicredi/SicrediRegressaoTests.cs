@@ -290,6 +290,8 @@ namespace BancoBr.Tests.Sicredi
             protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
             {
                 Caminho = request.RequestUri!.AbsolutePath;
+                if (!Caminho.EndsWith("/comprovantes"))
+                    return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{\"status\":\"SUCESSO\"}") });
                 Assert.Equal("application/pdf", request.Headers.Accept.Single().MediaType);
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(Bytes) });
             }
@@ -299,12 +301,13 @@ namespace BancoBr.Tests.Sicredi
         [InlineData("boletos")]
         [InlineData("tributos/barras")]
         [InlineData("pix")]
-        public async Task Fachada_BaixarComprovante_PreservaPdfEDistribuiPorModalidade(string recurso)
+        public async Task Fachada_ConsultarComprovante_PreservaPdfEDistribuiPorModalidade(string recurso)
         {
             var handler = new PdfHandler();
             var movimento = new Movimento { NumeroDocumentoNoBanco = "id", MovimentoItem = Item(recurso) };
-            var bytes = await Criar(handler).BaixarComprovanteAsync(movimento);
+            var bytes = await Criar(handler).ConsultarComprovanteAsync(movimento);
             Assert.Equal(handler.Bytes, bytes);
+            Assert.Same(bytes, movimento.ArquivoComprovantePDF);
             Assert.Equal("/sb/multipag-pagamento-sandbox/v1/pagamentos/" + recurso + "/id/comprovantes", handler.Caminho);
         }
 

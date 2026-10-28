@@ -7,6 +7,7 @@ using BancoBr.API.Core.Http;
 using BancoBr.API.Core.OAuth;
 using BancoBr.API.Santander.Http;
 using BancoBr.API.Santander.Pagamentos.Models;
+using BancoBr.Common.Enums;
 using BancoBr.Common.Instances;
 
 namespace BancoBr.API.Santander.Pagamentos.Comprovantes
@@ -15,15 +16,15 @@ namespace BancoBr.API.Santander.Pagamentos.Comprovantes
     /// Cliente do comprovante (PDF) de pagamentos do Hub de Pagamentos do Santander, para
     /// qualquer modalidade (Pix, TED, boleto e convênio). O processo é o mesmo em todas: consulta
     /// o pagamento na workspace para obter o <c>transaction.code</c> e, com ele, usa a API
-    /// consult_payment_receipts v2 para solicitar o arquivo e obter o link. O que muda por
+    /// consult_payment_receipts v2 para solicitar o arquivo, obter o link e baixar o PDF. O que muda por
     /// modalidade é só o recurso consultado (veja <see cref="Identificar"/>).
     ///
-    /// O link vale poucos minutos. Se o banco ainda não gerou o arquivo, o link não é preenchido
+    /// O link é usado somente no download interno. Se o banco ainda não gerou o arquivo, retorna nulo
     /// e basta chamar de novo — a solicitação já feita é reaproveitada.
     /// </summary>
     internal class ComprovanteClient : ComprovanteApiBase
     {
-        /// <summary>Quantas vezes o link é consultado antes de devolver o movimento sem ele.</summary>
+        /// <summary>Quantas vezes o link é consultado antes de retornar nulo por arquivo ainda indisponível.</summary>
         private const int Tentativas = 5;
 
         private readonly SantanderHttpGateway _gateway;
@@ -57,9 +58,10 @@ namespace BancoBr.API.Santander.Pagamentos.Comprovantes
             _intervalo = intervaloComprovante ?? TimeSpan.FromSeconds(2);
         }
 
-        internal override async Task<Movimento> ConsultarComprovanteAsync(Movimento movimento, CancellationToken cancellationToken = default)
+        internal override async Task<byte[]> ConsultarComprovanteAsync(Movimento movimento, CancellationToken cancellationToken = default)
         {
             if (movimento == null) throw new ArgumentNullException(nameof(movimento));
+            movimento.ArquivoComprovantePDF = null;
 
             var (recurso, produto, id) = Identificar(movimento);
             if (string.IsNullOrWhiteSpace(id))
@@ -70,19 +72,18 @@ namespace BancoBr.API.Santander.Pagamentos.Comprovantes
             var pagamento = await _gateway.SendAsync<PagamentoTransacaoResponse>(HttpMethod.Get, url, body: null, cancellationToken).ConfigureAwait(false);
 
             movimento.SituacaoBancoBr = SantanderHttpGateway.MapStatusParaSituacao(pagamento?.Status);
+            if (movimento.SituacaoBancoBr != BancoBrSituacaoEnum.Efetivado) return null;
 
             var codigoTransacao = pagamento?.Transaction?.Code;
             if (string.IsNullOrWhiteSpace(codigoTransacao))
-                throw new InvalidOperationException($"O pagamento ainda não tem código de transação (situação: {pagamento?.Status}) — o comprovante só existe depois que o pagamento é efetivado.");
+                return null;
 
             var comprovante = await _gateway.ObterComprovanteAsync(_comprovantesBaseUrl, codigoTransacao, Tentativas, _intervalo, cancellationToken).ConfigureAwait(false);
-            if (comprovante != null)
-            {
-                movimento.LinkComprovanteBancoBr = comprovante.File.FileRepository.Location;
-                movimento.ValidadeLinkComprovanteBancoBr = comprovante.File.ExpirationDate;
-            }
+            if (comprovante == null) return null;
 
-            return movimento;
+            var pdf = await _gateway.BaixarArquivoComprovanteAsync(comprovante.File.FileRepository.Location, cancellationToken).ConfigureAwait(false);
+            movimento.ArquivoComprovantePDF = pdf;
+            return pdf;
         }
 
         /// <summary>
