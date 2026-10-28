@@ -1,4 +1,5 @@
 using System;
+using BancoBr.API.Core.Operacoes;
 using System.Globalization;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -34,14 +35,15 @@ namespace BancoBr.API.Sicredi
                 {
                     var valor = item.Value<decimal>("valor");
                     saldo.SaldoAtual = item.Value<decimal>("saldo");
-                    resultado.Add(new Movimento { MovimentoItem = new MovimentoItemExtratoTransacao
+                    var transacao = new MovimentoItemExtratoTransacao
                     {
                         TransactionId = (string)item["idMovimento"], Data = item.Value<DateTime>("data"),
                         Descricao = (string)item["descricao"], DescricaoInformacaoComplementar = (string)item["complemento"],
                         NumeroDocumento = (string)item["documento"], Valor = Math.Abs(valor),
-                        Tipo = valor < 0 ? BancoBrTipoCreditoDebitoEnum.Debito : BancoBrTipoCreditoDebitoEnum.Credito,
-                        SaldoAposLancamento = item.Value<decimal>("saldo")
-                    }});
+                        Tipo = valor < 0 ? BancoBrTipoCreditoDebitoEnum.Debito : BancoBrTipoCreditoDebitoEnum.Credito
+                    };
+                    MetadadosOperacao.De(transacao).SaldoAposLancamento = item.Value<decimal?>("saldo");
+                    resultado.Add(new Movimento { MovimentoItem = transacao });
                 }
                 if (page + 1 >= r.Value<int>("totalPages")) break;
             }

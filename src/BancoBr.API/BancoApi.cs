@@ -43,7 +43,7 @@ namespace BancoBr.API
     /// <see cref="MovimentoItem"/> específico da operação (<see cref="MovimentoItemDDA"/>,
     /// <see cref="MovimentoItemExtratoTransacao"/>, <see cref="MovimentoItemPagamentoConvenioCodigoBarra"/>).
     /// </summary>
-    public sealed class BancoApi
+    public sealed partial class BancoApi
     {
         /// <summary>
         /// Fluxo padrão: autenticação OAuth2 client_credentials, renovada automaticamente por
@@ -227,7 +227,7 @@ namespace BancoBr.API
         private readonly IPagamentoDiretoApi _pagamentoDireto;
         private readonly IComprovanteBinarioApi _comprovanteBinario;
 
-        private BancoApi(Correntista origem, PagamentoBoletoApiBase boleto, PagamentoConvenioApiBase convenio, PagamentoPixApiBase pix, PagamentoTedApiBase ted, ContaCorrenteApiBase contaCorrente, WorkspaceApiBase workspace = null, ComprovanteApiBase comprovante = null,
+        internal BancoApi(Correntista origem, PagamentoBoletoApiBase boleto, PagamentoConvenioApiBase convenio, PagamentoPixApiBase pix, PagamentoTedApiBase ted, ContaCorrenteApiBase contaCorrente, WorkspaceApiBase workspace = null, ComprovanteApiBase comprovante = null,
             ISaldoApi saldo = null, IPagamentoDiretoApi pagamentoDireto = null, IComprovanteBinarioApi comprovanteBinario = null)
         {
             (_origem, _boleto, _convenio, _pix, _ted, _contaCorrente, _workspace, _comprovante) = (origem, boleto, convenio, pix, ted, contaCorrente, workspace, comprovante);
@@ -247,7 +247,7 @@ namespace BancoBr.API
 
         /// <summary>
         /// No Sicredi, o envio é direto, sem consulta prévia: informe data, valor e NumeroDocumento.
-        /// A identidade é preservada em IdRequisicaoBancoBr; a aceitação ainda depende de processamento/aprovação.
+        /// Preserve idempotencyKey nos reenvios; a aceitação ainda depende de processamento/aprovação.
         /// Envia o movimento — consulta prévia (quando o banco exige) + pagamento, na mesma
         /// chamada. <paramref name="idempotencyKey"/> é opcional: para Boleto (que exige um GUID
         /// de lançamento por baixo) uma chave que não seja um GUID válido gera um novo; para TED

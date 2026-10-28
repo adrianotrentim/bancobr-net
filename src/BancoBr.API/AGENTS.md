@@ -21,3 +21,7 @@
 Use os testes em `tests/BancoBr.Tests/Sicoob` e `Santander` como exemplos de HTTP simulado. Para alterações de protocolo, valide a requisição emitida e o mapeamento de sucesso/erro, incluindo reautenticação ou múltiplas etapas quando afetadas. Para mudanças de endpoint, campo ou status bancário, baseie-se em especificação oficial fornecida ou consultada e registre a fonte na entrega; não deduza contratos de outro banco.
 
 Para Sicredi, consulte `Sicredi/README.md` e os guias oficiais vinculados antes de alterar o protocolo. A criação Multipag é assíncrona e não confirma liquidação; preserve `idTransacao` entre tentativas. Homologação usa bases distintas para pagamentos e DDA. Comprovantes são PDF binário, e extrato/saldo usam a conta vinculada à credencial.
+
+## Chamadas detalhadas e compatibilidade
+
+Ao alterar as chamadas detalhadas, leia `../../docs/operacoes-api.md`. Mantenha os contratos de requisição/resultado em `Operacoes`, preserve os modelos e estados antigos do Common e registre dados adicionais somente na camada API. Execução e autorização são dimensões separadas; ausência de informação não confirma aprovação. A captura de diagnóstico deve abranger somente respostas de recursos bancários da chamada detalhada, preservando isolamento entre operações concorrentes e excluindo OAuth, headers e requisições.
