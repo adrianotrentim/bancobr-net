@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
@@ -11,7 +12,7 @@ using Newtonsoft.Json.Linq;
 
 namespace BancoBr.API.Sicredi
 {
-    internal sealed class ExtratoClient : ContaCorrenteApiBase
+    internal sealed class ExtratoClient : ContaCorrenteApiBase, ISaldoApi
     {
         private readonly SicrediHttpGateway _gateway;
         internal ExtratoClient(SicrediHttpGateway gateway) : base(null, gateway.Origem) { _gateway = gateway; }
@@ -26,7 +27,7 @@ namespace BancoBr.API.Sicredi
             resultado.Add(new Movimento { MovimentoItem = saldo });
             for (var page = 0; ; page++)
             {
-                var r = await _gateway.JsonAsync(HttpMethod.Get, _gateway.Raiz + "contacorrente/v1/extratos?dataInicio=" + inicio.ToString("yyyy-MM-dd") + "&dataFim=" + fim.ToString("yyyy-MM-dd") + "&page=" + page + "&size=100", null, cancellationToken).ConfigureAwait(false);
+                var r = await _gateway.JsonAsync(HttpMethod.Get, _gateway.Raiz + "contacorrente/v1/extratos?dataInicio=" + inicio.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + "&dataFim=" + fim.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + "&page=" + page + "&size=100", null, cancellationToken).ConfigureAwait(false);
                 if (r.Value<int?>("pageNumber") != page) throw new JsonSerializationException("Página do extrato divergente da solicitada.");
                 if (page == 0) saldo.SaldoAtual = saldo.SaldoAnterior = r.Value<decimal>("saldoAnterior");
                 foreach (var item in (JArray)r["dtlMovimentos"] ?? throw new JsonSerializationException("Extrato sem dtlMovimentos."))
@@ -47,7 +48,7 @@ namespace BancoBr.API.Sicredi
             return resultado;
         }
 
-        internal async Task<Movimento> ConsultarSaldoAsync(CancellationToken ct)
+        public async Task<Movimento> ConsultarSaldoAsync(CancellationToken ct)
         {
             var r = await _gateway.JsonAsync(HttpMethod.Get, _gateway.Raiz + "contacorrente/v1/saldos", null, ct).ConfigureAwait(false);
             return new Movimento { MovimentoItem = new MovimentoItemExtratoSaldo

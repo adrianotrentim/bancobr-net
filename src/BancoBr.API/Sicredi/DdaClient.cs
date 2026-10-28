@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
@@ -20,7 +21,7 @@ namespace BancoBr.API.Sicredi
             var resultado = new List<Movimento>();
             for (var primeiro = 1; ; primeiro += 100)
             {
-                var url = _gateway.Raiz + (_gateway.Homologacao ? "multipag-sandbox" : "multipag") + "/v1/dda/boletos?dataInicio=" + inicio.ToString("yyyy-MM-dd") + "&dataFim=" + fim.ToString("yyyy-MM-dd") + "&cnpjCpfPagador=" + SicrediHttpGateway.Digitos(_gateway.Origem.CPF_CNPJ) + "&itemInicial=" + primeiro + "&itemFinal=" + (primeiro + 99);
+                var url = _gateway.Raiz + (_gateway.Homologacao ? "multipag-sandbox" : "multipag") + "/v1/dda/boletos?dataInicio=" + inicio.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + "&dataFim=" + fim.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) + "&cnpjCpfPagador=" + SicrediHttpGateway.Digitos(_gateway.Origem.CPF_CNPJ) + "&itemInicial=" + primeiro + "&itemFinal=" + (primeiro + 99);
                 var r = await _gateway.JsonAsync(HttpMethod.Get, url, null, ct).ConfigureAwait(false);
                 var boletos = (JArray)r["boletos"] ?? throw new Newtonsoft.Json.JsonSerializationException("DDA sem boletos.");
                 foreach (var b in boletos) resultado.Add(new Movimento { MovimentoItem = new MovimentoItemDDA
