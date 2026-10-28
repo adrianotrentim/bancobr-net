@@ -347,7 +347,8 @@ namespace BancoBr.Tests.Santander
             var post = handler.Requests[0];
             Assert.Equal(HttpMethod.Post, post.Method);
             Assert.Equal($"{BaseUrl}/workspaces/ws-1/barcode_payments", post.RequestUri!.ToString());
-            Assert.Equal(@"{""code"":""" + CodigoBarrasConvenio + @"""}", handler.Bodies[0]);
+            // O cliente converte o código de 44 posições para a linha digitável com DVs.
+            Assert.Equal(@"{""code"":""826400000012.234567890129.345678901231.456789012345""}", handler.Bodies[0]);
 
             Assert.Equal(PaymentId, resultado.NumeroDocumentoNoBanco);
             Assert.Equal(89.90m, resultado.ValorPagamento);

@@ -2,6 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageId>BancoBr.CNAB</PackageId>
+    <Title>BancoBr.NET — Arquivos CNAB 240</Title>
+    <Description>Geração de remessas e leitura de retornos bancários CNAB 240 para pagamentos e transferências no BancoBr.NET.</Description>
   </PropertyGroup>
 
   <ItemGroup>

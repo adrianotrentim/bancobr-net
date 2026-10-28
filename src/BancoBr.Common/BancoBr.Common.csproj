@@ -2,6 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageId>BancoBr.Common</PackageId>
+    <Title>BancoBr.NET — Domínio compartilhado</Title>
+    <Description>Tipos, enums e contratos compartilhados pelas integrações bancárias API e CNAB 240 do BancoBr.NET.</Description>
   </PropertyGroup>
 
 </Project>

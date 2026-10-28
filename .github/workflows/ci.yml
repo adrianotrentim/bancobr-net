@@ -1,0 +1,139 @@
+name: Validar e gerar pacotes NuGet
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publicar a versão de prévia no GitHub Packages
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  build:
+    name: Compilar, testar e empacotar
+    runs-on: windows-2022
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Preparar .NET
+        uses: actions/setup-dotnet@v6.0.0
+        with:
+          dotnet-version: |
+            10.0.x
+            6.0.x
+
+      - name: Definir versão dos pacotes
+        id: version
+        shell: pwsh
+        env:
+          PACKAGE_VERSION_SUFFIX: ${{ vars.PACKAGE_VERSION_SUFFIX }}
+        run: |
+          [xml]$props = Get-Content src/Directory.Build.props
+          $version = $props.Project.PropertyGroup.Version
+          $suffix = $env:PACKAGE_VERSION_SUFFIX
+          if ($suffix -and $suffix -notmatch '^[a-z][a-z0-9]*$') {
+            throw 'PACKAGE_VERSION_SUFFIX deve conter apenas letras minúsculas e números, começando por letra.'
+          }
+          if ($env:GITHUB_REF -like 'refs/tags/*') {
+            $version = $env:GITHUB_REF_NAME -replace '^v', ''
+            if ($version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') {
+              throw 'Use uma tag no formato v1.2.3.'
+            }
+            if ($suffix) { $version += "-$suffix" }
+          } else {
+            $preview = "ci.$env:GITHUB_RUN_NUMBER.$env:GITHUB_RUN_ATTEMPT"
+            if ($suffix) { $preview = "$suffix.$preview" }
+            $version += "-$preview"
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "### Pacotes NuGet — $version" >> $env:GITHUB_STEP_SUMMARY
+
+      - name: Restaurar dependências
+        run: dotnet restore BancoBr.sln
+
+      - name: Compilar em Release
+        shell: pwsh
+        env:
+          PACKAGE_VERSION: ${{ steps.version.outputs.version }}
+        run: >-
+          dotnet build BancoBr.sln --configuration Release --no-restore
+          -p:Version=$env:PACKAGE_VERSION
+          -p:RepositoryUrl="$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY"
+          -p:ContinuousIntegrationBuild=true
+
+      - name: Executar testes locais
+        shell: pwsh
+        run: |
+          dotnet test tests/BancoBr.Tests/BancoBr.Tests.csproj --configuration Release --no-build --logger trx --results-directory artifacts/test-results
+
+      - name: Salvar relatório dos testes
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: resultados-testes
+          path: artifacts/test-results/*.trx
+          if-no-files-found: warn
+
+      - name: Gerar os três pacotes
+        shell: pwsh
+        env:
+          PACKAGE_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          foreach ($project in @('BancoBr.Common', 'BancoBr.API', 'BancoBr.CNAB')) {
+            dotnet pack "src/$project/$project.csproj" --configuration Release --no-build --output artifacts/packages "-p:Version=$env:PACKAGE_VERSION" "-p:RepositoryUrl=$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY" -p:ContinuousIntegrationBuild=true
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+
+      - name: Salvar pacotes para download
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: nuget-${{ steps.version.outputs.version }}
+          path: artifacts/packages/*.nupkg
+          if-no-files-found: error
+
+  publish:
+    name: Publicar no feed do proprietário
+    needs: build
+    if: >-
+      vars.PUBLISH_PACKAGES == 'true' &&
+      ((github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+       (github.event_name == 'workflow_dispatch' && inputs.publish))
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/setup-dotnet@v6.0.0
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Baixar pacotes validados
+        uses: actions/download-artifact@v8.0.2
+        with:
+          name: nuget-${{ needs.build.outputs.version }}
+          path: packages
+
+      - name: Publicar no GitHub Packages
+        shell: bash
+        env:
+          GH_PACKAGES_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          dotnet nuget push 'packages/*.nupkg' \
+            --source "https://nuget.pkg.github.com/${GITHUB_REPOSITORY_OWNER,,}/index.json" \
+            --api-key "$GH_PACKAGES_TOKEN" \
+            --skip-duplicate

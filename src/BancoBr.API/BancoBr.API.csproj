@@ -2,6 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageId>BancoBr.API</PackageId>
+    <Title>BancoBr.NET — Integração por API</Title>
+    <Description>Integração bancária por API para pagamentos, PIX, TED, DDA e extrato, conforme o suporte de cada instituição.</Description>
   </PropertyGroup>
 
   <ItemGroup>

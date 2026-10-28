@@ -343,3 +343,56 @@ foreach (var transacao in extrato.Select(m => m.MovimentoItem).OfType<MovimentoI
 # Dúvidas?
 
 Abra um issue na página do projeto no GitHub ou [clique aqui](https://github.com/adrianotentim/bancobr-net/issues).
+
+# Pacotes NuGet e integração contínua
+
+O workflow **Validar e gerar pacotes NuGet** compila a solução em Release, executa os testes locais e gera três pacotes:
+
+| Pacote | Conteúdo |
+| --- | --- |
+| `BancoBr.Common` | Modelos, enums e contratos compartilhados |
+| `BancoBr.API` | Integrações bancárias por API; depende de Common |
+| `BancoBr.CNAB` | Geração e leitura de CNAB 240; depende de Common |
+
+Os arquivos `.nupkg` ficam disponíveis nos artefatos da execução do GitHub Actions. Pull requests e pushes em `main` geram versões de prévia; tags `v1.2.3` geram a versão `1.2.3`. A versão base das prévias está em `src/Directory.Build.props`.
+
+## Publicar no GitHub Packages
+
+Em **Settings → Secrets and variables → Actions → Variables**, configure:
+
+| Variável | Valor | Uso |
+| --- | --- | --- |
+| `PUBLISH_PACKAGES` | `true` | Habilita publicação por tag ou execução manual |
+| `PACKAGE_VERSION_SUFFIX` | `fork` no fork; vazia no original | Distingue as versões de uma distribuição do fork |
+
+Com o sufixo `fork`, a tag `v1.2.3` gera `1.2.3-fork`, e uma execução comum gera `1.0.0-fork.ci.NUMERO.TENTATIVA`. O sufixo aceita letras minúsculas e números, começando por letra.
+
+Para publicar, envie uma tag `vX.Y.Z` ou execute o workflow manualmente marcando **Publicar a versão de prévia no GitHub Packages**. A publicação ocorre somente após os testes aprovarem. O workflow usa o `GITHUB_TOKEN` automático, sem segredo adicional, e publica no feed do proprietário do repositório em execução. Os metadados também apontam para esse repositório. Ao levar o workflow ao original, os mantenedores habilitam suas próprias variáveis.
+
+O console de homologação bancária não é executado pelo CI. Os pacotes não são enviados ao NuGet.org por este workflow.
+
+## Instalar a partir do feed
+
+Configure `https://nuget.pkg.github.com/PROPRIETARIO/index.json` como fonte NuGet. Para uso local, autentique com seu usuário GitHub e um token pessoal clássico com `read:packages`, armazenado fora do repositório. Consulte as [instruções de autenticação do GitHub Packages](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-nuget-registry).
+
+Após configurar a fonte:
+
+```sh
+dotnet add package BancoBr.API --version 1.2.3-fork
+dotnet add package BancoBr.CNAB --version 1.2.3-fork
+```
+
+Substitua a versão por uma publicada no feed. Common é instalado como dependência. Se consumir feeds de fork e original, use mapeamento de fontes NuGet para escolher a origem de cada pacote.
+
+## Gerar localmente
+
+```sh
+dotnet restore BancoBr.sln
+dotnet build BancoBr.sln --configuration Release --no-restore
+dotnet test tests/BancoBr.Tests/BancoBr.Tests.csproj --configuration Release --no-build
+dotnet pack src/BancoBr.Common/BancoBr.Common.csproj --configuration Release --no-build --output artifacts/packages
+dotnet pack src/BancoBr.API/BancoBr.API.csproj --configuration Release --no-build --output artifacts/packages
+dotnet pack src/BancoBr.CNAB/BancoBr.CNAB.csproj --configuration Release --no-build --output artifacts/packages
+```
+
+Os testes usam HTTP simulado e conteúdo CNAB gerado em memória, sem acessar os bancos.
