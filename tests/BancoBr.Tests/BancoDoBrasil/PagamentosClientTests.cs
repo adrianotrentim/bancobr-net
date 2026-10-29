@@ -37,7 +37,7 @@ namespace BancoBr.Tests.BancoDoBrasil
             Assert.Contains("/v1/lotes-boletos?gw-dev-app-key=chave", handler.LastRequest!.RequestUri!.ToString());
             Assert.Equal("Bearer", handler.LastRequest.Headers.Authorization!.Scheme);
             Assert.Equal("90001210123456001", movimento.NumeroDocumentoNoBanco);
-            Assert.Equal(BancoBrSituacaoEnum.NaoIntegrado, movimento.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.NaoIntegrado, movimento.Situacao);
         }
 
         [Fact]
@@ -61,7 +61,7 @@ namespace BancoBr.Tests.BancoDoBrasil
             var client = new PagamentoTedClient(new HttpClient(handler), new StaticAccessTokenProvider("token"), "chave", Origem());
             var movimento = new Movimento { NumeroDocumentoNoBanco = "90001210123456001", MovimentoItem = new MovimentoItemTransferenciaTED() };
             await client.ConsultarTedAsync(movimento);
-            Assert.Equal(esperado, movimento.SituacaoBancoBr);
+            Assert.Equal(esperado, movimento.Situacao);
             Assert.Equal("ABC", ((MovimentoItemTransferenciaTED)movimento.MovimentoItem).CodigoAutenticacao);
         }
 
@@ -109,7 +109,7 @@ namespace BancoBr.Tests.BancoDoBrasil
             var client = new PagamentoBoletoClient(new HttpClient(handler), new StaticAccessTokenProvider("token"), "chave", Origem());
             var movimento = Boleto(); movimento.NumeroDocumentoNoBanco = "987";
             await client.CancelarAgendamentoAsync(movimento);
-            Assert.Equal(BancoBrSituacaoEnum.Cancelado, movimento.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Cancelado, movimento.Situacao);
             Assert.Equal(123, (int)JObject.Parse(handler.LastRequestBody!)["numeroContratoPagamento"]!);
             Assert.Equal(987, (int)JObject.Parse(handler.LastRequestBody!)["listaPagamentos"]![0]!["codigoPagamento"]!);
         }
@@ -121,8 +121,8 @@ namespace BancoBr.Tests.BancoDoBrasil
             var client = new PagamentoConvenioClient(new HttpClient(handler), new StaticAccessTokenProvider("token"), "chave", Origem());
             var movimento = Boleto(); movimento.MovimentoItem = new MovimentoItemPagamentoConvenioCodigoBarra { CodigoBarra = new string('8', 44) };
             await client.PagarConvenioAsync(movimento);
-            Assert.Equal(BancoBrSituacaoEnum.Rejeitado, movimento.SituacaoBancoBr);
-            Assert.Equal("248", movimento.DetalheRejeicaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Rejeitado, movimento.Situacao);
+            Assert.Equal("248", movimento.DetalheRejeicao);
         }
         [Theory]
         [InlineData("abc")]

@@ -42,7 +42,7 @@ namespace BancoBr.Tests
 
             Assert.True(obtido);
             Assert.Equal(handler.Pdf, movimento.ArquivoComprovantePDF);
-            Assert.Equal(BancoBrSituacaoEnum.Efetivado, movimento.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, movimento.Situacao);
             Assert.Contains(handler.Requests, r => r.RequestUri!.AbsolutePath.EndsWith("/" + recurso + "/id"));
             Assert.Single(handler.Requests.Where(ComprovanteHandler.Download));
             var json = JObject.Parse(JsonConvert.SerializeObject(movimento));
@@ -64,7 +64,7 @@ namespace BancoBr.Tests
 
             Assert.False(obtido);
             Assert.Null(movimento.ArquivoComprovantePDF);
-            Assert.Equal(BancoBrSituacaoEnum.Agendado, movimento.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Agendado, movimento.Situacao);
             Assert.Single(handler.Requests);
         }
 

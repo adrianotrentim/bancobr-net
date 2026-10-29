@@ -40,7 +40,7 @@ namespace BancoBr.Tests.Sicredi
             Assert.Equal(10m, (decimal)body["valorPagamento"]!);
             Assert.Equal("transacao-1", (string?)body["idTransacao"]);
             Assert.Equal("/sb/multipag-pagamento-sandbox/v1/pagamentos/boletos", handler.Requests[0].RequestUri!.AbsolutePath);
-            Assert.Equal(esperado, m.SituacaoBancoBr);
+            Assert.Equal(esperado, m.Situacao);
 
             Assert.Equal("transacao-1", m.NumeroDocumentoNoBanco);
         }
@@ -62,7 +62,7 @@ namespace BancoBr.Tests.Sicredi
             Assert.Single(handler.Requests);
             Assert.Equal(chaveValida, (string?)JObject.Parse(handler.Bodies.Single()!)["idTransacao"]);
             Assert.Equal(chaveValida, movimento.NumeroDocumentoNoBanco);
-            Assert.Equal(BancoBrSituacaoEnum.Agendado, movimento.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Agendado, movimento.Situacao);
         }
 
         [Fact]
@@ -84,7 +84,7 @@ namespace BancoBr.Tests.Sicredi
             Assert.Equal("PATCH", handler.Requests[0].Method.Method);
             Assert.EndsWith("tributos/barras/cancelamentos", handler.Requests[0].RequestUri!.AbsolutePath);
             Assert.Equal("original", (string?)JObject.Parse(handler.Bodies[0]!)["idTransacao"]);
-            Assert.Equal(BancoBrSituacaoEnum.Cancelado, m.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Cancelado, m.Situacao);
         }
 
         [Fact]
@@ -156,7 +156,7 @@ namespace BancoBr.Tests.Sicredi
             Assert.DoesNotContain("dda", handler.Bodies[0]);
             Assert.Equal("identidade-erp", (string?)JObject.Parse(handler.Bodies[1]!)["idTransacao"]);
             Assert.EndsWith("/boletos/identidade-erp", handler.Requests[2].RequestUri!.AbsolutePath);
-            Assert.Equal(BancoBrSituacaoEnum.Efetivado, m.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, m.Situacao);
         }
 
         [Fact]

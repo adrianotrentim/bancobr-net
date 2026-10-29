@@ -101,7 +101,7 @@ Console.WriteLine($"Beneficiário: {movimento.Favorecido?.Nome}, Valor: {item.Va
 // dados (sem consultar de novo).
 await banco.EnviarAgendamentoAsync(movimento, idempotencyKey: Guid.NewGuid().ToString());
 
-Console.WriteLine($"Situação={movimento.SituacaoBancoBr}, IdPagamento={movimento.NumeroDocumentoNoBanco}");
+Console.WriteLine($"Situação={movimento.Situacao}, IdPagamento={movimento.NumeroDocumentoNoBanco}");
 ```
 
 ### Pix (transferência por chave)
@@ -121,7 +121,7 @@ var movimentoPix = new Movimento
 // EnviarAgendamentoAsync já inicia e confirma o pagamento numa única chamada.
 await banco.EnviarAgendamentoAsync(movimentoPix);
 
-Console.WriteLine($"Situação={movimentoPix.SituacaoBancoBr}, EndToEndId={movimentoPix.NumeroDocumentoNoBanco}");
+Console.WriteLine($"Situação={movimentoPix.Situacao}, EndToEndId={movimentoPix.NumeroDocumentoNoBanco}");
 
 // Santander e Sicredi: mesma chamada para obter o PDF, com o download resolvido pela biblioteca.
 // Se o pagamento ou o arquivo ainda não estiver pronto, retorna false: consulte novamente mais tarde.

@@ -49,7 +49,7 @@ namespace BancoBr.Tests.BancoDoBrasil
             Assert.Contains("/lotes-guias-codigo-barras?", handler.LastRequest.RequestUri!.ToString());
             Assert.Equal(1234567, (int)JObject.Parse(handler.LastRequestBody!)["numeroRequisicao"]!);
             Assert.Equal("90001210123456001", movimento.NumeroDocumentoNoBanco);
-            Assert.Equal(BancoBrSituacaoEnum.NaoIntegrado, movimento.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.NaoIntegrado, movimento.Situacao);
         }
 
         [Fact]
@@ -65,7 +65,7 @@ namespace BancoBr.Tests.BancoDoBrasil
 
             Assert.Equal(HttpMethod.Get, handler.LastRequest!.Method);
             Assert.Contains("/guias-codigo-barras/90001210123456001?", handler.LastRequest.RequestUri!.ToString());
-            Assert.Equal(BancoBrSituacaoEnum.Efetivado, movimento.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, movimento.Situacao);
             Assert.Equal("ABC", ((MovimentoItemPagamentoConvenioCodigoBarra)movimento.MovimentoItem).Autenticacao);
         }
 

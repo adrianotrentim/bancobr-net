@@ -86,7 +86,7 @@ namespace BancoBr.Tests.Santander
             Assert.Contains(@"""sourceAccount"":{""branchCode"":""1234"",""accountNumber"":""000000056789""}", handler.Bodies[1]!);
 
             Assert.Equal(TransferId, resultado.NumeroDocumentoNoBanco);
-            Assert.Equal(BancoBrSituacaoEnum.Agendado, resultado.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Agendado, resultado.Situacao);
             var item = (MovimentoItemTransferenciaTED)resultado.MovimentoItem;
             Assert.Equal(TransferId, item.NumeroControleIF);
             Assert.Equal("PENDING_CONFIRMATION", item.Situacao);
@@ -160,8 +160,8 @@ namespace BancoBr.Tests.Santander
             var resultado = await CriarClient(handler).PagarTedAsync(movimento, "x");
 
             Assert.Equal(1, handler.Requests.Count);
-            Assert.Equal(BancoBrSituacaoEnum.Rejeitado, resultado.SituacaoBancoBr);
-            Assert.Equal("CONTA_INVALIDA", resultado.DetalheRejeicaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Rejeitado, resultado.Situacao);
+            Assert.Equal("CONTA_INVALIDA", resultado.DetalheRejeicao);
         }
 
         [Fact]
@@ -195,8 +195,8 @@ namespace BancoBr.Tests.Santander
             var get = handler.Requests[0];
             Assert.Equal(HttpMethod.Get, get.Method);
             Assert.Equal($"{BaseUrl}/workspaces/ws-1/transfer/{TransferId}", get.RequestUri!.ToString());
-            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
-            Assert.Equal(new DateTime(2026, 10, 12), resultado.HorarioBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.Situacao);
+            Assert.Equal(new DateTime(2026, 10, 12), resultado.Horario);
             Assert.Equal("VXBT202403252085158bd9a", ((MovimentoItemTransferenciaTED)resultado.MovimentoItem).CodigoAutenticacao);
         }
 

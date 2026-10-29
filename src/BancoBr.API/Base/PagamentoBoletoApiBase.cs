@@ -39,7 +39,7 @@ namespace BancoBr.API.Base
         /// Consulta o boleto identificado por
         /// <see cref="MovimentoItemPagamentoTituloCodigoBarra.CodigoBarras"/>. Quando o banco
         /// não encontra o boleto ou bloqueia o pagamento, o motivo fica em
-        /// <see cref="Movimento.SituacaoBancoBr"/> + <see cref="Movimento.DetalheRejeicaoBancoBr"/>.
+        /// <see cref="Movimento.Situacao"/> + <see cref="Movimento.DetalheRejeicao"/>.
         /// </summary>
         internal abstract Task<Movimento> ConsultarBoletoAsync(Movimento movimento, CancellationToken cancellationToken = default);
 

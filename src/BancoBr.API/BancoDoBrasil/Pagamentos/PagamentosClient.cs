@@ -59,9 +59,9 @@ namespace BancoBr.API.BancoDoBrasil.Pagamentos
             movimento.NumeroDocumentoNoBanco = (string)(item["codigoIdentificadorPagamento"] ?? item["identificadorPagamento"] ?? item["identificadorTransferencia"]);
             var aceite = (string)(item["indicadorAceite"] ?? item["indicadorMovimentoAceito"]);
             var erros = item["errorCodes"] ?? item["erros"] ?? item["errors"];
-            movimento.DetalheRejeicaoBancoBr = erros == null ? null : string.Join(", ", erros.Children().Select(e => e.Type == JTokenType.Object ? (string)(e["codigo"] ?? e["mensagem"]) : e.ToString()).Where(e => e != "0"));
+            movimento.DetalheRejeicao = erros == null ? null : string.Join(", ", erros.Children().Select(e => e.Type == JTokenType.Object ? (string)(e["codigo"] ?? e["mensagem"]) : e.ToString()).Where(e => e != "0"));
             var estado = (int?)(resposta["estadoRequisicao"] ?? resposta["codigoEstado"]);
-            movimento.SituacaoBancoBr = aceite == "N" || estado == 3 || estado == 7 ? BancoBrSituacaoEnum.Rejeitado : BancoBrSituacaoEnum.NaoIntegrado;
+            movimento.Situacao = aceite == "N" || estado == 3 || estado == 7 ? BancoBrSituacaoEnum.Rejeitado : BancoBrSituacaoEnum.NaoIntegrado;
             return movimento;
         }
 
@@ -71,14 +71,14 @@ namespace BancoBr.API.BancoDoBrasil.Pagamentos
             var resposta = await _gateway.SendAsync<JObject>(HttpMethod.Get, _baseUrl + recurso + "/" + Uri.EscapeDataString(movimento.NumeroDocumentoNoBanco), null, ct).ConfigureAwait(false);
             switch (((string)resposta["estadoPagamento"])?.Trim().ToUpperInvariant())
             {
-                case "PAGO": movimento.SituacaoBancoBr = BancoBrSituacaoEnum.Efetivado; break;
-                case "AGENDADO": movimento.SituacaoBancoBr = BancoBrSituacaoEnum.Agendado; break;
-                case "CANCELADO": movimento.SituacaoBancoBr = BancoBrSituacaoEnum.Cancelado; break;
-                case "REJEITADO": case "INCONSISTENTE": case "DEVOLVIDO": case "BLOQUEADO": movimento.SituacaoBancoBr = BancoBrSituacaoEnum.Rejeitado; break;
-                default: movimento.SituacaoBancoBr = BancoBrSituacaoEnum.NaoIntegrado; break;
+                case "PAGO": movimento.Situacao = BancoBrSituacaoEnum.Efetivado; break;
+                case "AGENDADO": movimento.Situacao = BancoBrSituacaoEnum.Agendado; break;
+                case "CANCELADO": movimento.Situacao = BancoBrSituacaoEnum.Cancelado; break;
+                case "REJEITADO": case "INCONSISTENTE": case "DEVOLVIDO": case "BLOQUEADO": movimento.Situacao = BancoBrSituacaoEnum.Rejeitado; break;
+                default: movimento.Situacao = BancoBrSituacaoEnum.NaoIntegrado; break;
             }
             if (resposta["valorPagamento"] != null) movimento.ValorPagamento = (decimal)resposta["valorPagamento"];
-            if (DateTime.TryParseExact(((string)resposta["dataPagamento"])?.PadLeft(8, '0'), "ddMMyyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var data)) movimento.HorarioBancoBr = data;
+            if (DateTime.TryParseExact(((string)resposta["dataPagamento"])?.PadLeft(8, '0'), "ddMMyyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var data)) movimento.Horario = data;
             var autenticacao = (string)(resposta["codigoAutenticacaoPagamento"] ?? resposta["autenticacaoPagamento"]);
             if (movimento.MovimentoItem is MovimentoItemPagamentoTituloCodigoBarra boleto) boleto.NumeroAutenticacaoPagamento = autenticacao;
             if (movimento.MovimentoItem is MovimentoItemTransferenciaTED ted) ted.CodigoAutenticacao = autenticacao;
@@ -94,8 +94,8 @@ namespace BancoBr.API.BancoDoBrasil.Pagamentos
             if (contrato.HasValue) corpo["numeroContratoPagamento"] = contrato.Value;
             var resposta = await _gateway.SendAsync<JObject>(HttpMethod.Post, _baseUrl + "cancelar-pagamentos", corpo, ct).ConfigureAwait(false);
             var item = resposta["pagamentos"]?.First;
-            movimento.DetalheRejeicaoBancoBr = (string)item?["estadoCancelamento"];
-            if ((string)item?["indicadorCancelamento"] == "S") movimento.SituacaoBancoBr = BancoBrSituacaoEnum.Cancelado;
+            movimento.DetalheRejeicao = (string)item?["estadoCancelamento"];
+            if ((string)item?["indicadorCancelamento"] == "S") movimento.Situacao = BancoBrSituacaoEnum.Cancelado;
             return movimento;
         }
 

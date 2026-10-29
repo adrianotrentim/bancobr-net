@@ -129,7 +129,7 @@ namespace BancoBr.API.Sicredi
             var body = Gateway.Conta();
             body["idTransacao"] = m.NumeroDocumentoNoBanco;
             await Gateway.JsonAsync(new HttpMethod("PATCH"), Gateway.Pagamentos + Recurso(m) + "/cancelamentos", body, ct).ConfigureAwait(false);
-            m.SituacaoBancoBr = BancoBrSituacaoEnum.Cancelado;
+            m.Situacao = BancoBrSituacaoEnum.Cancelado;
 
             return m;
         }
@@ -188,13 +188,13 @@ namespace BancoBr.API.Sicredi
 
             switch (status)
             {
-                case "SUCESSO": m.SituacaoBancoBr = BancoBrSituacaoEnum.Efetivado; break;
-                case "CANCELADO": m.SituacaoBancoBr = BancoBrSituacaoEnum.Cancelado; break;
-                case "ERRO": case "NAO_APROVADO": case "EXPIRADO": m.SituacaoBancoBr = BancoBrSituacaoEnum.Rejeitado; break;
-                case "RECEBIDO": case "AGENDADO": case "AGUARDANDO_APROVACAO": case "APROVADO": m.SituacaoBancoBr = BancoBrSituacaoEnum.Agendado; break;
-                default: m.SituacaoBancoBr = BancoBrSituacaoEnum.NaoIntegrado; break;
+                case "SUCESSO": m.Situacao = BancoBrSituacaoEnum.Efetivado; break;
+                case "CANCELADO": m.Situacao = BancoBrSituacaoEnum.Cancelado; break;
+                case "ERRO": case "NAO_APROVADO": case "EXPIRADO": m.Situacao = BancoBrSituacaoEnum.Rejeitado; break;
+                case "RECEBIDO": case "AGENDADO": case "AGUARDANDO_APROVACAO": case "APROVADO": m.Situacao = BancoBrSituacaoEnum.Agendado; break;
+                default: m.Situacao = BancoBrSituacaoEnum.NaoIntegrado; break;
             }
-            m.DetalheRejeicaoBancoBr = m.SituacaoBancoBr == BancoBrSituacaoEnum.Rejeitado ? status : null;
+            m.DetalheRejeicao = m.Situacao == BancoBrSituacaoEnum.Rejeitado ? status : null;
         }
     }
 }

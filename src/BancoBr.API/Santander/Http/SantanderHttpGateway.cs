@@ -146,9 +146,9 @@ namespace BancoBr.API.Santander.Http
         /// </summary>
         public static void AplicarStatusCodigo(Movimento movimento, PagamentoCodigoResponse dto)
         {
-            movimento.SituacaoBancoBr = MapStatusParaSituacao(dto.Status);
-            movimento.DetalheRejeicaoBancoBr = dto.RejectReason;
-            movimento.HorarioBancoBr = dto.Transaction?.Date;
+            movimento.Situacao = MapStatusParaSituacao(dto.Status);
+            movimento.DetalheRejeicao = dto.RejectReason;
+            movimento.Horario = dto.Transaction?.Date;
 
             if (dto.PaymentValue.GetValueOrDefault() != 0)
                 movimento.ValorPagamento = dto.PaymentValue.Value;

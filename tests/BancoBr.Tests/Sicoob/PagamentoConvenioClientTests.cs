@@ -114,7 +114,7 @@ namespace BancoBr.Tests.Sicoob
 
             var resultado = await client.PagarConvenioAsync(movimento);
 
-            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.Situacao);
             Assert.Equal("PCFbQ0RBVEFb", Item(resultado).ComprovanteBase64);
             Assert.Equal("71205202-2DBB-46C7-BA31-0DFB8DC64EBE", Item(resultado).Autenticacao);
             Assert.Equal("183390172928", resultado.NumeroDocumentoNoBanco);
@@ -132,8 +132,8 @@ namespace BancoBr.Tests.Sicoob
 
             var resultado = await client.PagarConvenioAsync(movimento);
 
-            Assert.Equal(BancoBrSituacaoEnum.Agendado, resultado.SituacaoBancoBr);
-            Assert.Contains("assinatura", resultado.DetalheRejeicaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Agendado, resultado.Situacao);
+            Assert.Contains("assinatura", resultado.DetalheRejeicao);
             Assert.Null(Item(resultado).ComprovanteBase64);
         }
 
@@ -184,7 +184,7 @@ namespace BancoBr.Tests.Sicoob
             var resultado = await client.PagarConvenioAsync(movimento);
 
             Assert.Equal(2, handler.Requests.Count);
-            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.Situacao);
             // A consulta de pagamentos não devolve o PDF do comprovante — só os dados da arrecadação.
             Assert.Null(Item(resultado).ComprovanteBase64);
             Assert.Equal("71205202-2DBB-46C7-BA31-0DFB8DC64EBE", Item(resultado).Autenticacao);
@@ -235,8 +235,8 @@ namespace BancoBr.Tests.Sicoob
             var resultado = await client.ConsultarPagamentosAsync(CodigoBarras, 1234, new DateTime(2026, 6, 29));
 
             Assert.Single(resultado);
-            Assert.Equal("Recebido", resultado[0].DetalheRejeicaoBancoBr);
-            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado[0].SituacaoBancoBr);
+            Assert.Equal("Recebido", resultado[0].DetalheRejeicao);
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado[0].Situacao);
         }
 
         [Fact]
@@ -262,7 +262,7 @@ namespace BancoBr.Tests.Sicoob
 
             var resultado = await client.ConsultarPagamentosAsync(CodigoBarras, 1234, new DateTime(2026, 6, 29));
 
-            Assert.Equal(BancoBrSituacaoEnum.NaoIntegrado, resultado[0].SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.NaoIntegrado, resultado[0].Situacao);
         }
 
         [Fact]
@@ -288,7 +288,7 @@ namespace BancoBr.Tests.Sicoob
 
             var resultado = await client.ConsultarPagamentosAsync(CodigoBarras, 1234, new DateTime(2026, 6, 29));
 
-            Assert.Equal(BancoBrSituacaoEnum.Rejeitado, resultado[0].SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Rejeitado, resultado[0].Situacao);
         }
 
         [Fact]

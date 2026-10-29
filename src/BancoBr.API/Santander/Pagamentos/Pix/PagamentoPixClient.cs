@@ -157,7 +157,7 @@ namespace BancoBr.API.Santander.Pagamentos.Pix
             };
 
             await IniciarAsync(movimento, wireRequest, cancellationToken).ConfigureAwait(false);
-            if (movimento.SituacaoBancoBr == BancoBrSituacaoEnum.Rejeitado)
+            if (movimento.Situacao == BancoBrSituacaoEnum.Rejeitado)
                 return movimento;
 
             return await ConfirmarPagamentoAsync(movimento, cancellationToken).ConfigureAwait(false);
@@ -166,7 +166,7 @@ namespace BancoBr.API.Santander.Pagamentos.Pix
         internal override async Task<Movimento> PagarComIniciacaoAsync(Movimento movimento, CancellationToken cancellationToken = default)
         {
             await IniciarPagamentoAsync(movimento, cancellationToken).ConfigureAwait(false);
-            if (movimento.SituacaoBancoBr == BancoBrSituacaoEnum.Rejeitado)
+            if (movimento.Situacao == BancoBrSituacaoEnum.Rejeitado)
                 return movimento;
 
             return await ConfirmarPagamentoAsync(movimento, cancellationToken).ConfigureAwait(false);
@@ -268,9 +268,9 @@ namespace BancoBr.API.Santander.Pagamentos.Pix
             if (!string.IsNullOrWhiteSpace(dto.Id))
                 movimento.NumeroDocumentoNoBanco = dto.Id;
 
-            movimento.SituacaoBancoBr = SantanderHttpGateway.MapStatusParaSituacao(dto.Status);
-            movimento.DetalheRejeicaoBancoBr = dto.RejectReason;
-            movimento.HorarioBancoBr = dto.Transaction?.Date;
+            movimento.Situacao = SantanderHttpGateway.MapStatusParaSituacao(dto.Status);
+            movimento.DetalheRejeicao = dto.RejectReason;
+            movimento.Horario = dto.Transaction?.Date;
 
             if (dto.PaymentValue != 0)
                 movimento.ValorPagamento = dto.PaymentValue;

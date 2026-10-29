@@ -304,9 +304,9 @@ namespace BancoBr.API.Sicoob.Pagamentos.Pix
             if (!string.IsNullOrWhiteSpace(endToEndId))
                 movimento.NumeroDocumentoNoBanco = endToEndId;
 
-            movimento.SituacaoBancoBr = MapEstadoParaSituacao(estado);
-            movimento.DetalheRejeicaoBancoBr = detalheRejeicao;
-            movimento.HorarioBancoBr = horario;
+            movimento.Situacao = MapEstadoParaSituacao(estado);
+            movimento.DetalheRejeicao = detalheRejeicao;
+            movimento.Horario = horario;
 
             if (valor != 0)
                 movimento.ValorPagamento = valor;

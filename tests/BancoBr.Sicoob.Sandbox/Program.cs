@@ -87,9 +87,9 @@ try
 
     var item = (MovimentoItemPagamentoTituloCodigoBarra)movimento.MovimentoItem;
 
-    if (movimento.SituacaoBancoBr == BancoBrSituacaoEnum.Cancelado && item.IdentificadorConsulta == null)
+    if (movimento.Situacao == BancoBrSituacaoEnum.Cancelado && item.IdentificadorConsulta == null)
     {
-        Console.WriteLine($"Boleto não disponível para pagamento: {movimento.DetalheRejeicaoBancoBr}");
+        Console.WriteLine($"Boleto não disponível para pagamento: {movimento.DetalheRejeicao}");
         return 0;
     }
 
@@ -98,7 +98,7 @@ try
     Console.WriteLine($"Valor de pagamento: {movimento.ValorPagamento:C}");
     Console.WriteLine($"Vencimento: {item.DataVencimento:yyyy-MM-dd}");
     Console.WriteLine($"IdentificadorConsulta: {item.IdentificadorConsulta}");
-    Console.WriteLine($"Situação: {movimento.SituacaoBancoBr} ({movimento.DetalheRejeicaoBancoBr})");
+    Console.WriteLine($"Situação: {movimento.Situacao} ({movimento.DetalheRejeicao})");
 
     if (!confirmarPagamento)
     {
@@ -107,7 +107,7 @@ try
         return 0;
     }
 
-    if (movimento.SituacaoBancoBr == BancoBrSituacaoEnum.Cancelado)
+    if (movimento.Situacao == BancoBrSituacaoEnum.Cancelado)
     {
         Console.WriteLine("Pagamento bloqueado pelo Sicoob para este boleto; abortando antes de chamar EnviarAgendamentoAsync.");
         return 1;
@@ -126,7 +126,7 @@ try
     // idLancamento como idempotencyKey; a chave composta do Sicoob é montada por baixo.
     await banco.EnviarAgendamentoAsync(movimento, idLancamento.ToString());
 
-    Console.WriteLine($"Pagamento processado. Situação={movimento.SituacaoBancoBr}, IdPagamento={movimento.NumeroDocumentoNoBanco}, Detalhe={movimento.DetalheRejeicaoBancoBr}");
+    Console.WriteLine($"Pagamento processado. Situação={movimento.Situacao}, IdPagamento={movimento.NumeroDocumentoNoBanco}, Detalhe={movimento.DetalheRejeicao}");
 
     return 0;
 }

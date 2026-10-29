@@ -174,8 +174,8 @@ namespace BancoBr.API.Sicoob.Pagamentos.Convenios
             {
                 if (response.StatusCode == System.Net.HttpStatusCode.Accepted)
                 {
-                    movimento.SituacaoBancoBr = BancoBrSituacaoEnum.Agendado;
-                    movimento.DetalheRejeicaoBancoBr = "Pagamento pendente de assinatura.";
+                    movimento.Situacao = BancoBrSituacaoEnum.Agendado;
+                    movimento.DetalheRejeicao = "Pagamento pendente de assinatura.";
                     return movimento;
                 }
 
@@ -197,7 +197,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Convenios
                     AplicarArrecadacao(movimento, item, envelope.Resultado.Arrecadacao);
                 }
 
-                movimento.SituacaoBancoBr = BancoBrSituacaoEnum.Efetivado;
+                movimento.Situacao = BancoBrSituacaoEnum.Efetivado;
                 return movimento;
             }
         }
@@ -253,7 +253,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Convenios
             item.SiglaConvenio = encontradoItem.SiglaConvenio;
             item.Transacao = encontradoItem.Transacao;
 
-            movimento.SituacaoBancoBr = BancoBrSituacaoEnum.Efetivado;
+            movimento.Situacao = BancoBrSituacaoEnum.Efetivado;
             return movimento;
         }
 
@@ -443,8 +443,8 @@ namespace BancoBr.API.Sicoob.Pagamentos.Convenios
             ValorPagamento = dto.ValorPago,
             DataPagamento = dto.DataPagamento,
             NumeroDocumentoNoBanco = dto.Nsu?.ToString(),
-            SituacaoBancoBr = MapSituacaoArrecadacaoParaSituacao(dto.Situacao),
-            DetalheRejeicaoBancoBr = dto.Situacao?.Descricao,
+            Situacao = MapSituacaoArrecadacaoParaSituacao(dto.Situacao),
+            DetalheRejeicao = dto.Situacao?.Descricao,
             MovimentoItem = new MovimentoItemPagamentoConvenioCodigoBarra
             {
                 CodigoBarra = codigoBarras,

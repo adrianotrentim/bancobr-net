@@ -71,8 +71,8 @@ namespace BancoBr.API.Santander.Pagamentos.Comprovantes
             var url = $"{_baseUrl}workspaces/{workspace.WorkspaceId}/{recurso}/{id}";
             var pagamento = await _gateway.SendAsync<PagamentoTransacaoResponse>(HttpMethod.Get, url, body: null, cancellationToken).ConfigureAwait(false);
 
-            movimento.SituacaoBancoBr = SantanderHttpGateway.MapStatusParaSituacao(pagamento?.Status);
-            if (movimento.SituacaoBancoBr != BancoBrSituacaoEnum.Efetivado) return false;
+            movimento.Situacao = SantanderHttpGateway.MapStatusParaSituacao(pagamento?.Status);
+            if (movimento.Situacao != BancoBrSituacaoEnum.Efetivado) return false;
 
             var codigoTransacao = pagamento?.Transaction?.Code;
             if (string.IsNullOrWhiteSpace(codigoTransacao))

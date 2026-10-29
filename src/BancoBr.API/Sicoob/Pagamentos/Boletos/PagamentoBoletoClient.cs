@@ -203,14 +203,14 @@ namespace BancoBr.API.Sicoob.Pagamentos.Boletos
             {
                 if (response.StatusCode == System.Net.HttpStatusCode.Accepted)
                 {
-                    movimento.SituacaoBancoBr = BancoBrSituacaoEnum.Agendado;
-                    movimento.DetalheRejeicaoBancoBr = "Pagamento pendente de assinatura.";
+                    movimento.Situacao = BancoBrSituacaoEnum.Agendado;
+                    movimento.DetalheRejeicao = "Pagamento pendente de assinatura.";
                     return movimento;
                 }
 
                 if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 {
-                    movimento.SituacaoBancoBr = BancoBrSituacaoEnum.Efetivado;
+                    movimento.Situacao = BancoBrSituacaoEnum.Efetivado;
                     return movimento;
                 }
 
@@ -262,8 +262,8 @@ namespace BancoBr.API.Sicoob.Pagamentos.Boletos
                 await EnsureSuccessOrThrowAsync(response).ConfigureAwait(false);
             }
 
-            movimento.SituacaoBancoBr = BancoBrSituacaoEnum.Cancelado;
-            movimento.DetalheRejeicaoBancoBr = "Agendamento cancelado.";
+            movimento.Situacao = BancoBrSituacaoEnum.Cancelado;
+            movimento.DetalheRejeicao = "Agendamento cancelado.";
 
             return movimento;
         }
@@ -348,8 +348,8 @@ namespace BancoBr.API.Sicoob.Pagamentos.Boletos
         /// </summary>
         private static Movimento AplicarBoletoNaoEncontrado(Movimento movimento)
         {
-            movimento.SituacaoBancoBr = BancoBrSituacaoEnum.Cancelado;
-            movimento.DetalheRejeicaoBancoBr = "Boleto não encontrado.";
+            movimento.Situacao = BancoBrSituacaoEnum.Cancelado;
+            movimento.DetalheRejeicao = "Boleto não encontrado.";
             return movimento;
         }
 
@@ -359,8 +359,8 @@ namespace BancoBr.API.Sicoob.Pagamentos.Boletos
         /// </summary>
         private static Movimento AplicarBloqueio(Movimento movimento, string mensagemBloqueio)
         {
-            movimento.SituacaoBancoBr = BancoBrSituacaoEnum.Cancelado;
-            movimento.DetalheRejeicaoBancoBr = mensagemBloqueio;
+            movimento.Situacao = BancoBrSituacaoEnum.Cancelado;
+            movimento.DetalheRejeicao = mensagemBloqueio;
             return movimento;
         }
 
@@ -409,9 +409,9 @@ namespace BancoBr.API.Sicoob.Pagamentos.Boletos
                 return movimento;
 
             movimento.NumeroDocumentoNoBanco = comprovante.IdPagamento.ToString();
-            movimento.SituacaoBancoBr = MapSituacaoPagamentoParaSituacao(comprovante.SituacaoPagamento);
-            movimento.DetalheRejeicaoBancoBr = comprovante.DescricaoDetalheSituacao;
-            movimento.HorarioBancoBr = comprovante.DataHoraCadastro;
+            movimento.Situacao = MapSituacaoPagamentoParaSituacao(comprovante.SituacaoPagamento);
+            movimento.DetalheRejeicao = comprovante.DescricaoDetalheSituacao;
+            movimento.Horario = comprovante.DataHoraCadastro;
 
             if (comprovante.ValorPagamento != 0)
                 movimento.ValorPagamento = comprovante.ValorPagamento;

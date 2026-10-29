@@ -81,7 +81,7 @@ namespace BancoBr.Tests.Santander
             var item = (MovimentoItemPagamentoTituloCodigoBarra)resultado.MovimentoItem;
             Assert.Equal(PaymentId, item.IdentificadorConsulta);
             Assert.Null(resultado.NumeroDocumentoNoBanco);
-            Assert.Equal(BancoBrSituacaoEnum.NaoIntegrado, resultado.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.NaoIntegrado, resultado.Situacao);
             Assert.Equal(147.50m, resultado.ValorPagamento);
             Assert.Equal(new DateTime(2026, 10, 20), item.DataVencimento);
             Assert.Equal(150.00m, item.ValorCodigoBarra);
@@ -148,8 +148,8 @@ namespace BancoBr.Tests.Santander
             Assert.Contains(@"""finalPayer"":{""name"":""Minha Empresa LTDA"",""documentType"":""CNPJ"",""documentNumber"":""11222333000181""}", body);
 
             Assert.Equal(PaymentId, resultado.NumeroDocumentoNoBanco);
-            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
-            Assert.Equal(new DateTime(2026, 10, 12, 10, 30, 0, DateTimeKind.Utc), resultado.HorarioBancoBr!.Value.ToUniversalTime());
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.Situacao);
+            Assert.Equal(new DateTime(2026, 10, 12, 10, 30, 0, DateTimeKind.Utc), resultado.Horario!.Value.ToUniversalTime());
             Assert.Equal("AUTH123", ((MovimentoItemPagamentoTituloCodigoBarra)resultado.MovimentoItem).NumeroAutenticacaoPagamento);
         }
 
@@ -186,7 +186,7 @@ namespace BancoBr.Tests.Santander
             Assert.Equal(HttpMethod.Post, handler.Requests[0].Method);
             Assert.Equal("PATCH", handler.Requests[1].Method.Method);
             Assert.Contains(@"""paymentValue"":147.5", handler.Bodies[1]!);
-            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.Situacao);
             Assert.Equal(PaymentId, resultado.NumeroDocumentoNoBanco);
         }
 
@@ -199,8 +199,8 @@ namespace BancoBr.Tests.Santander
             var resultado = await CriarBoleto(handler).PagarBoletoComConsultaAsync(movimento, Guid.NewGuid());
 
             Assert.Equal(1, handler.Requests.Count);
-            Assert.Equal(BancoBrSituacaoEnum.Rejeitado, resultado.SituacaoBancoBr);
-            Assert.Equal("Boleto vencido", resultado.DetalheRejeicaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Rejeitado, resultado.Situacao);
+            Assert.Equal("Boleto vencido", resultado.DetalheRejeicao);
         }
 
         [Fact]
@@ -215,7 +215,7 @@ namespace BancoBr.Tests.Santander
             var get = handler.Requests[0];
             Assert.Equal(HttpMethod.Get, get.Method);
             Assert.Equal($"{BaseUrl}/workspaces/ws-1/bank_slip_payments/{PaymentId}", get.RequestUri!.ToString());
-            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.Situacao);
         }
 
         [Theory]
@@ -231,7 +231,7 @@ namespace BancoBr.Tests.Santander
 
             var resultado = await CriarBoleto(handler).ConsultarComprovantePorIdAsync(movimento);
 
-            Assert.Equal(esperado, resultado.SituacaoBancoBr);
+            Assert.Equal(esperado, resultado.Situacao);
         }
 
         [Fact]
@@ -372,7 +372,7 @@ namespace BancoBr.Tests.Santander
             Assert.Equal("PATCH", patch.Method.Method);
             Assert.Equal($"{BaseUrl}/workspaces/ws-1/barcode_payments/{PaymentId}", patch.RequestUri!.ToString());
             Assert.Contains(@"""finalPayer"":{""name"":""Minha Empresa LTDA"",""documentType"":""CNPJ"",""documentNumber"":""11222333000181""}", handler.Bodies[0]!);
-            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.Situacao);
             Assert.Equal("AUTH9", ((MovimentoItemPagamentoConvenioCodigoBarra)resultado.MovimentoItem).Autenticacao);
         }
 
@@ -396,7 +396,7 @@ namespace BancoBr.Tests.Santander
 
             Assert.Equal(HttpMethod.Get, handler.Requests[0].Method);
             Assert.Equal($"{BaseUrl}/workspaces/ws-1/barcode_payments/{PaymentId}", handler.Requests[0].RequestUri!.ToString());
-            Assert.Equal(BancoBrSituacaoEnum.Agendado, resultado.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Agendado, resultado.Situacao);
         }
 
         [Fact]

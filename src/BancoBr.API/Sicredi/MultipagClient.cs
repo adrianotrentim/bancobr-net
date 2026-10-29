@@ -43,7 +43,7 @@ namespace BancoBr.API.Sicredi
             var cliente = ObterCliente(movimento);
             movimento.ArquivoComprovantePDF = null;
             await cliente.ConsultarAsync(movimento, cancellationToken).ConfigureAwait(false);
-            if (movimento.SituacaoBancoBr != BancoBrSituacaoEnum.Efetivado) return false;
+            if (movimento.Situacao != BancoBrSituacaoEnum.Efetivado) return false;
 
             var pdf = await cliente.ComprovanteAsync(movimento, cancellationToken).ConfigureAwait(false);
             movimento.ArquivoComprovantePDF = pdf;

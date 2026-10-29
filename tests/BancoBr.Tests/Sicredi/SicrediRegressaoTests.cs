@@ -82,7 +82,7 @@ namespace BancoBr.Tests.Sicredi
             var movimento = new Movimento { NumeroDocumentoNoBanco = "transacao", MovimentoItem = item };
             var resultado = await Criar(handler).ConsultarAgendamentoAsync(movimento);
             Assert.Same(movimento, resultado);
-            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.Situacao);
             Assert.Equal(119.62m, resultado.ValorPagamento);
             Assert.Equal(new DateTime(2026, 10, 28), resultado.DataPagamento);
             Assert.Equal("ERP-001", resultado.NumeroDocumento);
@@ -123,7 +123,7 @@ namespace BancoBr.Tests.Sicredi
             Assert.Equal("ERP-001", movimento.NumeroDocumento);
 
             Assert.Equal("barras-conhecidas", item.CodigoBarras);
-            Assert.Equal(BancoBrSituacaoEnum.Agendado, movimento.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Agendado, movimento.Situacao);
         }
 
         private static MovimentoItem Item(string recurso)
@@ -169,7 +169,7 @@ namespace BancoBr.Tests.Sicredi
             Assert.Equal(HttpMethod.Get, handler.Requests[1].Method);
             Assert.EndsWith("/" + recurso + "/referencia-original", handler.Requests[1].RequestUri!.AbsolutePath);
             Assert.Equal("referencia-original", resultado.NumeroDocumentoNoBanco);
-            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.Situacao);
         }
 
         [Fact]
@@ -220,7 +220,7 @@ namespace BancoBr.Tests.Sicredi
             Assert.Null(body["chavePix"]);
             Assert.EndsWith("/pix/referencia-pix", handler.Requests[1].RequestUri!.AbsolutePath);
             Assert.EndsWith("/pix/cancelamentos", handler.Requests[2].RequestUri!.AbsolutePath);
-            Assert.Equal(BancoBrSituacaoEnum.Cancelado, movimento.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Cancelado, movimento.Situacao);
         }
 
         [Theory]
@@ -280,7 +280,7 @@ namespace BancoBr.Tests.Sicredi
             Assert.Equal(rota + "/cancelamentos", handler.Requests[2].RequestUri!.AbsolutePath);
             Assert.Equal("identidade-erp", (string?)JObject.Parse(handler.Bodies[1]!)["idTransacao"]);
             Assert.Equal("identidade-erp", (string?)JObject.Parse(handler.Bodies[2]!)["idTransacao"]);
-            Assert.Equal(BancoBrSituacaoEnum.Cancelado, movimento.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Cancelado, movimento.Situacao);
         }
 
         private sealed class PdfHandler : HttpMessageHandler

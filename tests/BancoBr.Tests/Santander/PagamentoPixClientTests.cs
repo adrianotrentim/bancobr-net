@@ -57,7 +57,7 @@ namespace BancoBr.Tests.Santander
             Assert.DoesNotContain("qrCode", body);
 
             Assert.Equal(PaymentId, resultado.NumeroDocumentoNoBanco);
-            Assert.Equal(BancoBrSituacaoEnum.NaoIntegrado, resultado.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.NaoIntegrado, resultado.Situacao);
             var item = (MovimentoItemTransferenciaPIX)resultado.MovimentoItem;
             Assert.Equal("Fornecedor LTDA", item.TitularConfirmadoNome);
             Assert.Equal("12345678000100", item.TitularConfirmadoDocumento);
@@ -175,8 +175,8 @@ namespace BancoBr.Tests.Santander
             Assert.Equal(2, handler.Requests.Count);
             Assert.Equal("PATCH", handler.Requests[1].Method.Method);
             Assert.Equal($"{BaseUrl}/workspaces/ws-1/pix_payments/{PaymentId}", handler.Requests[1].RequestUri!.ToString());
-            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
-            Assert.NotNull(resultado.HorarioBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.Situacao);
+            Assert.NotNull(resultado.Horario);
             // o PATCH não devolve o titular de novo — o que veio do POST é mantido
             Assert.Equal("Fornecedor LTDA", ((MovimentoItemTransferenciaPIX)resultado.MovimentoItem).TitularConfirmadoNome);
         }
@@ -194,7 +194,7 @@ namespace BancoBr.Tests.Santander
             Assert.Contains(@"""status"":""AUTHORIZED""", body);
             Assert.Contains(@"""paymentValue"":150", body);
             Assert.Contains(@"""debitAccount"":{""branch"":""1234"",""number"":""000000056789""}", body);
-            Assert.Equal(BancoBrSituacaoEnum.Agendado, resultado.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Agendado, resultado.Situacao);
         }
 
         [Fact]
@@ -206,8 +206,8 @@ namespace BancoBr.Tests.Santander
             var resultado = await CriarClient(handler).PagarComIniciacaoAsync(CriarMovimentoChave());
 
             Assert.Equal(1, handler.Requests.Count);
-            Assert.Equal(BancoBrSituacaoEnum.Rejeitado, resultado.SituacaoBancoBr);
-            Assert.Equal("Chave inexistente", resultado.DetalheRejeicaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Rejeitado, resultado.Situacao);
+            Assert.Equal("Chave inexistente", resultado.DetalheRejeicao);
         }
 
         [Fact]
@@ -221,7 +221,7 @@ namespace BancoBr.Tests.Santander
 
             Assert.Equal(HttpMethod.Get, handler.Requests[0].Method);
             Assert.EndsWith($"/workspaces/ws-1/pix_payments/{PaymentId}", handler.Requests[0].RequestUri!.ToString());
-            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.Situacao);
         }
 
 
@@ -237,7 +237,7 @@ namespace BancoBr.Tests.Santander
 
             Assert.Equal(2, handler.Requests.Count);
             Assert.Contains(@"""qrCode"":""00020126...""", handler.Bodies[0]!);
-            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.Situacao);
             var item = (MovimentoItemPagamentoTituloPIXQRCode)resultado.MovimentoItem;
             Assert.Equal("TX123", item.TXID);
             Assert.Equal(100m, item.ValorOriginal);

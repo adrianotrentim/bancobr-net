@@ -86,7 +86,7 @@ namespace BancoBr.Tests
             var handler = Envio(banco); var movimento = Boleto();
             var resultado = await Criar(banco, handler).EnviarAgendamentoAsync(movimento, Id.ToString());
             Assert.Same(movimento, resultado);
-            Assert.Equal(esperado, resultado.SituacaoBancoBr);
+            Assert.Equal(esperado, resultado.Situacao);
             Assert.NotEmpty(handler.Requests);
             var serializado = JsonConvert.SerializeObject(resultado);
             Assert.DoesNotContain("IdRequisicaoBancoBr", serializado);

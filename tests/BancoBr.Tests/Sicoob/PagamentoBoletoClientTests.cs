@@ -89,8 +89,8 @@ namespace BancoBr.Tests.Sicoob
 
             var resultado = await client.ConsultarBoletoAsync(movimento);
 
-            Assert.Equal(BancoBrSituacaoEnum.Cancelado, resultado.SituacaoBancoBr);
-            Assert.Equal("Boleto não encontrado.", resultado.DetalheRejeicaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Cancelado, resultado.Situacao);
+            Assert.Equal("Boleto não encontrado.", resultado.DetalheRejeicao);
             Assert.Null(Item(resultado).IdentificadorConsulta);
         }
 
@@ -126,7 +126,7 @@ namespace BancoBr.Tests.Sicoob
 
             var resultado = await client.PagarBoletoAsync(movimento, IdempotencyKey.New(1234, 1234569, Guid.NewGuid()));
 
-            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.Situacao);
             Assert.Equal("1983450", resultado.NumeroDocumentoNoBanco);
             Assert.Equal("89C3E9FD-1A37-40BE-A85B-69AF118D336A", Item(resultado).NumeroAutenticacaoPagamento);
             Assert.Contains("\"identificadorConsulta\":\"hash-123\"", handler.LastRequestBody);
@@ -146,8 +146,8 @@ namespace BancoBr.Tests.Sicoob
 
             var resultado = await client.PagarBoletoAsync(movimento, IdempotencyKey.New(1234, 1234569, Guid.NewGuid()));
 
-            Assert.Equal(BancoBrSituacaoEnum.Agendado, resultado.SituacaoBancoBr);
-            Assert.Contains("assinatura", resultado.DetalheRejeicaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Agendado, resultado.Situacao);
+            Assert.Contains("assinatura", resultado.DetalheRejeicao);
             Assert.Null(resultado.NumeroDocumentoNoBanco);
         }
 
@@ -160,7 +160,7 @@ namespace BancoBr.Tests.Sicoob
 
             var resultado = await client.PagarBoletoAsync(movimento, IdempotencyKey.New(1234, 1234569, Guid.NewGuid()));
 
-            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.Situacao);
             Assert.Null(resultado.NumeroDocumentoNoBanco);
         }
 
@@ -200,7 +200,7 @@ namespace BancoBr.Tests.Sicoob
 
             Assert.Equal(2, handler.Requests.Count);
             Assert.Contains(idempotencyKey, handler.Requests[1].RequestUri!.ToString());
-            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.Situacao);
             Assert.Equal("1983450", resultado.NumeroDocumentoNoBanco);
         }
 
@@ -214,7 +214,7 @@ namespace BancoBr.Tests.Sicoob
 
             var resultado = await client.ConsultarComprovantePorIdAsync(movimento);
 
-            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.Situacao);
             Assert.Equal("1983450", resultado.NumeroDocumentoNoBanco);
         }
 
@@ -235,7 +235,7 @@ namespace BancoBr.Tests.Sicoob
 
             var resultado = await client.ConsultarComprovantePorIdAsync(movimento);
 
-            Assert.Equal(BancoBrSituacaoEnum.NaoIntegrado, resultado.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.NaoIntegrado, resultado.Situacao);
         }
 
         [Fact]
@@ -255,7 +255,7 @@ namespace BancoBr.Tests.Sicoob
 
             var resultado = await client.ConsultarComprovantePorIdAsync(movimento);
 
-            Assert.Equal(BancoBrSituacaoEnum.Rejeitado, resultado.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Rejeitado, resultado.Situacao);
         }
 
         [Fact]
@@ -268,7 +268,7 @@ namespace BancoBr.Tests.Sicoob
 
             Assert.NotNull(resultado);
             Assert.Equal("1983450", resultado!.NumeroDocumentoNoBanco);
-            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.Situacao);
             Assert.IsType<MovimentoItemPagamentoTituloCodigoBarra>(resultado.MovimentoItem);
         }
 
@@ -283,7 +283,7 @@ namespace BancoBr.Tests.Sicoob
             var resultado = await client.CancelarAgendamentoAsync(movimento);
 
             Assert.Equal(HttpMethod.Delete, handler.LastRequest!.Method);
-            Assert.Equal(BancoBrSituacaoEnum.Cancelado, resultado.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Cancelado, resultado.Situacao);
         }
 
         [Fact]
@@ -399,7 +399,7 @@ namespace BancoBr.Tests.Sicoob
             Assert.Equal(2, handler.Requests.Count);
             Assert.Equal(HttpMethod.Get, handler.Requests[0].Method);
             Assert.Equal(HttpMethod.Post, handler.Requests[1].Method);
-            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultado.Situacao);
             Assert.Equal("1983450", resultado.NumeroDocumentoNoBanco);
             // O IdentificadorConsulta da consulta é reaproveitado no pagamento.
             Assert.Equal("hash-123", Item(resultado).IdentificadorConsulta);
@@ -415,8 +415,8 @@ namespace BancoBr.Tests.Sicoob
             var resultado = await client.PagarBoletoComConsultaAsync(movimento, Guid.NewGuid());
 
             Assert.Single(handler.Requests);
-            Assert.Equal(BancoBrSituacaoEnum.Cancelado, resultado.SituacaoBancoBr);
-            Assert.Equal("Boleto não encontrado.", resultado.DetalheRejeicaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Cancelado, resultado.Situacao);
+            Assert.Equal("Boleto não encontrado.", resultado.DetalheRejeicao);
             Assert.Null(resultado.NumeroDocumentoNoBanco);
         }
 
@@ -430,8 +430,8 @@ namespace BancoBr.Tests.Sicoob
             var resultado = await client.PagarBoletoComConsultaAsync(movimento, Guid.NewGuid());
 
             Assert.Single(handler.Requests);
-            Assert.Equal(BancoBrSituacaoEnum.Cancelado, resultado.SituacaoBancoBr);
-            Assert.Equal("Pagamento bloqueado", resultado.DetalheRejeicaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Cancelado, resultado.Situacao);
+            Assert.Equal("Pagamento bloqueado", resultado.DetalheRejeicao);
             Assert.Null(resultado.NumeroDocumentoNoBanco);
         }
 
@@ -476,12 +476,12 @@ namespace BancoBr.Tests.Sicoob
             Assert.Equal(3, resultados.Count);
 
             Assert.True(resultados[0].Sucesso);
-            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultados[0].Movimento.SituacaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Efetivado, resultados[0].Movimento.Situacao);
             Assert.Equal("1983450", resultados[0].Movimento.NumeroDocumentoNoBanco);
 
             Assert.True(resultados[1].Sucesso);
-            Assert.Equal(BancoBrSituacaoEnum.Cancelado, resultados[1].Movimento.SituacaoBancoBr);
-            Assert.Equal("Pagamento bloqueado", resultados[1].Movimento.DetalheRejeicaoBancoBr);
+            Assert.Equal(BancoBrSituacaoEnum.Cancelado, resultados[1].Movimento.Situacao);
+            Assert.Equal("Pagamento bloqueado", resultados[1].Movimento.DetalheRejeicao);
 
             Assert.False(resultados[2].Sucesso);
             Assert.IsType<BancoApiException>(resultados[2].Erro);

@@ -152,8 +152,8 @@ namespace BancoBr.API.Sicoob.Pagamentos.Ted
                     // real (sem corpo) só confirma o aceite do envio — os detalhes
                     // (numeroControleIF, idAgendamento etc.) precisam ser buscados depois via
                     // ConsultarTedAsync.
-                    movimento.SituacaoBancoBr = BancoBrSituacaoEnum.Agendado;
-                    movimento.DetalheRejeicaoBancoBr = "TED enviada; consulte novamente para obter o comprovante.";
+                    movimento.Situacao = BancoBrSituacaoEnum.Agendado;
+                    movimento.DetalheRejeicao = "TED enviada; consulte novamente para obter o comprovante.";
                     return movimento;
                 }
 
@@ -164,7 +164,7 @@ namespace BancoBr.API.Sicoob.Pagamentos.Ted
                 var retorno = AplicarRetorno(movimento, item, dto);
 
                 if (dto != null && string.IsNullOrWhiteSpace(dto.Situacao))
-                    retorno.SituacaoBancoBr = dto.Agendamento ? BancoBrSituacaoEnum.Agendado : BancoBrSituacaoEnum.Efetivado;
+                    retorno.Situacao = dto.Agendamento ? BancoBrSituacaoEnum.Agendado : BancoBrSituacaoEnum.Efetivado;
 
                 return retorno;
             }
@@ -201,8 +201,8 @@ namespace BancoBr.API.Sicoob.Pagamentos.Ted
             var url = $"{_baseUrl}transferencias/agendamentos/{item.IdAgendamento}";
             var resultado = await SendEnvelopedListAsync<TedCancelamentoResultado>(HttpMethod.Delete, url, idempotencyKey, cancellationToken).ConfigureAwait(false);
 
-            movimento.SituacaoBancoBr = BancoBrSituacaoEnum.Cancelado;
-            movimento.DetalheRejeicaoBancoBr = resultado != null && !string.IsNullOrWhiteSpace(resultado.Mensagem)
+            movimento.Situacao = BancoBrSituacaoEnum.Cancelado;
+            movimento.DetalheRejeicao = resultado != null && !string.IsNullOrWhiteSpace(resultado.Mensagem)
                 ? resultado.Mensagem
                 : "Agendamento cancelado.";
 
@@ -272,8 +272,8 @@ namespace BancoBr.API.Sicoob.Pagamentos.Ted
             if (!string.IsNullOrWhiteSpace(dto.NumeroControleIF))
                 movimento.NumeroDocumentoNoBanco = dto.NumeroControleIF;
 
-            movimento.SituacaoBancoBr = MapSituacaoParaSituacao(dto.Situacao);
-            movimento.DetalheRejeicaoBancoBr = dto.MensagemErro;
+            movimento.Situacao = MapSituacaoParaSituacao(dto.Situacao);
+            movimento.DetalheRejeicao = dto.MensagemErro;
 
             if (decimal.TryParse(dto.Amount, NumberStyles.Any, CultureInfo.InvariantCulture, out var valor) && valor != 0)
                 movimento.ValorPagamento = valor;

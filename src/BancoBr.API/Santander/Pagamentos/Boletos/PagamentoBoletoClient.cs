@@ -109,7 +109,7 @@ namespace BancoBr.API.Santander.Pagamentos.Boletos
         internal override async Task<Movimento> PagarBoletoComConsultaAsync(Movimento movimento, Guid idLancamento, CancellationToken cancellationToken = default)
         {
             await ConsultarBoletoAsync(movimento, cancellationToken).ConfigureAwait(false);
-            if (movimento.SituacaoBancoBr == BancoBrSituacaoEnum.Rejeitado)
+            if (movimento.Situacao == BancoBrSituacaoEnum.Rejeitado)
                 return movimento;
 
             return await PagarBoletoAsync(movimento, idempotencyKey: null, cancellationToken).ConfigureAwait(false);

@@ -85,7 +85,7 @@ namespace BancoBr.API.Santander.Pagamentos.Ted
             var dto = await _gateway.SendAsync<RespostaTedSantander>(HttpMethod.Post, url, wireRequest, cancellationToken).ConfigureAwait(false);
             AplicarResposta(movimento, item, dto);
 
-            if (movimento.SituacaoBancoBr == BancoBrSituacaoEnum.Rejeitado)
+            if (movimento.Situacao == BancoBrSituacaoEnum.Rejeitado)
                 return movimento;
 
             // A conta é enviada explicitamente: se a workspace foi achada por uma conta adicional,
@@ -242,11 +242,11 @@ namespace BancoBr.API.Santander.Pagamentos.Ted
                 item.NumeroControleIF = dto.Id;
             }
 
-            movimento.SituacaoBancoBr = SantanderHttpGateway.MapStatusParaSituacao(dto.Status);
-            movimento.DetalheRejeicaoBancoBr = dto.RejectReason;
+            movimento.Situacao = SantanderHttpGateway.MapStatusParaSituacao(dto.Status);
+            movimento.DetalheRejeicao = dto.RejectReason;
             item.Situacao = dto.Status;
             item.MensagemErro = dto.RejectReason;
-            item.Agendado = movimento.SituacaoBancoBr == BancoBrSituacaoEnum.Agendado;
+            item.Agendado = movimento.Situacao == BancoBrSituacaoEnum.Agendado;
 
             if (dto.TransferValue != 0)
                 movimento.ValorPagamento = dto.TransferValue;
@@ -255,7 +255,7 @@ namespace BancoBr.API.Santander.Pagamentos.Ted
                 movimento.DataPagamento = dataPagamento;
 
             if (TryParseData(dto.Transaction?.Date, out var dataTransacao))
-                movimento.HorarioBancoBr = dataTransacao;
+                movimento.Horario = dataTransacao;
 
             if (!string.IsNullOrWhiteSpace(dto.Transaction?.Code))
                 item.CodigoAutenticacao = dto.Transaction.Code;

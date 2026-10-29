@@ -56,19 +56,19 @@ namespace BancoBr.Common.Instances
         /// Situação do pagamento no banco, normalizada. Nulo enquanto o movimento não passou
         /// por nenhuma chamada de API bancária.
         /// </summary>
-        public BancoBrSituacaoEnum? SituacaoBancoBr { get; set; }
+        public BancoBrSituacaoEnum? Situacao { get; set; }
 
         /// <summary>
         /// Data/hora informada pelo banco para o evento do pagamento (liquidação, cadastro do
         /// comprovante, etc.).
         /// </summary>
-        public DateTime? HorarioBancoBr { get; set; }
+        public DateTime? Horario { get; set; }
 
         /// <summary>
         /// Motivo textual informado pelo banco quando o pagamento não pôde ser efetivado
         /// (rejeição, bloqueio, boleto não encontrado, pendência de assinatura, ...).
         /// </summary>
-        public string DetalheRejeicaoBancoBr { get; set; }
+        public string DetalheRejeicao { get; set; }
 
         /// <summary>
         /// Arquivo PDF do comprovante, preenchido por ConsultarComprovanteAsync nos bancos

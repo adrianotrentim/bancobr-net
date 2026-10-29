@@ -95,7 +95,7 @@ var movimento = new Movimento
 await banco.EnviarAgendamentoAsync(movimento, idempotencyKey: identificadorSalvoNoSeuSistema);
 await banco.ConsultarAgendamentoAsync(movimento);
 
-if (movimento.SituacaoBancoBr == BancoBrSituacaoEnum.Efetivado)
+if (movimento.Situacao == BancoBrSituacaoEnum.Efetivado)
 {
     Console.WriteLine("Pagamento realizado.");
 }
@@ -122,7 +122,7 @@ O registro da solicitação é uma etapa do pagamento. Ele ainda pode depender d
 | `SUCESSO` | Pagamento efetivado |
 | `CANCELADO`, `ERRO`, `NAO_APROVADO` ou `EXPIRADO` | O pagamento foi cancelado ou não foi concluído |
 
-Os quatro primeiros estados aparecem em `Movimento.SituacaoBancoBr` como `Agendado`. Somente a confirmação de sucesso aparece como `Efetivado`. Acompanhe a aprovação pelos canais do Sicredi.
+Os quatro primeiros estados aparecem em `Movimento.Situacao` como `Agendado`. Somente a confirmação de sucesso aparece como `Efetivado`. Acompanhe a aprovação pelos canais do Sicredi.
 
 ### Obter o PDF ou cancelar um agendamento
 
