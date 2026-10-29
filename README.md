@@ -36,6 +36,7 @@ dotnet add package BancoBr.CNAB   # integração via arquivos CNAB 240
 
 - [x] Sicoob
 - [x] Santander
+- [x] [Sicredi](src/BancoBr.API/Sicredi/README.md) — pagamentos, DDA, extrato e saldo; homologação pendente de credenciais
 - [ ] Itaú
 - [ ] Bradesco
 - [ ] CEF
@@ -122,12 +123,17 @@ await banco.EnviarAgendamentoAsync(movimentoPix);
 
 Console.WriteLine($"Situação={movimentoPix.SituacaoBancoBr}, EndToEndId={movimentoPix.NumeroDocumentoNoBanco}");
 
-// Só Santander: link do comprovante (PDF) de um Pix já efetivado, em Movimento.LinkComprovanteBancoBr.
-// O link é temporário (ValidadeLinkComprovanteBancoBr). Se o banco ainda não gerou o arquivo, o link
-// volta vazio: chame de novo mais tarde — a solicitação já feita é reaproveitada.
-await banco.ConsultarComprovanteAsync(movimentoPix);
-Console.WriteLine($"Comprovante={movimentoPix.LinkComprovanteBancoBr}, válido até {movimentoPix.ValidadeLinkComprovanteBancoBr}");
+// Santander e Sicredi: mesma chamada para obter o PDF, com o download resolvido pela biblioteca.
+// Se o pagamento ou o arquivo ainda não estiver pronto, retorna false: consulte novamente mais tarde.
+bool obtido = await banco.ConsultarComprovanteAsync(movimentoPix);
+if (obtido)
+    System.IO.File.WriteAllBytes("comprovante.pdf", movimentoPix.ArquivoComprovantePDF);
+// O PDF é preenchido em movimentoPix.ArquivoComprovantePDF.
 ```
+
+**Migração de comprovantes:** `ConsultarComprovanteAsync` passa de `Task<Movimento>` para `Task<bool>`, indicando se o arquivo foi obtido. Os campos `LinkComprovanteBancoBr` e `ValidadeLinkComprovanteBancoBr` são substituídos por `ArquivoComprovantePDF` (`byte[]`). Atualize chamadas e persistência que utilizavam o link; na serialização JSON com Newtonsoft.Json, os bytes são representados em Base64.
+
+O método separado `BaixarComprovanteAsync` foi removido. No Santander, obtenção do link temporário e download passam a ser internos. Nos dois bancos, `true` indica PDF preenchido em `ArquivoComprovantePDF`, e `false` indica que ele ainda não está disponível. Falhas de comunicação e cancelamento continuam propagando exceções.
 
 ### TED
 
