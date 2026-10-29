@@ -75,12 +75,23 @@ namespace BancoBr.Common.Instances
         /// que disponibilizam o documento. Nulo enquanto o arquivo não estiver disponível.
         /// </summary>
         public byte[] ArquivoComprovantePDF { get; set; }
+        
 
         #endregion
     }
 
+    public class MovimentoDescricaoComplementarRetorno
+    {
+        public string Codigo { get; set; }
+        public string Descricao { get; set; }
+    }
+
     public class MovimentoItem
     {
+        /// <summary>
+        /// Descrições do item do movimento, quando o banco possuir mais de 1 descrição no retorno.
+        /// </summary>
+        public List<MovimentoDescricaoComplementarRetorno> DescricaoComplementarRetorno { get; set; }
     }
 
     public class MovimentoItemTransferenciaPIX : MovimentoItem
