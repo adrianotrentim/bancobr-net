@@ -50,6 +50,90 @@ namespace BancoBr.Tests.BancoDoBrasil
             Assert.Equal(BancoBrTipoCreditoDebitoEnum.Debito, debito.Tipo);
             Assert.Equal(7.90m, debito.Valor);
             Assert.Equal(new DateTime(2026, 9, 1), debito.DataLote);
+            Assert.Empty(debito.DescricaoComplementarRetorno);
+        }
+
+        [Theory]
+        [InlineData(0, null)]
+        [InlineData(250, "Pagamento de título")]
+        [InlineData(624, "Pix recebido")]
+        public async Task ConsultarExtratoAsync_HistoricoESubHistorico_PreservaCodigosEDescricoes(int codigoHistorico, string? descricaoHistorico)
+        {
+            var resposta = JsonConvert.SerializeObject(new
+            {
+                listaLancamento = new[]
+                {
+                    new
+                    {
+                        indicadorTipoLancamento = "1", dataLancamento = 1092026,
+                        codigoHistorico, textoDescricaoHistorico = descricaoHistorico,
+                        codigoSubHistorico = 12345, textoDescricaoSubHistorico = "Detalhe do lançamento",
+                        textoInformacaoComplementar = "Informação adicional", valorLancamento = 150.25,
+                        indicadorSinalLancamento = "C", textoIdentificadorUnicoTransacao = "tx-historico"
+                    }
+                }
+            });
+            var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.OK, resposta));
+
+            var resultado = await Criar(handler).ConsultarExtratoAsync(0, 9, 2026, null, null, false);
+
+            var item = Assert.IsType<MovimentoItemExtratoTransacao>(Assert.Single(resultado).MovimentoItem);
+            Assert.Equal("Detalhe do lançamento", item.Descricao);
+            Assert.Equal("Informação adicional", item.DescricaoInformacaoComplementar);
+            Assert.Equal("tx-historico", item.TransactionId);
+            Assert.Collection(item.DescricaoComplementarRetorno,
+                historico =>
+                {
+                    Assert.Equal(codigoHistorico.ToString(System.Globalization.CultureInfo.InvariantCulture), historico.Codigo);
+                    Assert.Equal(descricaoHistorico, historico.Descricao);
+                },
+                subHistorico =>
+                {
+                    Assert.Equal("12345", subHistorico.Codigo);
+                    Assert.Equal("Detalhe do lançamento", subHistorico.Descricao);
+                });
+        }
+
+        [Fact]
+        public async Task ConsultarExtratoAsync_HistoricoSemDescricao_PreservaCodigoSemUsarTextoDoSubHistorico()
+        {
+            // A OpenAPI v2 documenta codigoHistorico, mas não textoDescricaoHistorico.
+            var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.OK, @"{""listaLancamento"":[{
+                ""indicadorTipoLancamento"":""1"",""dataLancamento"":1092026,""indicadorSinalLancamento"":""D"",
+                ""codigoHistorico"":250,""codigoSubHistorico"":12345,""textoDescricaoSubHistorico"":""Pagamento de boleto""
+            }]}"));
+
+            var resultado = await Criar(handler).ConsultarExtratoAsync(0, 9, 2026, null, null, false);
+
+            var item = Assert.IsType<MovimentoItemExtratoTransacao>(Assert.Single(resultado).MovimentoItem);
+            Assert.Equal("Pagamento de boleto", item.Descricao);
+            Assert.Collection(item.DescricaoComplementarRetorno,
+                historico =>
+                {
+                    Assert.Equal("250", historico.Codigo);
+                    Assert.Null(historico.Descricao);
+                },
+                subHistorico =>
+                {
+                    Assert.Equal("12345", subHistorico.Codigo);
+                    Assert.Equal("Pagamento de boleto", subHistorico.Descricao);
+                });
+        }
+
+        [Fact]
+        public async Task ConsultarExtratoAsync_CodigosAusentes_NaoInventaCodigoZero()
+        {
+            var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.OK, @"{""listaLancamento"":[{
+                ""indicadorTipoLancamento"":""1"",""dataLancamento"":1092026,""indicadorSinalLancamento"":""C"",
+                ""textoDescricaoSubHistorico"":""Pix recebido""
+            }]}"));
+
+            var resultado = await Criar(handler).ConsultarExtratoAsync(0, 9, 2026, null, null, false);
+
+            var item = Assert.IsType<MovimentoItemExtratoTransacao>(Assert.Single(resultado).MovimentoItem);
+            var descricao = Assert.Single(item.DescricaoComplementarRetorno);
+            Assert.Null(descricao.Codigo);
+            Assert.Equal("Pix recebido", descricao.Descricao);
         }
 
         [Fact]

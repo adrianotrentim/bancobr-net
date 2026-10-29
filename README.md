@@ -200,6 +200,8 @@ foreach (var transacao in extrato.Select(m => m.MovimentoItem).OfType<MovimentoI
 }
 ```
 
+No Banco do Brasil, cada transação também preenche `DescricaoComplementarRetorno` com os códigos e descrições de histórico e sub-histórico recebidos. Veja o [mapeamento e exemplo do BB](src/BancoBr.API/BancoDoBrasil/README.md).
+
 </details>
 
 <details>

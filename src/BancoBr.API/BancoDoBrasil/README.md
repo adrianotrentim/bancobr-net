@@ -44,5 +44,24 @@ O aceite da requisição fica como `NaoIntegrado` até a consulta confirmar a si
 
 O extrato usa agência e conta de `ConfiguracaoAPI.Correntista`, percorre todas as páginas e retorna lançamentos contabilizados e a posição de saldo atual quando informada. Lançamentos futuros ou em processamento não são incluídos. `numeroContaCorrente` e `agruparCnab` não alteram a consulta do BB.
 
+Cada `MovimentoItemExtratoTransacao` preenche `DescricaoComplementarRetorno` com os pares recebidos, nesta ordem:
+
+| Origem no BB | `Codigo` | `Descricao` |
+| --- | --- | --- |
+| Histórico | `codigoHistorico` convertido em texto | `textoDescricaoHistorico`, se recebido; caso contrário, `null` |
+| Sub-histórico | `codigoSubHistorico` convertido em texto | `textoDescricaoSubHistorico` |
+
+Um par é omitido quando não há código nem descrição; quando ambos estão ausentes nos dois pares, a lista fica vazia. Código ausente fica `null`, enquanto o código `0` é preservado como `"0"`. Os códigos permitem ao consumidor reconhecer históricos como 250 e 624 e aplicar seus próprios filtros de conciliação.
+
+A [OpenAPI oficial de Extratos v2](https://apoio.developers.bb.com.br/apis/80?versaoApi=2&topico=19424468), versão 2.0.1 consultada em 29/10/2026, documenta os dois códigos e `textoDescricaoSubHistorico`, mas não declara `textoDescricaoHistorico`. A biblioteca aceita este último quando ele vier na resposta, sem substituir sua ausência pelo texto do sub-histórico. `Descricao` continua recebendo `textoDescricaoSubHistorico`, e `DescricaoInformacaoComplementar` recebe `textoInformacaoComplementar`.
+
+```csharp
+foreach (var transacao in extratoBB.Select(m => m.MovimentoItem).OfType<MovimentoItemExtratoTransacao>())
+{
+    foreach (var descricao in transacao.DescricaoComplementarRetorno)
+        Console.WriteLine($"{descricao.Codigo}: {descricao.Descricao}");
+}
+```
+
 
 O contrato de pagamentos é obtido de `ConfiguracaoAPI.Correntista.Convenio`. Quando preenchido, deve ser um inteiro positivo compatível com Int32; o cliente o converte para o campo numérico exigido por cada endpoint. Quando vazio, o campo é omitido. O extrato não utiliza esse convênio.
