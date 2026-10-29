@@ -42,7 +42,23 @@ Cada envio utiliza uma requisição com um lançamento. Preserve `NumeroDocument
 
 O aceite da requisição fica como `NaoIntegrado` até a consulta confirmar a situação bancária. A liberação/autorização exigida pelo contrato deve ser feita pelos canais do BB; esta biblioteca não libera lotes automaticamente. DDA, Pix QR Code, consulta prévia de chave Pix e link PDF de comprovante não estão implementados para o BB.
 
-O extrato usa agência e conta de `ConfiguracaoAPI.Correntista`, percorre todas as páginas e retorna lançamentos contabilizados e a posição de saldo atual quando informada. Lançamentos futuros ou em processamento não são incluídos. `numeroContaCorrente` e `agruparCnab` não alteram a consulta do BB.
+O extrato usa agência e conta de `ConfiguracaoAPI.Correntista`, percorre todas as páginas e retorna lançamentos contabilizados. Quando o BB informa posições de saldo, o primeiro item é um `MovimentoItemExtratoSaldo`. Lançamentos futuros ou em processamento não são incluídos. `numeroContaCorrente` e `agruparCnab` não alteram a consulta do BB.
+
+O BB devolve as posições de saldo dentro de `listaLancamento`, e elas não viram transações:
+
+| Origem no BB | Campo |
+| --- | --- |
+| Tipo `1`, sem documento, `SALDO ANTERIOR` | `SaldoAnterior` |
+| Tipo `SD` (saldo disponível de hoje, já com o resgate automático de investimentos) | `SaldoAtual` |
+| Tipo `SA` (saldo contábil de hoje; só vem quando a data final é anterior a hoje) | `SaldoAtual` só quando não vier `SD` |
+| Tipo `1`, sem documento, histórico 999 `S A L D O` (saldo contábil no fim do período) | `SaldoAtual` só quando não vierem `SD` nem `SA`; negativo quando o sinal é `D` |
+| Tipo `LC` (limite contratado) | `SaldoLimite` |
+| Tipo `1`, sem documento, `Saldo do dia` | descartado |
+| Tipos `RA` e `LD` (resgate automático, limite disponível) | descartados: sem campo no modelo |
+
+Por isso `SaldoAnterior` somado aos lançamentos fecha com o saldo contábil, e não com `SaldoAtual`, quando há resgate automático.
+
+O `SD` traz a posição de hoje qualquer que seja o período consultado, inclusive com data final anterior a hoje; por isso `SaldoAtual` é o saldo do dia da consulta, e não o do fim do período. Esse formato foi observado em retornos de produção do extrato v2, em 29/10/2026, com data final no próprio dia e anterior a ele.
 
 Cada `MovimentoItemExtratoTransacao` preenche `DescricaoComplementarRetorno` com os pares recebidos, nesta ordem:
 
