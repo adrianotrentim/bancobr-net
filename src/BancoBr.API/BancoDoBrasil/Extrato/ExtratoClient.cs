@@ -75,6 +75,7 @@ namespace BancoBr.API.BancoDoBrasil.Extrato
                                 Data = Data(item.DataLancamento),
                                 DataLote = item.DataMovimento == 0 ? (DateTime?)null : Data(item.DataMovimento),
                                 Descricao = item.Descricao, DescricaoInformacaoComplementar = item.Complemento,
+                                DescricaoComplementarRetorno = DescricoesComplementares(item),
                                 CpfCnpj = item.CpfCnpjContrapartida
                             }
                         });
@@ -86,6 +87,28 @@ namespace BancoBr.API.BancoDoBrasil.Extrato
                 pagina = resposta.ProximaPagina;
             } while (true);
             return movimentos;
+        }
+
+        /// <summary>
+        /// Preserva histórico e sub-histórico em pares separados. A OpenAPI v2 não declara
+        /// textoDescricaoHistorico; a descrição do histórico só é preenchida se vier na resposta.
+        /// </summary>
+        private static List<MovimentoDescricaoComplementarRetorno> DescricoesComplementares(LancamentoResponse item)
+        {
+            var descricoes = new List<MovimentoDescricaoComplementarRetorno>();
+            if (item.CodigoHistorico.HasValue || !string.IsNullOrEmpty(item.DescricaoHistorico))
+                descricoes.Add(new MovimentoDescricaoComplementarRetorno
+                {
+                    Codigo = item.CodigoHistorico?.ToString(CultureInfo.InvariantCulture),
+                    Descricao = item.DescricaoHistorico
+                });
+            if (item.CodigoSubHistorico.HasValue || !string.IsNullOrEmpty(item.Descricao))
+                descricoes.Add(new MovimentoDescricaoComplementarRetorno
+                {
+                    Codigo = item.CodigoSubHistorico?.ToString(CultureInfo.InvariantCulture),
+                    Descricao = item.Descricao
+                });
+            return descricoes;
         }
 
         private static DateTime Data(int valor) => DateTime.ParseExact(valor.ToString("D8", CultureInfo.InvariantCulture), "ddMMyyyy", CultureInfo.InvariantCulture);
@@ -116,6 +139,9 @@ namespace BancoBr.API.BancoDoBrasil.Extrato
         [JsonProperty("dataLancamento")] public int DataLancamento { get; set; }
         [JsonProperty("dataMovimento")] public int DataMovimento { get; set; }
         [JsonProperty("numeroDocumento")] public long NumeroDocumento { get; set; }
+        [JsonProperty("codigoHistorico")] public int? CodigoHistorico { get; set; }
+        [JsonProperty("textoDescricaoHistorico")] public string DescricaoHistorico { get; set; }
+        [JsonProperty("codigoSubHistorico")] public int? CodigoSubHistorico { get; set; }
         [JsonProperty("textoDescricaoSubHistorico")] public string Descricao { get; set; }
         [JsonProperty("valorLancamento")] public decimal Valor { get; set; }
         [JsonProperty("indicadorSinalLancamento")] public string Sinal { get; set; }

@@ -84,7 +84,7 @@ namespace BancoBr.Tests.BancoDoBrasil
         public async Task ConsultarExtratoAsync_BB_UsaContaDaConfiguracao()
         {
             var handler = new FakeHttpMessageHandler(HttpStatusCode.OK,
-                "{\"numeroPaginaProximo\":0,\"listaLancamento\":[{\"indicadorTipoLancamento\":\"1\",\"dataLancamento\":28102026,\"indicadorSinalLancamento\":\"D\",\"valorLancamento\":25,\"textoDescricaoSubHistorico\":\"Pagamento\"}]}");
+                "{\"numeroPaginaProximo\":0,\"listaLancamento\":[{\"indicadorTipoLancamento\":\"1\",\"dataLancamento\":28102026,\"indicadorSinalLancamento\":\"D\",\"valorLancamento\":25,\"codigoHistorico\":250,\"codigoSubHistorico\":12345,\"textoDescricaoSubHistorico\":\"Pagamento\"}]}");
             var extrato = new ExtratoClient(new HttpClient(handler), new StaticAccessTokenProvider("token"), "chave",
                 new Uri("https://extratos.example.test/v2/"), Origem());
 
@@ -94,6 +94,18 @@ namespace BancoBr.Tests.BancoDoBrasil
             var item = Assert.IsType<MovimentoItemExtratoTransacao>(Assert.Single(movimentos).MovimentoItem);
             Assert.Equal(25m, item.Valor);
             Assert.Equal(BancoBrTipoCreditoDebitoEnum.Debito, item.Tipo);
+            Assert.Equal("Pagamento", item.Descricao);
+            Assert.Collection(item.DescricaoComplementarRetorno,
+                historico =>
+                {
+                    Assert.Equal("250", historico.Codigo);
+                    Assert.Null(historico.Descricao);
+                },
+                subHistorico =>
+                {
+                    Assert.Equal("12345", subHistorico.Codigo);
+                    Assert.Equal("Pagamento", subHistorico.Descricao);
+                });
         }
     }
 }
