@@ -15,8 +15,8 @@ using Newtonsoft.Json;
 namespace BancoBr.API.BancoDoBrasil.Extrato
 {
     /// <summary>
-    /// Consulta o extrato V2 do BB. Retorna os lançamentos contabilizados e o saldo atual;
-    /// lançamentos futuros/em processamento não compõem o extrato conciliável.
+    /// Consulta o extrato V2 do BB. Retorna os lançamentos contabilizados e, quando informado,
+    /// o saldo como primeiro item; lançamentos futuros/em processamento não compõem o extrato conciliável.
     /// Agência e conta são obtidas de Correntista, sem dígitos verificadores.
     /// </summary>
     internal class ExtratoClient : ContaCorrenteApiBase
@@ -50,6 +50,8 @@ namespace BancoBr.API.BancoDoBrasil.Extrato
             if (fim < inicio) throw new ArgumentException("A data final não pode anteceder a inicial.");
             var url = $"{_baseUrl}conta-corrente/agencia/{Origem.NumeroAgencia}/conta/{Origem.NumeroConta}?dataInicioSolicitacao={inicio.ToString("ddMMyyyy", CultureInfo.InvariantCulture)}&dataFimSolicitacao={fim.ToString("ddMMyyyy", CultureInfo.InvariantCulture)}&quantidadeRegistroPaginaSolicitacao=120";
             var movimentos = new List<Movimento>();
+            MovimentoItemExtratoSaldo saldo = null;
+            decimal? saldoDisponivel = null, saldoContabilAtual = null, saldoFimPeriodo = null;
             var pagina = 1;
             do
             {
@@ -59,9 +61,30 @@ namespace BancoBr.API.BancoDoBrasil.Extrato
                 foreach (var item in resposta.Lancamentos ?? new List<LancamentoResponse>())
                 {
                     // A API também inclui posições de saldo e operações ainda não contabilizadas.
-                    if (item.TipoLancamento == "SA")
+                    if (item.TipoLancamento == "SD")
                     {
-                        movimentos.Add(new Movimento { MovimentoItem = new MovimentoItemExtratoSaldo { SaldoAtual = ValorComSinal(item) } });
+                        saldo = saldo ?? new MovimentoItemExtratoSaldo();
+                        saldoDisponivel = ValorComSinal(item);
+                    }
+                    else if (item.TipoLancamento == "SA")
+                    {
+                        saldo = saldo ?? new MovimentoItemExtratoSaldo();
+                        saldoContabilAtual = ValorComSinal(item);
+                    }
+                    else if (item.TipoLancamento == "LC")
+                    {
+                        (saldo = saldo ?? new MovimentoItemExtratoSaldo()).SaldoLimite = Math.Abs(item.Valor);
+                    }
+                    else if (item.TipoLancamento == "1" && EhLinhaSaldo(item))
+                    {
+                        var descricao = Normalizar(item.Descricao);
+                        if (item.CodigoHistorico == CodigoHistoricoSaldo || descricao == "SALDO")
+                        {
+                            saldo = saldo ?? new MovimentoItemExtratoSaldo();
+                            saldoFimPeriodo = ValorComSinal(item);
+                        }
+                        else if (descricao == "SALDOANTERIOR")
+                            (saldo = saldo ?? new MovimentoItemExtratoSaldo()).SaldoAnterior = ValorComSinal(item);
                     }
                     else if (item.TipoLancamento == "1")
                     {
@@ -86,8 +109,31 @@ namespace BancoBr.API.BancoDoBrasil.Extrato
                     throw new JsonSerializationException("Paginação não progressiva no extrato BB.");
                 pagina = resposta.ProximaPagina;
             } while (true);
+            if (saldo != null)
+            {
+                // SD é a posição disponível de hoje (com resgate automático de investimentos),
+                // qualquer que seja o período. SA (saldo contábil de hoje) só vem quando o período
+                // termina antes de hoje; "S A L D O" é o saldo contábil no fim do período.
+                saldo.SaldoAtual = saldoDisponivel ?? saldoContabilAtual ?? saldoFimPeriodo ?? 0m;
+                movimentos.Insert(0, new Movimento { MovimentoItem = saldo });
+            }
             return movimentos;
         }
+
+        private const int CodigoHistoricoSaldo = 999;
+
+        /// <summary>
+        /// Em produção o BB devolve as posições de saldo como lançamentos tipo "1" sem documento:
+        /// "SALDO ANTERIOR" e "Saldo do dia" (histórico 0) e "S A L D O" (histórico 999, saldo contábil final).
+        /// Os saldos diários são descartados; o anterior e o contábil final alimentam <see cref="MovimentoItemExtratoSaldo"/>.
+        /// </summary>
+        private static bool EhLinhaSaldo(LancamentoResponse item) =>
+            item.NumeroDocumento == 0
+            && (item.CodigoHistorico == 0 || item.CodigoHistorico == CodigoHistoricoSaldo)
+            && Normalizar(item.Descricao).StartsWith("SALDO", StringComparison.Ordinal);
+
+        private static string Normalizar(string texto) =>
+            (texto ?? string.Empty).Replace(" ", string.Empty).ToUpperInvariant();
 
         /// <summary>
         /// Preserva histórico e sub-histórico em pares separados. A OpenAPI v2 não declara

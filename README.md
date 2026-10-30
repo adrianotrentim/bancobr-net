@@ -189,7 +189,7 @@ var extrato = await banco.ConsultarExtratoAsync(
     mes: 9,
     ano: 2026); // no Santander usa o Correntista da ConfiguracaoAPI (agência/conta/DV); ignorado no Sicoob
 
-// No Sicoob, o primeiro item é o saldo do período (o Santander não devolve saldo).
+// No Sicoob, Sicredi e Banco do Brasil, o primeiro item é o saldo (o Santander não devolve saldo).
 var saldo = extrato.Select(m => m.MovimentoItem).OfType<MovimentoItemExtratoSaldo>().FirstOrDefault();
 if (saldo != null)
     Console.WriteLine($"Saldo atual: {saldo.SaldoAtual:C}");
