@@ -76,6 +76,8 @@ namespace BancoBr.API
                     return ConectarSicredi(configuracao, tokenEndpointOverride, null);
                 case BancoEnum.BancoDoBrasil:
                     return ConectarBancoDoBrasil(configuracao, tokenEndpointOverride, null);
+                case BancoEnum.BradescoSA:
+                    return ConectarBradesco(configuracao, tokenEndpointOverride, null);
                 case BancoEnum.Sicoob:
                     return new BancoApi(
                         configuracao.Correntista,
@@ -121,6 +123,8 @@ namespace BancoBr.API
                     return ConectarSicredi(configuracao, null, tokenProvider ?? throw new ArgumentNullException(nameof(tokenProvider)));
                 case BancoEnum.BancoDoBrasil:
                     return ConectarBancoDoBrasil(configuracao, null, tokenProvider ?? throw new ArgumentNullException(nameof(tokenProvider)));
+                case BancoEnum.BradescoSA:
+                    return ConectarBradesco(configuracao, null, tokenProvider ?? throw new ArgumentNullException(nameof(tokenProvider)));
                 case BancoEnum.Sicoob:
                     return new BancoApi(
                         configuracao.Correntista,
@@ -207,6 +211,34 @@ namespace BancoBr.API
                 new BancoDoBrasil.Pagamentos.PagamentoPixClient(http, pagamentosToken, configuracao.ChaveAplicacao, configuracao.Correntista, url),
                 new BancoDoBrasil.Pagamentos.PagamentoTedClient(http, pagamentosToken, configuracao.ChaveAplicacao, configuracao.Correntista, url),
                 new BancoDoBrasil.Extrato.ExtratoClient(configuracao, extratoToken));
+        }
+
+        /// <summary>
+        /// Bradesco: Boleto, Convênio (contas de consumo e tributos), TED, Pix Transferências e extrato (o saldo sai do próprio extrato). Os tokens são mTLS + client_credentials; Pix usa o host
+        /// <c>qrpix</c> e as demais APIs, <c>openapi</c> (ou o sandbox, com <see cref="ConfiguracaoAPI.AmbienteHomologacao"/>).
+        /// <paramref name="tokenEndpoint"/>, quando informado, vale para os dois.        /// </summary>
+        private static BancoApi ConectarBradesco(ConfiguracaoAPI configuracao, Uri tokenEndpoint, IAccessTokenProvider tokenProvider)
+        {
+            if (configuracao.CertificadoDigital == null)
+                throw new ArgumentException("Informe o certificado mTLS do Bradesco.", nameof(configuracao));
+
+            var homologacao = configuracao.AmbienteHomologacao;
+            var http = Bradesco.Http.BradescoHttpGateway.BuildHttpClient(configuracao.CertificadoDigital);
+            Func<Uri, IAccessTokenProvider> token = padrao => tokenProvider ?? new OAuthTokenProvider(http, new OAuthTokenProviderOptions
+            {
+                TokenEndpoint = tokenEndpoint ?? padrao, ClientId = configuracao.ClientId, ClientSecret = configuracao.ClientSecret
+            });
+            var tokenPagamentos = token(homologacao ? Bradesco.Http.BradescoHttpGateway.HomologacaoTokenEndpoint : Bradesco.Http.BradescoHttpGateway.PagamentosTokenEndpoint);
+            var tokenPix = token(homologacao ? Bradesco.Http.BradescoHttpGateway.HomologacaoTokenEndpoint : Bradesco.Http.BradescoHttpGateway.PixTokenEndpoint);
+            var pagamentosUrl = homologacao ? Bradesco.Http.BradescoHttpGateway.HomologacaoBaseUrl : Bradesco.Http.BradescoHttpGateway.PagamentosBaseUrl;
+            var pixUrl = homologacao ? Bradesco.Http.BradescoHttpGateway.HomologacaoBaseUrl : Bradesco.Http.BradescoHttpGateway.PixBaseUrl;
+
+            return new BancoApi(configuracao.Correntista,
+                new Bradesco.Pagamentos.PagamentoBoletoClient(http, tokenPagamentos, configuracao.Correntista, pagamentosUrl),
+                new Bradesco.Pagamentos.PagamentoConvenioClient(http, tokenPagamentos, configuracao.Correntista, pagamentosUrl),
+                new Bradesco.Pagamentos.PagamentoPixClient(http, tokenPix, configuracao.Correntista, pixUrl),
+                new Bradesco.Pagamentos.PagamentoTedClient(http, tokenPagamentos, configuracao.Correntista, pagamentosUrl),
+                new Bradesco.ContaCorrente.ExtratoClient(http, tokenPagamentos, configuracao.Correntista, pagamentosUrl));
         }
 
         private readonly Correntista _origem;
