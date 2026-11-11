@@ -23,10 +23,13 @@ namespace BancoBr.API.Santander.ContaCorrente.Models
         [JsonProperty("transactionName")]
         public string TransactionName { get; set; }
 
+        [JsonProperty("historicComplement")]
+        public string HistoricComplement { get; set; }
+
         [JsonProperty("amount")]
         public decimal Amount { get; set; }
 
         [JsonProperty("transactionDate")]
-        public DateTime TransactionDate { get; set; }
+        public string TransactionDate { get; set; }
     }
 }
