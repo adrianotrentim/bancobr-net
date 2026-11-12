@@ -138,7 +138,7 @@ jobs:
             --api-key "$GH_PACKAGES_TOKEN" \
             --skip-duplicate
   # Publicação no nuget.org via Trusted Publishing (sem API key guardada).
-  # Política configurada no nuget.org: owner adrianotrentim, repositório
+  # Política configurada no nuget.org: owner divsoft, repositório
   # adrianotrentim/bancobr-net, workflow ci.yml, sem environment, pacotes BancoBr.*
   # Só roda com tag v1.2.3 e quando a variável PUBLISH_NUGET_ORG = 'true'.
   publish-nuget-org:
