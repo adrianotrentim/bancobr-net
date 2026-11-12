@@ -41,7 +41,7 @@ dotnet add package BancoBr.CNAB   # integração via arquivos CNAB 240
 - [x] Santander
 - [x] [Sicredi](src/BancoBr.API/Sicredi/README.md)
 - [x] [Banco do Brasil](src/BancoBr.API/BancoDoBrasil/README.md)
-- [x] [Bradesco](src/BancoBr.API/Bradesco/README.md) (Boleto, convênio, TED, Pix e extrato)
+- [x] [Bradesco](src/BancoBr.API/Bradesco/README.md)
 - [ ] Itaú
 - [ ] CEF
 
