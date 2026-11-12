@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,8 +22,8 @@ namespace BancoBr.API.Santander.ContaCorrente
     /// </summary>
     internal class ExtratoClient : ContaCorrenteApiBase
     {
-        /// <summary>Código do Santander (0033) — extrato de outras instituições exige consentimento (Open Finance).</summary>
-        private const string BancoId = "0033";
+        /// <summary>CNPJ do Santander — extrato de outras instituições exige consentimento (Open Finance).</summary>
+        private const string BancoId = "90400888000142";
 
         private const int Limite = 50;
 
@@ -71,9 +72,10 @@ namespace BancoBr.API.Santander.ContaCorrente
 
             var movimentos = new List<Movimento>();
 
-            while (true)
+            // _offset é o número da página (começa em 1), e não o deslocamento em itens.
+            for (var pagina = 1; ; pagina++)
             {
-                var dto = await _gateway.SendAsync<ExtratoResponse>(HttpMethod.Get, $"{url}&_limit={Limite}&_offset={movimentos.Count}", body: null, cancellationToken).ConfigureAwait(false);
+                var dto = await _gateway.SendAsync<ExtratoResponse>(HttpMethod.Get, $"{url}&_limit={Limite}&_offset={pagina}", body: null, cancellationToken).ConfigureAwait(false);
                 if (dto?.Content == null || dto.Content.Count == 0)
                     break;
 
@@ -94,10 +96,21 @@ namespace BancoBr.API.Santander.ContaCorrente
                 TransactionId = dto.TransactionId,
                 Tipo = MapTipo(dto.CreditDebitType),
                 Valor = Math.Abs(dto.Amount),
-                Data = dto.TransactionDate,
+                Data = ParseData(dto.TransactionDate),
                 Descricao = dto.TransactionName,
+                DescricaoInformacaoComplementar = dto.HistoricComplement,
             },
         };
+
+        private static readonly string[] FormatosData = { "dd/MM/yyyy", "yyyy-MM-dd", "yyyy-MM-ddTHH:mm:ss" };
+
+        private static DateTime ParseData(string data)
+        {
+            if (DateTime.TryParseExact(data?.Trim(), FormatosData, CultureInfo.InvariantCulture, DateTimeStyles.None, out var resultado))
+                return resultado;
+
+            throw new Exception($"Data de lançamento não reconhecida no extrato Santander: \"{data}\".");
+        }
 
         /// <summary>
         /// Sem fallback, como no Sicoob: errar o sinal de um lançamento financeiro é pior do que

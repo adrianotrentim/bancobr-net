@@ -36,7 +36,7 @@ namespace BancoBr.Tests.Santander
 
             var request = Assert.Single(handler.Requests);
             Assert.Equal(HttpMethod.Get, request.Method);
-            Assert.Equal($"{BaseUrl}/banks/0033/statements/0001.000010331607?initialDate=2026-09-01&finalDate=2026-09-30&_limit=50&_offset=0", request.RequestUri!.ToString());
+            Assert.Equal($"{BaseUrl}/banks/90400888000142/statements/0001.000010331607?initialDate=2026-09-01&finalDate=2026-09-30&_limit=50&_offset=1", request.RequestUri!.ToString());
             Assert.Equal("fake-client-id", request.Headers.GetValues("X-Application-Key").Single());
 
             Assert.Equal(2, resultado.Count);
@@ -61,8 +61,32 @@ namespace BancoBr.Tests.Santander
 
             Assert.Equal(53, resultado.Count);
             Assert.Equal(2, handler.Requests.Count);
-            Assert.Contains("initialDate=2026-02-05&finalDate=2026-02-10&_limit=50&_offset=0", handler.Requests[0].RequestUri!.Query.Replace("?", ""));
-            Assert.EndsWith("_limit=50&_offset=50", handler.Requests[1].RequestUri!.Query);
+            Assert.Contains("initialDate=2026-02-05&finalDate=2026-02-10&_limit=50&_offset=1", handler.Requests[0].RequestUri!.Query.Replace("?", ""));
+            Assert.EndsWith("_limit=50&_offset=2", handler.Requests[1].RequestUri!.Query);
+        }
+
+        [Fact]
+        public async Task ConsultarExtratoAsync_InterpretaDataNoFormatoDiaMesAno()
+        {
+            var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.OK, @"{ ""_content"": [
+                { ""creditDebitType"": ""CREDITO"", ""transactionName"": ""A"", ""amount"": 1, ""transactionDate"": ""09/11/2026"" },
+                { ""creditDebitType"": ""CREDITO"", ""transactionName"": ""B"", ""amount"": 1, ""transactionDate"": ""2026-11-09"" }
+            ] }"));
+
+            var resultado = await Criar(handler).ConsultarExtratoAsync(0, 11, 2026, null, null, false, default);
+
+            Assert.Equal(new DateTime(2026, 11, 9), ((MovimentoItemExtratoTransacao)resultado[0].MovimentoItem).Data);
+            Assert.Equal(new DateTime(2026, 11, 9), ((MovimentoItemExtratoTransacao)resultado[1].MovimentoItem).Data);
+        }
+
+        [Fact]
+        public async Task ConsultarExtratoAsync_DataInvalida_Lanca()
+        {
+            var handler = new SequencedFakeHttpMessageHandler((HttpStatusCode.OK, @"{ ""_content"": [
+                { ""creditDebitType"": ""CREDITO"", ""transactionName"": ""A"", ""amount"": 1, ""transactionDate"": ""ontem"" }
+            ] }"));
+
+            await Assert.ThrowsAsync<Exception>(() => Criar(handler).ConsultarExtratoAsync(0, 11, 2026, null, null, false, default));
         }
 
         [Fact]
