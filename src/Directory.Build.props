@@ -1,9 +1,9 @@
 <Project>
   <PropertyGroup>
-    <Version>1.0.0</Version>
-    <Authors>Adriano Trentim e colaboradores do BancoBr.NET</Authors>
+    <Version>1.0.4</Version>
+    <Authors>Divsoft Sistemas</Authors>
     <Product>BancoBr.NET</Product>
-    <Copyright>Copyright (c) 2023 Adriano Trentim e colaboradores</Copyright>
+    <Copyright>Copyright (c) 2023 - Divsoft Sistemas</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageTags>BancoBr;bancos;Brasil;pagamentos;PIX;CNAB240</PackageTags>
     <RepositoryType>git</RepositoryType>
