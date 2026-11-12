@@ -374,54 +374,6 @@ foreach (var movimento in cnabLeitura.Movimentos)
 
 </details>
 
-<details>
-<summary><h3>⚙️ Para mantenedores: pacotes NuGet e integração contínua</h3></summary>
-
-O workflow **Validar e gerar pacotes NuGet** (`.github/workflows/ci.yml`) compila a solução em Release, executa os testes locais e gera três pacotes:
-
-| Pacote | Conteúdo |
-| --- | --- |
-| `BancoBr.Common` | Modelos, enums e contratos compartilhados |
-| `BancoBr.API` | Integrações bancárias por API; depende de Common |
-| `BancoBr.CNAB` | Geração e leitura de CNAB 240; depende de Common |
-
-Pull requests e pushes em `main` apenas compilam, testam e geram versões de prévia (disponíveis nos artefatos da execução do GitHub Actions). Nada é publicado.
-
-### Publicar uma nova versão no NuGet.org
-
-1. Em **Releases → Draft a new release**, crie uma tag no formato `vX.Y.Z` (ex.: `v1.0.1`).
-2. Clique em **Publish release**.
-
-O workflow gera a versão `X.Y.Z` e, se os testes passarem, publica os três pacotes no NuGet.org via **Trusted Publishing** (sem API key armazenada). A publicação só ocorre quando a variável `PUBLISH_NUGET_ORG` está como `true` em **Settings → Secrets and variables → Actions → Variables**.
-
-### Publicar no GitHub Packages (opcional)
-
-Também é possível publicar no feed do GitHub Packages do proprietário do repositório, configurando as variáveis:
-
-| Variável | Valor | Uso |
-| --- | --- | --- |
-| `PUBLISH_PACKAGES` | `true` | Habilita publicação por tag ou execução manual |
-| `PACKAGE_VERSION_SUFFIX` | `fork` no fork; vazia no original | Distingue as versões de uma distribuição do fork |
-
-Com o sufixo `fork`, a tag `v1.2.3` gera `1.2.3-fork`, e uma execução comum gera `1.0.0-fork.ci.NUMERO.TENTATIVA`. O sufixo aceita letras minúsculas e números, começando por letra. Para consumir esse feed, configure `https://nuget.pkg.github.com/PROPRIETARIO/index.json` como fonte NuGet, autenticando com um token pessoal com `read:packages` (veja as [instruções do GitHub Packages](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-nuget-registry)).
-
-O console de homologação bancária não é executado pelo CI.
-
-### Gerar localmente
-
-```sh
-dotnet restore BancoBr.sln
-dotnet build BancoBr.sln --configuration Release --no-restore
-dotnet test tests/BancoBr.Tests/BancoBr.Tests.csproj --configuration Release --no-build
-dotnet pack src/BancoBr.Common/BancoBr.Common.csproj --configuration Release --no-build --output artifacts/packages
-dotnet pack src/BancoBr.API/BancoBr.API.csproj --configuration Release --no-build --output artifacts/packages
-dotnet pack src/BancoBr.CNAB/BancoBr.CNAB.csproj --configuration Release --no-build --output artifacts/packages
-```
-
-Os testes usam HTTP simulado e conteúdo CNAB gerado em memória, sem acessar os bancos.
-
-</details>
-
 ## Dúvidas?
 
 Abra um issue na página do projeto no GitHub ou [clique aqui](https://github.com/adrianotrentim/bancobr-net/issues).
